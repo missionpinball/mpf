@@ -28,7 +28,7 @@ class RgbDmd(SystemWideDevice):
         machine.bcp.interface.register_command_callback("rgb_dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
 
     def __init__(self, machine, name):
-        """initialize DMD."""
+        """Initialize DMD."""
         self.hw_device = None
         self.platform = None        # type: RgbDmdPlatform
         super().__init__(machine, name)

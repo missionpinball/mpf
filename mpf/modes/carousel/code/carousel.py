@@ -13,7 +13,7 @@ class Carousel(Mode):
                  "_block_events", "_release_events", "_is_blocking"]
 
     def __init__(self, *args, **kwargs):
-        """initialize carousel mode."""
+        """Initialize carousel mode."""
         self._all_items = None
         self._items = None
         self._select_item_events = None
@@ -27,7 +27,7 @@ class Carousel(Mode):
         super().__init__(*args, **kwargs)
 
     def mode_init(self):
-        """initialize mode and read all settings from config."""
+        """Initialize mode and read all settings from config."""
         super().mode_init()
         mode_settings = self.config.get("mode_settings", [])
         self._all_items = []

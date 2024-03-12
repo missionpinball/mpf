@@ -14,7 +14,7 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
     __slots__ = ["machine", "platform", "switch_queue", "command_queue", "_started"]
 
     def __init__(self, machine, platform):
-        """initialize MPF service for VPE."""
+        """Initialize MPF service for VPE."""
         self._connected = asyncio.Future()
         self.machine = machine
         self.platform = platform

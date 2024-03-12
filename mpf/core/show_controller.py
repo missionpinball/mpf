@@ -17,7 +17,7 @@ class ShowController(MpfController):
     config_name = "show_controller"
 
     def __init__(self, machine):
-        """initialize show controller.
+        """Initialize show controller.
 
         Args:
         ----

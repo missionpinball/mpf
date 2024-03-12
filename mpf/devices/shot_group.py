@@ -28,7 +28,7 @@ class ShotGroup(ModeDevice):
     __slots__ = ["rotation_enabled", "profile", "rotation_pattern", "common_state"]
 
     def __init__(self, machine, name):
-        """initialize shot group."""
+        """Initialize shot group."""
         super().__init__(machine, name)
 
         self.rotation_enabled = None

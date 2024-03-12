@@ -12,7 +12,7 @@ class PluginPlayer(DeviceConfigPlayer):
     __slots__ = ["bcp_client", "_show_keys"]
 
     def __init__(self, machine):
-        """initialize plugin player."""
+        """Initialize plugin player."""
         super().__init__(machine)
         self.bcp_client = None
         self._show_keys = {}

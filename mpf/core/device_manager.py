@@ -158,7 +158,7 @@ class DeviceManager(MpfController):
                 collection[device_name].load_config(config[device_name])
 
     async def initialize_devices(self):
-        """initialize devices."""
+        """Initialize devices."""
         futures = []
         for collection_name in self.machine.config['mpf']['device_modules'].keys():
             if collection_name not in self.machine.config:
@@ -260,7 +260,7 @@ class DeviceCollection(dict):
     __slots__ = ["machine", "name", "config_section", "_tag_cache"]
 
     def __init__(self, machine, collection, config_section):
-        """initialize device collection."""
+        """Initialize device collection."""
         super().__init__()
 
         self.machine = machine

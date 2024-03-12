@@ -22,7 +22,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform: "OppHardwarePlatform", port, baud, overwrite_serial) -> None:
-        """initialize Serial Connection to OPP Hardware."""
+        """Initialize Serial Connection to OPP Hardware."""
         self.part_msg = b""
         self.chain_serial = overwrite_serial    # type: str
         self._lost_synch = False

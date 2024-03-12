@@ -28,7 +28,7 @@ class RegisteredSwitch:
     __slots__ = ["ms", "callback", "cancelled"]
 
     def __init__(self, ms, callback):
-        """initialize registered switch."""
+        """Initialize registered switch."""
         self.ms = ms
         self.callback = callback
         self.cancelled = False
@@ -44,7 +44,7 @@ class SwitchController(MpfController):
                  "_switch_lookup", "monitors", "_initialized"]
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize switch controller."""
+        """Initialize switch controller."""
         super().__init__(machine)
         self.registered_switches = dict()                       # type: Dict[Switch, List[List[RegisteredSwitch]]]
         # Dictionary of switches and states that have been registered for

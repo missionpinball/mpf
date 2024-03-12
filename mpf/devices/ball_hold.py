@@ -22,7 +22,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
                  "hold_queue"]
 
     def __init__(self, machine, name):
-        """initialize ball hold."""
+        """Initialize ball hold."""
         self.hold_devices = None
         self.source_playfield = None
         super().__init__(machine, name)

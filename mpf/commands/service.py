@@ -21,7 +21,7 @@ class ServiceCli(cmd.Cmd):
     prompt = "(service) "
 
     def __init__(self, bcp_client, loop, stdin=None, stdout=None):
-        """initialize service cli."""
+        """Initialize service cli."""
         super().__init__(stdin=stdin, stdout=stdout)
         self.bcp_client = bcp_client
         # start service mode

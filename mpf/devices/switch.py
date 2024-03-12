@@ -30,7 +30,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                  "recycle_jitter_count", "_events_to_post", "last_change"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """initialize switch."""
+        """Initialize switch."""
         self.hw_switch = None   # type: Optional[SwitchPlatformInterface]
         self.platform = None    # type: Optional[SwitchPlatform]
         super().__init__(machine, name)

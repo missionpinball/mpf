@@ -22,7 +22,7 @@ class EjectTracker:
                  "_ball_returned", "_ready", "_unknown_balls", "_num_unknown_balls", "_num_lost_balls"]
 
     def __init__(self, ball_counter_handler, already_left):
-        """initialize eject tracker."""
+        """Initialize eject tracker."""
         self.machine = ball_counter_handler.machine
         self._already_left = already_left
         self._ball_count_handler = ball_counter_handler     # type: BallCountHandler
@@ -183,7 +183,7 @@ class PhysicalBallCounter:
                  "_ball_change_futures"]
 
     def __init__(self, ball_device, config) -> None:
-        """initialize ball counter."""
+        """Initialize ball counter."""
         self.ball_device = ball_device              # type: BallDevice
         self.config = config
         self.machine = self.ball_device.machine     # type: MachineController

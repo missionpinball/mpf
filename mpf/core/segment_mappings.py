@@ -103,7 +103,7 @@ class Segment:
     __slots__ = ["dp", "char"]
 
     def __init__(self, dp, char):
-        """initialize segment."""
+        """Initialize segment."""
         self.dp = dp
         self.char = char
 
@@ -958,7 +958,7 @@ class AsciiSegment(Segment):
     __slots__ = ["ascii_value"]
 
     def __init__(self, dp, ascii_value, char):
-        """initialize ascii segment."""
+        """Initialize ascii segment."""
         super().__init__(dp, char)
         self.ascii_value = ascii_value
 

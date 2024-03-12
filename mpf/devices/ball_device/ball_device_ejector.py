@@ -16,7 +16,7 @@ class BallDeviceEjector:
     __slots__ = ["config", "ball_device", "machine"]
 
     def __init__(self, config: dict, ball_device: "BallDevice", machine: "MachineController") -> None:
-        """initialize ejector."""
+        """Initialize ejector."""
         self.config = config
         self.ball_device = ball_device
         self.machine = machine

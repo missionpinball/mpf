@@ -23,7 +23,7 @@ class FASTSwitch:
                  "current_hw_config"]
 
     def __init__(self, communicator, hw_number, ) -> None:
-        """initialize switch."""
+        """Initialize switch."""
 
         self.log = logging.getLogger('FAST Switch')
         self.communicator = communicator

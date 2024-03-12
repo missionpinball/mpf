@@ -10,7 +10,7 @@ class MpfPlugin(LogMixin):
     config_section = None
 
     def __init__(self, machine):
-        """initialize custom code but with custom logging formatter"""
+        """Initialize custom code but with custom logging formatter"""
         super().__init__()
         self.machine = machine
         self.name = type(self).__name__

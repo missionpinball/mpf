@@ -28,7 +28,7 @@ class Game(AsyncMode):
                  "balls_per_game", "max_players"]
 
     def __init__(self, *args, **kwargs):
-        """initialize game."""
+        """Initialize game."""
         super().__init__(*args, **kwargs)
         self._balls_in_play = 0
         self.player_list = list()

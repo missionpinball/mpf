@@ -166,12 +166,12 @@ class EventManager(MpfController):
         Then later to remove all the handlers that a module added, you could:
         for handler in handler_list:
         ``events.remove_handler(my_handler)``
-        
-        
+
+
         A fully working example to get some initial working code might look like explained below. In your modes config file have the section
 
         .. code::
-        
+
             mode:
                 start_events: ball_started
                 priority: 100
@@ -180,7 +180,7 @@ class EventManager(MpfController):
         Here the mode being used is my base mode, of course it could be done for any mode. Some basic code to read and write some player variable might look like below.
 
         .. code::
-        
+
             from mpf.core.mode import Mode
             from mpf.core.events import event_handler
 
@@ -188,25 +188,25 @@ class EventManager(MpfController):
 
                 def my_event_handler(self, *args, **kwargs):
                     print("My event handler is starting")
-        
-                    player = self.machine.game.player    
+
+                    player = self.machine.game.player
                     if not player:
                         return    # do something reasonable here but do not crash in the next line
 
                     # read player variable
                     print(player["status_target_light_red_0"]) #the variable status_target_light_red_0 is defined in the player_vars section of the config.yaml file
-   
+
                     #with every fired event alternate variable value between 0 and 1
-                    
+
                     if(player["status_target_light_red_0"] == 0):
                         player["status_target_light_red_0"] = 1 #set the variable to a value
                     else:
                         player["status_target_light_red_0"] = 0
-    
+
                 def mode_start(self, **kwargs):
                     print("My custom mode code is starting")
                     my_handler = self.machine.events.add_handler('toggle_light', self.my_event_handler)
-        
+
         """
         if event is None:
             raise AssertionError("Cannot pass event None.")

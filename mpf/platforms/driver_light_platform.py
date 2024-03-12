@@ -10,7 +10,7 @@ class DriverLight(LightPlatformSoftwareFade):
     __slots__ = ["driver"]
 
     def __init__(self, number, driver, loop, software_fade_ms):
-        """initialize coil as light."""
+        """Initialize coil as light."""
         super().__init__(number, loop, software_fade_ms)
         self.driver = driver
 

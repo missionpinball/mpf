@@ -38,7 +38,7 @@ class AutofireCoil(SystemWideDevice):
                  "_timeout_disable_time", "_timeout_hits"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize autofire."""
+        """Initialize autofire."""
         self._enabled = False
         self._rule = None       # type: Optional[HardwareRule]
         super().__init__(machine, name)

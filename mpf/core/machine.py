@@ -243,7 +243,7 @@ class MachineController(LogMixin):
         await self._initialize_platforms()
 
     async def initialize(self) -> None:
-        """initialize machine."""
+        """Initialize machine."""
         await self.initialize_core_and_hardware()
 
         self._initialize_credit_string()
@@ -322,7 +322,7 @@ class MachineController(LogMixin):
         self.clear_boot_hold('init')
 
     async def _initialize_platforms(self) -> None:
-        """initialize all used hardware platforms."""
+        """Initialize all used hardware platforms."""
         init_done = []
         # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
@@ -653,7 +653,7 @@ class MachineController(LogMixin):
         self.monitors[monitor_class].add(monitor)
 
     def initialize_mpf(self):
-        """initialize MPF."""
+        """Initialize MPF."""
         self.info_log("Initializing MPF...")
         timeout = 30 if self.options["production"] else None
         try:

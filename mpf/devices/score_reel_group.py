@@ -26,7 +26,7 @@ class ScoreReelGroup(SystemWideDevice):
         machine.score_reel_controller = ScoreReelController(machine)
 
     def __init__(self, machine, name):
-        """initialize score reel group."""
+        """Initialize score reel group."""
         super().__init__(machine, name)
 
         self.wait_for_valid_queue = None

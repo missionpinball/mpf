@@ -13,7 +13,7 @@ class HoldCoilEjector(BallDeviceEjector):
         raise NotImplementedError()
 
     def __init__(self, config, ball_device, machine):
-        """initialize hold coil ejector."""
+        """Initialize hold coil ejector."""
         for option in ["hold_switches", "hold_coil", "hold_coil_release_time", "hold_events"]:
             if option not in config and option in ball_device.config:
                 config[option] = ball_device.config[option]

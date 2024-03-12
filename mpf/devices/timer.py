@@ -31,7 +31,7 @@ class Timer(ModeDevice):
     class_label = 'timer'
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize mode timer."""
+        """Initialize mode timer."""
         super().__init__(machine, name)
         self.machine = machine
         self.name = name

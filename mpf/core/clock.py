@@ -13,7 +13,7 @@ class PeriodicTask:
     __slots__ = ["_canceled", "_interval", "_callback", "_loop", "_last_call"]
 
     def __init__(self, interval, loop, callback):
-        """initialize periodic task."""
+        """Initialize periodic task."""
         self._canceled = False
         self._interval = interval
         self._callback = callback
@@ -49,7 +49,7 @@ class ClockBase(LogMixin):
     __slots__ = ["machine", "loop"]
 
     def __init__(self, machine=None, loop=None):
-        """initialize clock."""
+        """Initialize clock."""
         super().__init__()
         self.machine = machine
 

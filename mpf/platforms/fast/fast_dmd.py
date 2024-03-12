@@ -7,7 +7,7 @@ class FASTDMD(DmdPlatformInterface):
     """Object for a FAST DMD."""
 
     def __init__(self, machine, name, sender):
-        """initialize DMD."""
+        """Initialize DMD."""
         self.machine = machine
         self.name = name
         self.send = sender

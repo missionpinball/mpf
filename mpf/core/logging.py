@@ -23,7 +23,7 @@ class LogMixin:
                  "_info", "_url_base"]
 
     def __init__(self) -> None:
-        """initialize Log Mixin."""
+        """Initialize Log Mixin."""
         self.log = None     # type: Optional[Logger]
         self._info_to_console = False
         self._debug_to_console = False

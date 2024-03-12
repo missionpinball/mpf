@@ -8,7 +8,7 @@ class BaseError(AssertionError):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, message, error_no, logger_name, context=None, url_name=None):
-        """initialize exception."""
+        """Initialize exception."""
         self._logger_name = logger_name
         self._error_no = error_no
         self._context = context

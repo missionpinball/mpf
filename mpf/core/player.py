@@ -82,7 +82,7 @@ class Player:
     """
 
     def __init__(self, machine, index):
-        """initialize player."""
+        """Initialize player."""
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine

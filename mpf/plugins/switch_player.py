@@ -12,7 +12,7 @@ class SwitchPlayer(MpfPlugin):
     config_section = 'switch_player'
 
     def initialize(self):
-        """initialize switch player."""
+        """Initialize switch player."""
         self.configure_logging(self.name)
         self.delay = DelayManager(self.machine)
         self.current_step = 0

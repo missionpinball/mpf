@@ -90,7 +90,7 @@ class FASTLEDChannel(LightPlatformInterface):
         return f'<FASTLEDChannel: {self.led.number}-{self.channel}>'
 
     def __init__(self, led: FASTRGBLED, channel) -> None:
-        """initialize LED."""
+        """Initialize LED."""
         super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)

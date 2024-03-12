@@ -26,7 +26,7 @@ class Bcp(MpfController):
     __slots__ = ["interface", "transport", "servers", "enabled"]
 
     def __init__(self, machine: "MachineController") -> None:
-        """initialize BCP module."""
+        """Initialize BCP module."""
         super().__init__(machine)
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)

@@ -18,7 +18,7 @@ class EventPlayer(FlatConfigPlayer):
     __slots__ = ["delay"]
 
     def __init__(self, machine):
-        """initialize EventPlayer."""
+        """Initialize EventPlayer."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
 

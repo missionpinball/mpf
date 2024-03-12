@@ -19,7 +19,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
     __slots__ = ["player", "_state", "_handlers", "_show", "_player_var_name"]
 
     def __init__(self, machine, name):
-        """initialize state machine."""
+        """Initialize state machine."""
         super().__init__(machine, name)
         self.player = None
         self._state = None
@@ -28,7 +28,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         self._player_var_name = "state_machine_{}".format(name)
 
     async def device_added_system_wide(self):
-        """initialize internal state."""
+        """Initialize internal state."""
         await super().device_added_system_wide()
 
         if self.config['persist_state']:

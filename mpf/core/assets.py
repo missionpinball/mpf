@@ -38,7 +38,7 @@ class BaseAssetManager(MpfController, LogMixin):
                  "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded", "_start_time"]
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize asset manager.
+        """Initialize asset manager.
 
         Args:
         ----
@@ -650,7 +650,7 @@ class AssetPool:
 
     # Could possibly combine some or make @properties?
     def __init__(self, mc, name, config, member_cls):
-        """initialize asset pool."""
+        """Initialize asset pool."""
         self.machine = mc
         self.priority = None
         self.name = name
@@ -889,7 +889,7 @@ class Asset:
 
     @classmethod
     def initialize(cls, machine):
-        """initialize asset class."""
+        """Initialize asset class."""
         if not cls.disk_asset_section:
             cls.disk_asset_section = cls.config_section
 
@@ -904,7 +904,7 @@ class Asset:
             pool_config_section=cls.pool_config_section)
 
     def __init__(self, machine, name, file, config):
-        """initialize asset."""
+        """Initialize asset."""
         self.machine = machine      # type: MachineController
         self.name = name
         self.file = file

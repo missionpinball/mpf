@@ -20,7 +20,7 @@ class PKONESwitch(SwitchPlatformInterface):
     __slots__ = ["log"]
 
     def __init__(self, config: SwitchConfig, number: PKONESwitchNumber, platform: "PKONEHardwarePlatform") -> None:
-        """initialize switch."""
+        """Initialize switch."""
         super().__init__(config, number, platform)
         self.log = logging.getLogger('PKONESwitch')
 

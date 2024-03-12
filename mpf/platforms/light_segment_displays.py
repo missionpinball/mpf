@@ -15,7 +15,7 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["_lights", "_key", "_segment_map", "_current_text"]
 
     def __init__(self, number, lights, segment_type):
-        """initialize segment display."""
+        """Initialize segment display."""
         super().__init__(number)
         self._lights = lights
         if segment_type == "7segment":
@@ -63,7 +63,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
     __slots__ = ["log", "config"]
 
     def __init__(self, machine):
-        """initialize platform."""
+        """Initialize platform."""
         super().__init__(machine)
         self.log = logging.getLogger('Light Segment Displays')
         self.log.debug("Configuring Light Segment Displays")

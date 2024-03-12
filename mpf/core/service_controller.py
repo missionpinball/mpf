@@ -24,7 +24,7 @@ class ServiceController(MpfController):
     config_name = "service_controller"
 
     def __init__(self, machine):
-        """initialize service controller."""
+        """Initialize service controller."""
         super().__init__(machine)
         self._enabled = False
         self.configure_logging("service")

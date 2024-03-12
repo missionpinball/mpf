@@ -15,7 +15,7 @@ class Match(AsyncMode):
     __slots__ = []
 
     def __init__(self, *args, **kwargs):
-        """initialize match mode."""
+        """Initialize match mode."""
         super().__init__(*args, **kwargs)
         # add setting
         self.machine.settings.add_setting(SettingEntry("match_percentage", "Match Percentage", 500,

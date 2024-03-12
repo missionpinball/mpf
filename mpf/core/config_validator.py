@@ -44,7 +44,7 @@ class ConfigValidator:
     __slots__ = ["machine", "config_spec", "log", "validator_list"]
 
     def __init__(self, machine, config_spec):
-        """initialize validator."""
+        """Initialize validator."""
         self.machine = machine      # type: MachineController
         self.log = logging.getLogger('ConfigValidator')
         self.config_spec = config_spec

@@ -54,7 +54,7 @@ class ProcProcess:
     """External pinproc process."""
 
     def __init__(self):
-        """initialize process."""
+        """Initialize process."""
         self.proc = None
         self.dmd = None
         self.loop = None
@@ -63,7 +63,7 @@ class ProcProcess:
         self.log = None
 
     def start_pinproc(self, machine_type, loop, trace, log):
-        """initialize libpinproc."""
+        """Initialize libpinproc."""
         self.loop = loop
         asyncio.set_event_loop(loop)
         self.stop_future = asyncio.Future()

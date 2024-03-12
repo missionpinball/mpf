@@ -102,7 +102,7 @@ class PushTransition(TransitionBase):
 
     """Segment display push transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, 
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
         self.direction = 'right'
@@ -126,7 +126,7 @@ class PushTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           self.collapse_commas, self.use_dots_for_commas,
                                                            current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
                                                        self.collapse_commas, self.use_dots_for_commas, new_colors)
@@ -139,7 +139,7 @@ class PushTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas)
 
         if self.direction == 'right':
@@ -187,7 +187,7 @@ class CoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           self.collapse_commas, self.use_dots_for_commas,
                                                            current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
                                                        self.collapse_commas, self.use_dots_for_commas, new_colors)
@@ -200,7 +200,7 @@ class CoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas,)
 
         if self.direction == 'right':
@@ -258,7 +258,7 @@ class UncoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           self.collapse_commas, self.use_dots_for_commas,
                                                            current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
                                                        self.collapse_commas, self.use_dots_for_commas, new_colors)
@@ -271,7 +271,7 @@ class UncoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas)
 
         if self.direction == 'right':
@@ -342,7 +342,7 @@ class WipeTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas)
 
         if self.direction == 'right':

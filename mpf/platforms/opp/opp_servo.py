@@ -15,7 +15,7 @@ class OPPServo(ServoPlatformInterface):
     __slots__ = ["number", "chain_serial", "platform", "speed", "current_position"]
 
     def __init__(self, chain_serial, servo_num, platform: "OppHardwarePlatform"):
-        """initialize servo."""
+        """Initialize servo."""
         self.number = servo_num
         self.platform = platform
         self.chain_serial = chain_serial
