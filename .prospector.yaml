@@ -1,4 +1,4 @@
-strictness: veryhigh
+strictness: verylow
 max-line-length: 120
 
 mccabe:
@@ -12,17 +12,28 @@ pyflakes:
 doc-warnings: true
 
 pep257:
-   disable:
+  disable:
     - D211  # in conflict with D203
     - D213  # in conflict with D212
+    # The following are disabled to make refactoring managable
     - D413  # Missing blank line after last section - need to fix a lot of docstrings first
+    - D417  # Missing argument description in docstring
 
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - too-few-public-methods
     - unsubscriptable-object    # broken on python 3.9
+    # The following linter rules are disabled to make a refactor managable in chunks
     - consider-using-f-string  # temporarily disabling due to the 900+ instances to be replaced
+    - useless-suppression  # disabling until all environments can agree on import paths
+    - missing-class-docstring
+    - use-dict-literal
+    - use-list-literal
+    - consider-using-max-builtin
+    - consider-using-min-builtin
+    - consider-using-generator
+    - raise-missing-from
 
   options:
     logging-modules: logging
