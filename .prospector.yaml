@@ -24,6 +24,8 @@ pylint:
     - unsubscriptable-object    # broken on python 3.9
 
   options:
+    logging-modules: logging
+    logging-format-style: old
     max-attributes: 12
     max-parents: 15
     max-branches: 30
