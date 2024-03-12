@@ -248,7 +248,7 @@ class Player:
     def __repr__(self):
         """Return string representation."""
         try:
-            return "<Player {}>".format(self.vars['number'])
+            return f"<Player {self.vars['number']}>"
         except KeyError:
             return '<Player (new)>'
 

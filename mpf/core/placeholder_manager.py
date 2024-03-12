@@ -43,7 +43,7 @@ class ConditionalEvent:
 
     def __repr__(self):
         """Return string representation."""
-        return "{}-{}-{}".format(self.name, self.condition, self.number)
+        return f"{self.name}-{self.condition}-{self.number}"
 
 
 class TemplateEvalError(Exception):
@@ -57,7 +57,7 @@ class TemplateEvalError(Exception):
 
     def __str__(self):
         """Return description."""
-        return "<TemplateEvalError with subscriptions {}>".format(self.subscriptions)
+        return f"<TemplateEvalError with subscriptions {self.subscriptions}>"
 
 
 class BaseTemplate(metaclass=abc.ABCMeta):
@@ -86,8 +86,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
         except ConfigFileError:     # pylint: disable-msg=try-except-raise
             raise
         except Exception as e:
-            raise AssertionError("Failed to evaluate {} template {} with parameters {}".format(
-                type(self), self.text, parameters)) from e
+            raise AssertionError(
+                f"Failed to evaluate {type(self)} template {self.text} with parameters {parameters}") from e
 
         if result is None:
             return self.default_value
@@ -209,7 +209,7 @@ class NativeTypeTemplate:
 
     def __repr__(self):
         """Return String."""
-        return "<NativeTemplate {}>".format(self.value)
+        return f"<NativeTemplate {self.value}>"
 
 
 class MpfFormatter(string.Formatter):

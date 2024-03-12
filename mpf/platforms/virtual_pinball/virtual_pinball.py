@@ -214,7 +214,11 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         return changed_drivers
 
     def _get_changed_lights_by_subtype(self, subtype):
-        """Return changed lights since last call. Returns bool for each light state but floating point brightness is stored in _last_lights to support other methods returning float."""
+        """Return changed lights since last call.
+
+        Returns bool for each light state but floating point brightness
+        is stored in _last_lights to support other methods returning float.
+        """
         changed_lamps = []
         for number, light in self._lights.items():
             if light.subtype != subtype:
