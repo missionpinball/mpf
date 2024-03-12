@@ -39,14 +39,14 @@ class FastServo(ServoPlatformInterface):
         self.exp_connection.send_and_forget(f'MP@{self.base_address}:{self.servo_index},{int(position * 255):02X},{self.max_runtime}')
 
     def set_speed_limit(self, speed_limit):
-        """ Called during servo init """
+        """Called during servo init."""
         pass
 
     def set_acceleration_limit(self, acceleration_limit):
-        """ Called during servo init """
+        """Called during servo init."""
         pass
 
     def stop(self):
-        """ Called during shutdown """
+        """Called during shutdown."""
         pass
         # TODO: send command to go home and power off servo

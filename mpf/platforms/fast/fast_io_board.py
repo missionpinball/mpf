@@ -23,6 +23,7 @@ class FastIoBoard:
         assert self.model in VALID_IO_BOARDS, "Invalid I/O board model: {}".format(self.model)
 
     def __repr__(self):
+        """Return representation of this I/O board."""
         return f'{self.model} "{self.name}"'
 
     def get_description_string(self) -> str:
