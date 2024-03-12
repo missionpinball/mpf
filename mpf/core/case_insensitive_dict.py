@@ -55,4 +55,4 @@ class CaseInsensitiveDict(dict):
     def _convert_keys(self):
         for k in list(self.keys()):
             v = super().pop(k)
-            self.__setitem__(k, v)
+            self[k] = v

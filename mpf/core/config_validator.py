@@ -237,8 +237,7 @@ class ConfigValidator:
                 raise self.validation_error("None", validation_failure_info,
                                       'Required setting "{}:" is missing from section "{}:" in your config.'.format(
                                           validation_failure_info.item, section), 9)
-            else:
-                item = default
+            item = default
 
         if item_type == 'single':
             return self.validate_item(item, validation, validation_failure_info)
@@ -508,7 +507,7 @@ class ConfigValidator:
             param = param.split(",")
             if param[0] != "NONE" and value < float(param[0]):
                 raise self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(value, param[0]))
-            elif param[1] != "NONE" and value > float(param[1]):
+            if param[1] != "NONE" and value > float(param[1]):
                 raise self.validation_error(item, validation_failure_info, "{} is larger then {}".format(value, param[1]))
 
     def _validate_type_float(self, item, validation_failure_info, param=None):

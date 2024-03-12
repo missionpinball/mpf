@@ -163,7 +163,8 @@ class Player:
         :param value: The value to add to the existing value
         :param kwargs: Arguments to include in the posted player_<name> event
         """
-        setattr(self, name, self[name] + value, **kwargs)
+        # pylint: disable-msg=unnecessary-dunder-call
+        self.__setattr__(name, self[name] + value, **kwargs)
 
     def set_with_kwargs(self, name: str, value, **kwargs):
         """Set a value to a player variable and include kwargs in the update event.
@@ -172,7 +173,8 @@ class Player:
         :param value: The value to set
         :param kwargs: Arguments to include in the posted player_<name> event
         """
-        setattr(self, name, value, **kwargs)
+        # pylint: disable-msg=unnecessary-dunder-call
+        self.__setattr__(name, value, **kwargs)
 
     # pylint: disable-msg=too-many-arguments
     def _send_variable_event(self, name: str, value, prev_value, change, player_num: int, **kwargs):

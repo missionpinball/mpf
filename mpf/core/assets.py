@@ -740,9 +740,8 @@ class AssetPool:
         self._total_weights = sum([x[1] for x in self.assets])
 
         if self.config['type'] == 'sequence':
-            for index in range(len(self.assets)):
-                self._asset_sequence.extend([self.assets[index][0]] *
-                                            self.assets[index][1])
+            for asset in self.assets:
+                self._asset_sequence.extend([asset[0]] * asset[1])
             self._asset_sequence.rotate(1)
 
     def load(self, callback=None, priority=None) -> bool:

@@ -271,7 +271,6 @@ class MachineController(LogMixin):
         self._exception = context
         self.stop("Exception thrown")
 
-    # pylint: disable-msg=no-self-use
     def _load_clock(self) -> ClockBase:  # pragma: no cover
         """Load clock and loop."""
         clock = ClockBase(self)
