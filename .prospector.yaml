@@ -51,8 +51,10 @@ pylint:
 ignore-paths:
   - mpf/tests/
   - mpf/benchmarks/
+  - build
   - docs
   - mpf/platforms/trinamics/
+  - mpf/platforms/visual_pinball_engine/
   - tools/
   - _mpf-mc                     # ignore mc in subpath on travis
 
