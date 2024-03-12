@@ -19,7 +19,7 @@ class FastExpCommunicator(FastSerialCommunicator):
     __slots__ = ["exp_boards_by_address", "active_board"]
 
     def __init__(self, platform, processor, config):
-
+        """Initialize the EXP communicator."""
         super().__init__(platform, processor, config)
 
         self.exp_boards_by_address = dict()  # keys = board addresses, values = FastExpansionBoard objects
@@ -31,7 +31,6 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
-
         for board in self.exp_boards_by_address.values():
             self.tasks.append(self.platform.machine.clock.schedule_interval(
                           board._update_leds, 1 / board.config['led_hz']))
@@ -46,7 +45,6 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     async def query_exp_boards(self):
         """Query the EXP bus for connected boards."""
-
         for board_name, board_config in self.config['boards'].items():
 
             board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
@@ -56,8 +54,8 @@ class FastExpCommunicator(FastSerialCommunicator):
             else:
                 board_address = EXPANSION_BOARD_FEATURES[board_config['model']]['default_address']
 
-            if board_address in self.exp_boards_by_address:
             # Got an ID for a board that's already registered. This shouldn't happen?
+            if board_address in self.exp_boards_by_address:
                 raise AssertionError(f'Expansion Board at address {board_address} is already registered')
 
             board_obj = FastExpansionBoard(board_name, self, board_address, board_config)
@@ -84,13 +82,15 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.done_processing_msg_response()
 
     def set_led_fade_rate(self, board_address: str, rate: int) -> None:
-        """Sets the hardware LED fade rate for an EXP board
+        """Sets the hardware LED fade rate for an EXP board.
 
-        Args:
+        Parameters
+        ----------
             board_address (str): 2 hex character board address
             rate (int): Fade rate, in milliseconds, between 0 and 8191
 
-        Raises:
+        Raises
+        ------
             ValueError: If the fade rate is out of bounds
         """
         if not 0 <= rate <= 8191:
