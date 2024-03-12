@@ -58,8 +58,10 @@ class FastAudCommunicator(FastSerialCommunicator):
             self.set_volume(amp_name, amp['volume'])
 
     def _volume_to_hw(self, volume):
-        """Always store and pass volume levels as decimals (0-64), and use this
-        method to convert to hex strings when sending via serial to AUD board."""
+        """Always store and pass volume levels as decimals (0-64).
+
+        Use this method to convert to hex strings when sending via serial to AUD board.
+        """
         volume = int(volume)
         assert 0 <= volume <= 63, f"Invalid volume {volume}"
         return f"{volume:02X}"

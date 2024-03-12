@@ -584,6 +584,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
 
             return fast_led_channel
+        raise AssertionError(f"Unknown light subtype {subtype}")
 
     def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
         """Converts port number and LED index into the proper FAST hex number.

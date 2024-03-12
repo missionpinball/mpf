@@ -17,7 +17,7 @@ class FastSerialCommunicator(LogMixin):
 
     IGNORED_MESSAGES = []
 
-    __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg", "log",
+    __slots__ = ["platform", "remote_processor", "config", "writer", "reader", "read_task", "received_msg",
                  "machine", "fast_debug", "port_debug", "remote_firmware", "send_queue", "write_task",
                  "pause_sending_until", "pause_sending_flag", "no_response_waiting", "done_waiting",
                  "ignore_decode_errors", "message_processors", "remote_model", "port", "tasks", "watchdog_cmd"]
@@ -60,12 +60,13 @@ class FastSerialCommunicator(LogMixin):
         else:
             self.watchdog_cmd = None
 
+        # TODO change these to not be hardcoded
+        # TODO do something with the URL endpoint
         self.configure_logging(logger=f'FAST [{self.remote_processor}]', console_level=config['debug'],
                                file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
-                                # TODO change these to not be hardcoded
-                                # TODO do something with the URL endpoint
 
     def __repr__(self):
+        """Return representation of FAST processor."""
         return f'[FAST {self.remote_processor}]'
 
     async def soft_reset(self):
@@ -137,7 +138,6 @@ class FastSerialCommunicator(LogMixin):
 
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
-
         self.write_to_port(b'\r\r\r\r')
 
     async def init(self):
@@ -190,7 +190,6 @@ class FastSerialCommunicator(LogMixin):
 
     def start_watchdog(self):
         """Start listening for commands and schedule watchdog."""
-
         if self.watchdog_cmd:
             self._watchdog_task()  # send one now
             self.tasks.append(self.machine.clock.schedule_interval(
@@ -200,13 +199,17 @@ class FastSerialCommunicator(LogMixin):
     def start_tasks(self):
         """Start periodic tasks, etc.
 
-        Called once on MPF boot, not at game start."""
-
+        Called once on MPF boot, not at game start.
+        """
         pass
 
     def stopping(self):
-        """The serial connection is about to stop. This is called before stop() and allows you
-        to do things that need to go out before the connection is closed. A 100ms delay to allow for this happens after this is called."""
+        """The serial connection is about to stop.
+
+        This is called before stop() and allows you to do things that need
+        to go out before the connection is closed. A 100ms delay to allow
+        for this happens after this is called.
+        """
         pass
 
     def cancel_tasks(self):
@@ -239,7 +242,8 @@ class FastSerialCommunicator(LogMixin):
     async def send_and_wait_for_response(self, msg, pause_sending_until, log_msg=None):
         """Sends a message and awaits until the response is received.
 
-        Args:
+        Parameters
+        ----------
             msg (_type_): Message to send
             pause_sending_until (_type_): Response to wait for before sending the next message
             log_msg (_type_, optional): Optional version of the message that will be used in logs. Typically used with binary messages so the longs
@@ -250,11 +254,14 @@ class FastSerialCommunicator(LogMixin):
         self.send_with_confirmation(msg, pause_sending_until, log_msg)
 
     async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1, max_retries=0, log_msg=None):
-        """Send a message and wait for the response to be processed. Unlike send_and_wait_for_response(), this method will not release the wait when the response is received.
+        """Send a message and wait for the response to be processed.
+
+        Unlike send_and_wait_for_response(), this method will not release the wait when the response is received.
         Instead, the wait must manually be released by calling done_processing_msg_response(). This is useful for messages that require multiple responses, or for messages that
         require real processing where you don't want the next messages to be sent until the processing is complete.
 
-        Args:
+        Parameters
+        ----------
             msg (_type_): Message to send
             pause_sending_until (_type_): Response to wait for before sending the next message
             timeout (int, optional): The time (in seconds) this communicator will wait for a response. If a response is not received by then
@@ -278,14 +285,18 @@ class FastSerialCommunicator(LogMixin):
         await self.done_waiting.wait()
 
     def done_processing_msg_response(self):
-        """Releases the wait for the response to be processed. This is used in conjunction with send_and_wait_for_response_processed().
-        May be called safely if there's no wait to release."""
+        """Releases the wait for the response to be processed.
+
+        This is used in conjunction with send_and_wait_for_response_processed().
+        May be called safely if there's no wait to release.
+        """
         self.done_waiting.set()
 
     def send_with_confirmation(self, msg, pause_sending_until, log_msg=None):
         """Sends a message without blocking (returns immediately), but will hold future messages in the queue until the response is received.
 
-        Args:
+        Parameters
+        ----------
             msg (_type_): _description_
             pause_sending_until (_type_): _description_
             log_msg (_type_, optional): _description_. Defaults to None.
@@ -366,7 +377,6 @@ class FastSerialCommunicator(LogMixin):
 
     def _watchdog_task(self):
         """Sends the watchdog command."""
-
         self.send_and_forget(self.watchdog_cmd)
 
     async def _socket_reader(self):
@@ -387,13 +397,13 @@ class FastSerialCommunicator(LogMixin):
         except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
             raise
         except Exception as e:  # pylint: disable-msg=broad-except
-            self.log.warning("Serial error: {}".format(e))
+            self.log.warning("Serial error: %s", e)
             return None
 
         # we either got empty response (-> socket closed) or an error
         if not resp:
             self.log.warning("Serial closed.")
-            self.machine.stop("Serial {} closed.".format(self.config["port"]))
+            self.machine.stop("Serial %s closed.", self.config["port"])
             return None
 
         return resp
