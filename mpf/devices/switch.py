@@ -26,7 +26,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     collection = 'switches'
     class_label = 'switch'
 
-    __slots__ = ["hw_switch", "platform", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
+    __slots__ = ["hw_switch", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
                  "recycle_jitter_count", "_events_to_post", "last_change"]
 
     def __init__(self, machine: MachineController, name: str) -> None:

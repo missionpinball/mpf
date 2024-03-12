@@ -102,9 +102,9 @@ class ScoreReel(SystemWideDevice):
 
         self.log.debug("Checking hw switches to determine reel value with hw_confirm_time %sms",
                        self.config['hw_confirm_time'])
-        for i in range(len(self.value_switches)):
-            if self.value_switches[i] and self.machine.switch_controller.is_active(self.value_switches[i],
-                                                                                   ms=self.config['hw_confirm_time']):
+        for i, switch in enumerate(self.value_switches):
+            if switch and self.machine.switch_controller.is_active(switch,
+                                                                   ms=self.config['hw_confirm_time']):
                 if self.assumed_value != i:
                     self.log.info("Setting value to %s because that switch is active.", i)
                     if self.assumed_value != -999:

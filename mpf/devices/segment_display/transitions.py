@@ -16,6 +16,7 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
     __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas", "use_dots_for_commas"]
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, config: dict) -> None:
         """Initialize the transition."""
         self.output_length = output_length
@@ -102,6 +103,7 @@ class PushTransition(TransitionBase):
 
     """Segment display push transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -163,6 +165,7 @@ class CoverTransition(TransitionBase):
 
     """Segment display cover transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -234,6 +237,7 @@ class UncoverTransition(TransitionBase):
 
     """Segment display uncover transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -305,6 +309,7 @@ class WipeTransition(TransitionBase):
 
     """Segment display wipe transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -380,6 +385,7 @@ class SplitTransition(TransitionBase):
 
     """Segment display split transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
