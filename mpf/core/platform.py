@@ -88,12 +88,10 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Return config spec for this platform."""
         return False
 
-    # pylint: disable-msg=no-self-use
     def get_info_string(self) -> str:
         """Return information string about this platform."""
         return "Not implemented"
 
-    # pylint: disable-msg=no-self-use
     def update_firmware(self) -> str:
         """Perform a firmware update."""
 
@@ -623,7 +621,6 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    # pylint: disable-msg=no-self-use
     def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
         """Set pulse on hit and release rule to driver.
 

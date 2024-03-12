@@ -269,7 +269,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             partial(self._update_subscription, template, subscription_list, settings, priority, context, key))
         self.handle_subscription_change(value, settings, priority, context, key)
 
-    # pylint: disable-msg=no-self-use
     # pylint: disable-msg=too-many-arguments
     def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle the change of a subscription."""

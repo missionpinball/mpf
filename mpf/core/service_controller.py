@@ -70,7 +70,6 @@ class ServiceController(MpfController):
         self.machine.events.post("service_mode_exited")
         await self.machine.reset()
 
-    # pylint: disable-msg=no-self-use
     def add_technical_alert(self, device, issue):
         """Add an alert about a technical problem."""
         del device

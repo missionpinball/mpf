@@ -293,17 +293,14 @@ class BasePlaceholder:
 
     __slots__ = []  # type: List[str]
 
-    # pylint: disable-msg=no-self-use
     def subscribe(self):
         """Subscribe to placeholder."""
         raise AssertionError("Not possible to subscribe this.")
 
-    # pylint: disable-msg=no-self-use
     def subscribe_attribute(self, item):
         """Subscribe to attribute."""
         raise AssertionError("Not possible to subscribe to attribute {}.".format(item))
 
-    # pylint: disable-msg=no-self-use
     def subscribe_item(self, item):
         """Subscribe to item."""
         raise AssertionError("Not possible to subscribe to item {}.".format(item))

@@ -194,14 +194,14 @@ class DeviceManager(MpfController):
             * The device object
         """
         config_spec = self.machine.config_validator.get_config_spec()
-        for collection in self.collections:
-            config_section = self.collections[collection].config_section
+        for collection_name, collection in self.collections.items():
+            config_section = collection.config_section
             if config_section in config:
                 for device, settings in iter(config[config_section].items()):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events') and x != "control_events"]
-                    device_obj = self.collections[collection][device]
+                    device_obj = collection[device]
 
                     for control_event in control_events:
                         # get events from this device's config
@@ -210,7 +210,7 @@ class DeviceManager(MpfController):
                                 continue
                             raise AssertionError(
                                 "Type of {}:{} should be event_handler|event_handler:ms| in config_spec".format(
-                                    collection, control_event))
+                                    collection_name, control_event))
                         # try the new style first
                         try:
                             method = getattr(device_obj, "event_{}".format(control_event[:-7]))

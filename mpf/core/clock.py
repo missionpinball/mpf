@@ -70,7 +70,6 @@ class ClockBase(LogMixin):
 
         asyncio.set_event_loop(self.loop)
 
-    # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
         try:
             # pylint: disable-msg=import-outside-toplevel

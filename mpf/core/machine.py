@@ -97,7 +97,7 @@ class MachineController(LogMixin):
             used to launch mpf.py.
     """
 
-    __slots__ = ["log", "options", "mpf_path", "machine_path", "_exception", "_boot_holds",
+    __slots__ = ["options", "mpf_path", "machine_path", "_exception", "_boot_holds",
                  "is_init_done", "_done", "monitors", "plugins", "custom_code", "modes", "game",
                  "variables", "thread_stopper", "config", "config_validator",
                  "delay", "hardware_platforms", "default_platform", "clock",

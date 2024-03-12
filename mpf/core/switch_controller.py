@@ -307,8 +307,8 @@ class SwitchController(MpfController):
     def process_switch_obj(self, obj: Switch, state, logical, timestamp=None):
         """Process a new switch state change for a switch by name.
 
-        Args:
-        ----
+        Parameters
+        ----------
             obj: The switch object.
             state: Boolean or int of state of the switch you're processing,
                 True/1 is active, False/0 is inactive.
@@ -332,7 +332,6 @@ class SwitchController(MpfController):
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
         """
-
         assert obj.hw_switch is not None
         # We need int, but this lets it come in as boolean also
         if state:

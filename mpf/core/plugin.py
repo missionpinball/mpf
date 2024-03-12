@@ -10,7 +10,7 @@ class MpfPlugin(LogMixin):
     config_section = None
 
     def __init__(self, machine):
-        """Initialize custom code but with custom logging formatter"""
+        """Initialize custom code but with custom logging formatter."""
         super().__init__()
         self.machine = machine
         self.name = type(self).__name__
@@ -22,13 +22,17 @@ class MpfPlugin(LogMixin):
 
     def initialize(self):
         """Called when the plugin is enabled and loaded into MPF.
-            Override with plugin-specific init behavior."""
+
+        Override with plugin-specific init behavior.
+        """
         pass
 
     @property
     def is_plugin_enabled(self):
         """If false, this plugin will not be attached to the MPF process.
-            Override with class-specific logic."""
+
+        Override with class-specific logic.
+        """
         if self.config_section:
             return self.config_section in self.machine.config
         return True
