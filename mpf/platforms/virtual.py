@@ -165,7 +165,6 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
             subtype = "led"
         return VirtualLight("{}-{}".format(subtype, number), platform_settings, self.machine)
 
-    # pylint: disable-msg=no-self-use
     def configure_hardware_sound_system(self, platform_settings) -> "HardwareSoundPlatformInterface":
         """Configure virtual hardware sound system."""
         del platform_settings

@@ -17,7 +17,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
     """
 
-    __slots__ = ( "delay", "machine", "name", "_task", "_keep_alive", "_start_time", "_test_obj")
+    __slots__ = ( "delay", "_task", "_keep_alive", "_start_time", "_test_obj")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

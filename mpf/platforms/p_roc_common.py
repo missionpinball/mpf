@@ -168,7 +168,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         machine: The MachineController instance.
     """
 
-    __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
+    __slots__ = ["pdbconfig", "pinproc", "proc", "hw_switch_rules", "version", "revision", "hardware_version",
                  "dipswitches", "machine_type", "event_task", "_late_init_futures",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 

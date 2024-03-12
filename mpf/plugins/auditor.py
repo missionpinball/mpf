@@ -14,7 +14,7 @@ class Auditor(MpfPlugin):
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 
-    __slots__ = ["log", "machine", "switchnames_to_audit", "config", "_autosave",
+    __slots__ = ["switchnames_to_audit", "config", "_autosave",
                  "current_audits", "enabled", "data_manager"]
 
     config_section = 'auditor'
@@ -221,7 +221,7 @@ class Auditor(MpfPlugin):
             for player in self.machine.game.player_list:
                 # Don't audit values that haven't been initialized on the player, either by
                 # a value set during gameplay or with an initial_value in the player_vars config
-                if not item in self.machine.game.player.vars:
+                if item not in self.machine.game.player.vars:
                     continue
 
                 self.current_audits['player'][item]['top'] = (

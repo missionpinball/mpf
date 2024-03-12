@@ -116,8 +116,8 @@ class SmartMatrixDevice(DmdPlatformInterface):
             raise AssertionError("Autodetect has been removed. Please specify the port in your config.")
             # Does anyone even use this? We can use the new FAST auto-detect if we want it. I removed the old auto-detect
             # since it was only used for this now.
-        else:
-            port = self.config['port']
+
+        port = self.config['port']
         self.port = serial.Serial(port, self.config['baud'])
         self.new_frame_event = threading.Event()
         self.control_data_queue = []

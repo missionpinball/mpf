@@ -17,7 +17,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
 
     """A simple led (single emitter/color) on a PKONE Extension board. Simple leds are either on or off."""
 
-    __slots__ = ["log", "number", "send", "platform"]
+    __slots__ = ["log", "send", "platform"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number: PKONESimpleLEDNumber, sender, platform: "PKONEHardwarePlatform") -> None:
