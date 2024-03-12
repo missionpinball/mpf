@@ -345,7 +345,7 @@ class Counter(LogicBlock):
     collection = 'counters'
     class_label = 'counter'
 
-    __slots__ = ["delay", "ignore_hits", "hit_value"]
+    __slots__ = ["ignore_hits", "hit_value"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize counter."""

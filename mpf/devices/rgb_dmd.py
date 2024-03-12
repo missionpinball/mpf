@@ -15,7 +15,7 @@ class RgbDmd(SystemWideDevice):
     collection = 'rgb_dmds'
     class_label = 'rgb_dmd'
 
-    __slots__ = ["hw_device", "platform"]
+    __slots__ = ["hw_device"]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):

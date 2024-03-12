@@ -473,15 +473,15 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.info_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
             return await self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                               incoming_ball_at_target, eject_try)
-        else:
-            if not confirm_future.done():
-                raise AssertionError("Future not done")
-            if confirm_future.cancelled():
-                raise AssertionError("Eject failed but should not")
-            # eject successful
-            self.info_log("Got eject confirm")
-            await self._handle_eject_success(eject_request)
-            return True
+
+        if not confirm_future.done():
+            raise AssertionError("Future not done")
+        if confirm_future.cancelled():
+            raise AssertionError("Eject failed but should not")
+        # eject successful
+        self.info_log("Got eject confirm")
+        await self._handle_eject_success(eject_request)
+        return True
 
     # pylint: disable-msg=too-many-arguments
     async def _handle_playfield_timeout_confirm(self, eject_request, ball_return_future, unknown_balls_future,

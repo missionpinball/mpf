@@ -15,7 +15,7 @@ class Dmd(SystemWideDevice):
     collection = 'dmds'
     class_label = 'dmd'
 
-    __slots__ = ["hw_device", "platform"]
+    __slots__ = ["hw_device"]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):

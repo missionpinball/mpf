@@ -631,7 +631,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         number: 15 --> Nano LED 15
         number: 15-0 --> Nano LED 15, channel 0
         """
-        if subtype == "led":
+        if not subtype or subtype == "led":
             return self._parse_led_light_number(number)
         if subtype == "gi":
             return self._parse_gi_light_number(number)
