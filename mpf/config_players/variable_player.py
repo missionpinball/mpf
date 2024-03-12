@@ -144,10 +144,10 @@ class VariablePlayer(ConfigPlayer):
 
     def clear_context(self, context: str) -> None:
         """Clear context."""
-        for var in self.blocks:
-            for entry, s in enumerate(self.blocks[var]):
+        for var, block in self.blocks.items():
+            for entry, s in enumerate(block):
                 if s.context == context:
-                    del self.blocks[var][entry]
+                    del block[entry]
 
     def validate_config_entry(self, settings: dict, name: str) -> dict:
         """Validate one entry of this player."""

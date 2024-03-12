@@ -60,7 +60,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
 
     """Platform which drives segment displays on lights of another platform."""
 
-    __slots__ = ["log", "config"]
+    __slots__ = ["config"]
 
     def __init__(self, machine):
         """Initialize platform."""

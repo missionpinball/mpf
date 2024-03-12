@@ -14,7 +14,7 @@ protoc.main([
 
 # Make pb2 imports in generated scripts relative
 for script in glob.iglob('./*_pb2*.py'):
-    with open(script, 'r+') as file:
+    with open(script, 'r+', encoding="utf-8") as file:
         code = file.read()
         file.seek(0)
         file.write(re.sub(r'\n(import .+_pb2.*)', '\nfrom . \\1', code))

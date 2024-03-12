@@ -56,7 +56,7 @@ class HighScore(AsyncMode):
                             self.config['high_score']['defaults'].items()}
 
     def _load_vars(self):
-        """Load var values from the config file"""
+        """Load var values from the config file."""
         self.vars = {k: [[next(iter(a.keys())), next(iter(a.values()))] for a in v] for (k, v) in
                      self.config['high_score']['vars'].items()}
 

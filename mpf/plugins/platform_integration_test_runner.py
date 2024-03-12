@@ -1,4 +1,4 @@
-"""Test framework for testing physical platform integration"""
+"""Test framework for testing physical platform integration."""
 
 import asyncio
 from datetime import datetime
@@ -11,15 +11,15 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
     """Runs a Platform Integration test provided by the command line.
 
-        mpf -pit path_to/test_file.py
-          -or-
-        mpf -pit path.to.ModuleFile.ModuleClassName
-
+    mpf -pit path_to/test_file.py
+        -or-
+    mpf -pit path.to.ModuleFile.ModuleClassName
     """
 
     __slots__ = ( "delay", "_task", "_keep_alive", "_start_time", "_test_obj")
 
     def __init__(self, *args, **kwargs):
+        """Initialize the test runner."""
         super().__init__(*args, **kwargs)
         self._keep_alive = None
         self._start_time = None
@@ -27,7 +27,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
     @property
     def is_plugin_enabled(self):
-        """This plugin is controlled by the '-pit' command line arg."""
+        """Enable this plugin by the '-pit' command line arg."""
         return self.machine.options["platform_integration_test"]
 
     def initialize(self):
@@ -55,8 +55,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         self.machine.events.add_handler("init_phase_3", self._setup_test)
 
     def keep_alive(self, value=True):
-        """Configure whether the test runner will keep the MPF instance
-            running after the test run finishes."""
+        """Configure whether the test runner will keep the MPF instance running after the test run finishes."""
         self._keep_alive = value
 
     def _setup_test(self, **kwargs):
@@ -113,8 +112,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             ball_save.disable()
 
     def accelerate_high_score(self):
-        """If there is a high score mode and the test achieves a high score, accelerate
-        the text entry timeout."""
+        """If there is a high score mode and the test achieves a high score, accelerate the text entry timeout."""
         if hasattr(self.machine.modes, "high_score"):
             self.machine.modes.high_score.high_score_config['enter_initials_timeout'] = 2
 
@@ -141,10 +139,13 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
     async def set_switch(self, switch_name, state=None, duration_secs=None, wait_after=None, blocking=True):
         """Set a switch to a given state.
+
+        Parameters
+        ----------
             - duration_secs: Number of seconds to hold the switch in that state. If none, will switch indefinitely.
             - wait_after: Number of seconds to wait after the switch before returning
             - blocking: If true, will wait for duration_secs before returning. If false, will fire-and-forget.
-            """
+        """
         self.set_switch_sync(switch_name, state)
         if duration_secs:
             # Blocking mode: await the duration before returning

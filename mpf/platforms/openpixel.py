@@ -310,9 +310,9 @@ class OpenPixelClient:
 
     def blank_all(self):
         """Blank all channels."""
-        for channel_index in range(len(self.channels)):
-            self.channels[channel_index] = [0] * len(self.channels[channel_index])
-            self.send(bytes(self._build_message(channel_index)))
+        for index, channel in enumerate(self.channels):
+            self.channels[index] = [0] * len(channel)
+            self.send(bytes(self._build_message(index)))
 
     def send(self, message):
         """Send a message to the socket.
