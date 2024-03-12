@@ -314,6 +314,7 @@ sort_devices_by_number: single|bool|True
             elif key == 'ENTER' and run_update:
                 # perform update
                 self.machine.events.post("service_software_update_start")
+                # pylint: disable-msg=consider-using-with
                 subprocess.Popen([self._update_script])
                 self.machine.stop("Software Update")
 
@@ -470,6 +471,35 @@ sort_devices_by_number: single|bool|True
         position = 0
         color_position = 0
         colors = ["white", "red", "green", "blue", "yellow"]
+        items = self._generate_light_chains()
+
+        while True:
+            self._update_light_chain_slide(items, position, colors[color_position])
+            for addr, l in items[position].light:
+                l.color(colors[color_position], key="service", priority=1000000)
+
+            key = await self._get_key()
+            for addr, l in items[position].light:
+                l.remove_from_stack_by_key("service")
+            if key == 'ESC':
+                break
+            if key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+            elif key == 'ENTER':
+                # change color
+                color_position += 1
+                if color_position >= len(colors):
+                    color_position = 0
+
+        self.machine.events.post("service_light_test_stop")
+
+    def _generate_light_chains(self):
         items = self.machine.service.get_light_map(do_sort=self._do_sort)
 
         # Categorize by platform and address
@@ -511,12 +541,12 @@ sort_devices_by_number: single|bool|True
                 platform_name = type(platform).__name__
                 if platform_name not in chain_lookup:
                     chain_lookup[platform_name] = {}
-                if not chain in chain_lookup[platform_name]:
+                if chain not in chain_lookup[platform_name]:
                     chain_lookup[platform_name][chain] = []
                 chain_lookup[platform_name][chain].append((addr, l))
                 # This is ugly, but is iteration overkill?
                 if chain_2:
-                    if not chain_2 in chain_lookup[platform_name]:
+                    if chain_2 not in chain_lookup[platform_name]:
                         chain_lookup[platform_name][chain_2] = []
                     chain_lookup[platform_name][chain_2].append((addr_2, l))
 
@@ -529,32 +559,6 @@ sort_devices_by_number: single|bool|True
             return
 
         items.sort(key=lambda x: x.chain )
-
-        while True:
-            self._update_light_chain_slide(items, position, colors[color_position])
-            for addr, l in items[position].light:
-                l.color(colors[color_position], key="service", priority=1000000)
-
-            key = await self._get_key()
-            for addr, l in items[position].light:
-                l.remove_from_stack_by_key("service")
-            if key == 'ESC':
-                break
-            if key == 'UP':
-                position += 1
-                if position >= len(items):
-                    position = 0
-            elif key == 'DOWN':
-                position -= 1
-                if position < 0:
-                    position = len(items) - 1
-            elif key == 'ENTER':
-                # change color
-                color_position += 1
-                if color_position >= len(colors):
-                    color_position = 0
-
-        self.machine.events.post("service_light_test_stop")
 
     async def _volume_menu(self, platform=None):
         position = 0
