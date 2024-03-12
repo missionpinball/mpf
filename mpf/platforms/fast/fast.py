@@ -615,7 +615,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         device_num = device_num - 1
         return f'{(port_offset + device_num):02X}'
 
-    def parse_light_number_to_channels(self, number: str, subtype: str):
+    def parse_light_number_to_channels(self, number: str, subtype: str = "led"):
         """Transform an MPF config light number to a FAST channel.
 
         Takes the `number:` and `subtype:` from the config file and parses and
@@ -630,73 +630,74 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         number: 15 --> Nano LED 15
         number: 15-0 --> Nano LED 15, channel 0
         """
+        if subtype == "led":
+            return self._parse_led_light_number(number)
         if subtype == "gi":
-            if self.is_retro:  # translate matrix/map number to FAST GI number
-                try:
-                    number = fast_defines.RETRO_GI_MAP[str(number).upper()]
-                except KeyError:
-                    self.raise_config_error(f"Could not find GI {number}", 3)
-            else:
-                number = Util.int_to_hex_string(number)
-
-            return [{"number": number}]
-
+            return self._parse_gi_light_number(number)
         if subtype == "matrix":
-            if self.is_retro:  # translate matrix number to FAST light num
-                try:
-                    number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
-                except KeyError:
-                    self.raise_config_error(f"Could not find light {number}", 4)
-            else:
-                number = Util.int_to_hex_string(number)
-
-            return [{"number": number}]
-
-        if not subtype or subtype == "led":
-
-            parts = number.lower().split("-")
-
-            if parts[0] in self.exp_boards_by_name:
-                # This is an expansion board LED
-                if not parts[1].startswith('b'):
-                    # No breakout specified, so we insert a b0
-                    parts.insert(1, 'b0')
-
-                if len(parts) == 4:
-                    # No channel specified, so we return 3 channels 0,1,2
-                    return [{'number': '-'.join(parts) + f'-{i}'} for i in range(3)]
-
-                if len(parts) == 5:
-                    # We have a channel specified
-                    channel = int(parts[4])
-                    if 0 <= channel <= 2:
-                        result = []
-                        for i in range(3):
-                            if i + channel > 2:
-                                # Channel rolls over, increment the LED number
-                                parts[3] = str(int(parts[3]) + 1)
-                                parts[4] = '0'
-                            else:
-                                parts[4] = str(channel + i)
-                            result.append({'number': '-'.join(parts)})
-                        return result
-                    else:
-                        raise AssertionError(f"Invalid LED channel: {channel}")
-                else:
-                    raise AssertionError(f"Invalid LED number: {number}")
-
-            else:
-                # This is a Nano LED
-                if '-' in str(number):
-                    # num = list(map(int, str(number).split('-')))
-                    # index = num[0] * 64 + num[1]
-                    index = int(self.port_idx_to_hex(parts[0], parts[1], 64), 16)
-                else:
-                    index = int(number)
-
-                return [{"number": f"{index}-{i}"} for i in range(3)]
+            return self._parse_matrix_light_number(number)
 
         raise AssertionError(f"Unknown LED subtype {subtype}")
+
+    def _parse_led_light_number(self, number):
+        parts = number.lower().split("-")
+
+        if parts[0] in self.exp_boards_by_name:
+            # This is an expansion board LED
+            if not parts[1].startswith('b'):
+                # No breakout specified, so we insert a b0
+                parts.insert(1, 'b0')
+
+            if len(parts) == 4:
+                # No channel specified, so we return 3 channels 0,1,2
+                return [{'number': '-'.join(parts) + f'-{i}'} for i in range(3)]
+
+            if len(parts) == 5:
+                # We have a channel specified
+                channel = int(parts[4])
+                if 0 <= channel <= 2:
+                    result = []
+                    for i in range(3):
+                        if i + channel > 2:
+                            # Channel rolls over, increment the LED number
+                            parts[3] = str(int(parts[3]) + 1)
+                            parts[4] = '0'
+                        else:
+                            parts[4] = str(channel + i)
+                        result.append({'number': '-'.join(parts)})
+                    return result
+                raise AssertionError(f"Invalid LED channel: {channel}")
+            raise AssertionError(f"Invalid LED number: {number}")
+
+        # This is a Nano LED
+        if '-' in str(number):
+            # num = list(map(int, str(number).split('-')))
+            # index = num[0] * 64 + num[1]
+            index = int(self.port_idx_to_hex(parts[0], parts[1], 64), 16)
+        else:
+            index = int(number)
+
+        return [{"number": f"{index}-{i}"} for i in range(3)]
+
+    def _parse_gi_light_number(self, number):
+        if self.is_retro:  # translate matrix/map number to FAST GI number
+            try:
+                number = fast_defines.RETRO_GI_MAP[str(number).upper()]
+            except KeyError:
+                self.raise_config_error(f"Could not find GI {number}", 3)
+        else:
+            number = Util.int_to_hex_string(number)
+        return [{"number": number}]
+
+    def _parse_matrix_light_number(self, number):
+        if self.is_retro:  # translate matrix number to FAST light num
+            try:
+                number = fast_defines.RETRO_LIGHT_MAP[str(number).upper()]
+            except KeyError:
+                self.raise_config_error(f"Could not find light {number}", 4)
+        else:
+            number = Util.int_to_hex_string(number)
+        return [{"number": number}]
 
     def configure_rgb_dmd(self, name):
         """Configure a hardware DMD connected to a FAST controller."""
