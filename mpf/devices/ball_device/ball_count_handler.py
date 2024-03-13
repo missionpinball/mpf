@@ -18,7 +18,7 @@ class BallCountHandler(BallDeviceStateHandler):
                  "_ball_count", "_ball_count_changed_futures", "counter"]
 
     def __init__(self, ball_device):
-        """initialize ball count handler."""
+        """Initialize ball count handler."""
         super().__init__(ball_device)
         # inputs
         self._is_counting = asyncio.Lock()
@@ -80,7 +80,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self._ball_count_changed_futures = []
 
     async def initialize(self):
-        """initialize handler."""
+        """Initialize handler."""
         counter_config = self.ball_device.config.get("counter", {})
         if counter_config:
             counter_class = Util.string_to_class(counter_config["class"])

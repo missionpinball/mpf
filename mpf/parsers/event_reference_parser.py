@@ -20,7 +20,7 @@ class EventReferenceParser:
     def _parse_file(self, file_name) -> List[EventReference]:
         """Parse one file and return all events from that file."""
         try:
-            with open(file_name) as f:
+            with open(file_name, encoding="utf-8") as f:
                 my_ast = ast.parse(f.read())
         except Exception:
             raise AssertionError("Error while parsing {}".format(file_name))

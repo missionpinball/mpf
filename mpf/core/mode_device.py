@@ -17,7 +17,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     __slots__ = ["mode"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """initialize mode device."""
+        """Initialize mode device."""
         super().__init__(machine, name)
         self.mode = None    # type: Optional[Mode]
 

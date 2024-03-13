@@ -16,7 +16,7 @@ class TwitchBot(MpfPlugin):
     config_section = 'twitch_client'
 
     def initialize(self):
-        """initialize Twitch client."""
+        """Initialize Twitch client."""
         self.configure_logging(self.name)
         self.config = self.machine.config_validator.validate_config(
             "twitch_client", self.machine.config['twitch_client'])

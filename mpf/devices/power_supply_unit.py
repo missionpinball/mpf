@@ -13,7 +13,7 @@ class PowerSupplyUnit(SystemWideDevice):
     __slots__ = ["_busy_until"]
 
     def __init__(self, machine, name):
-        """initialize PSU."""
+        """Initialize PSU."""
         super().__init__(machine, name)
         self._busy_until = None
 

@@ -41,7 +41,7 @@ class BcpInterface(MpfController):
                  "_shows"]
 
     def __init__(self, machine):
-        """initialize BCP."""
+        """Initialize BCP."""
         super().__init__(machine)
 
         if 'bcp' not in machine.config or not machine.config['bcp']:

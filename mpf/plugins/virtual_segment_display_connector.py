@@ -14,7 +14,7 @@ class VirtualSegmentDisplayConnector(MpfPlugin):
 
     """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
-    __slots__ = ["log", "machine", "bcp_client", "config"]
+    __slots__ = ["bcp_client", "config"]
 
     config_section = 'virtual_segment_display_connector'
 

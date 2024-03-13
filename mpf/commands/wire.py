@@ -56,6 +56,6 @@ class Command:
 
         yaml = YAML()
         yaml.default_flow_style = False
-        f = open("wiring.yaml", "w", encoding="utf-8")
-        yaml.dump(result, f)
-        f.close()
+        with open("wiring.yaml", "w", encoding="utf-8") as f:
+            yaml.dump(result, f)
+            f.close()

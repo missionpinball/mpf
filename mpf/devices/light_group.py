@@ -21,7 +21,7 @@ class LightGroup(SystemWideDevice):
     __slots__ = ["lights", "_drivers_loaded"]
 
     def __init__(self, machine: MachineController, name) -> None:
-        """initialize light group."""
+        """Initialize light group."""
         super().__init__(machine, name)
 
         self.lights = []        # type: List[Light]

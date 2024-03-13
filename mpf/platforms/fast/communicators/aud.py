@@ -24,7 +24,7 @@ class FastAudCommunicator(FastSerialCommunicator):
     __slots__ = ["amps", "current_config_byte", "phones_level", "phones_mute", "_watchdog_ms"]
 
     def __init__(self, platform, processor, config):
-
+        """Initialize AUD communicator."""
         super().__init__(platform, processor, config)
         self.amps = {
             'main':
@@ -54,12 +54,14 @@ class FastAudCommunicator(FastSerialCommunicator):
 
     async def soft_reset(self):
         self.update_config(send_now=True)
-        for amp_name in self.amps:
-            self.set_volume(amp_name, self.amps[amp_name]['volume'])
+        for amp_name, amp in self.amps.items():
+            self.set_volume(amp_name, amp['volume'])
 
     def _volume_to_hw(self, volume):
-        """Always store and pass volume levels as decimals (0-64), and use this
-        method to convert to hex strings when sending via serial to AUD board."""
+        """Always store and pass volume levels as decimals (0-64).
+
+        Use this method to convert to hex strings when sending via serial to AUD board.
+        """
         volume = int(volume)
         assert 0 <= volume <= 63, f"Invalid volume {volume}"
         return f"{volume:02X}"

@@ -7,7 +7,7 @@ class FASTDMD(DmdPlatformInterface):
     """Object for a FAST DMD."""
 
     def __init__(self, machine, name, sender):
-        """initialize DMD."""
+        """Initialize DMD."""
         self.machine = machine
         self.name = name
         self.send = sender
@@ -21,9 +21,8 @@ class FASTDMD(DmdPlatformInterface):
     def update(self, data: bytes):
         """Update data on the DMD.
 
-        Args:
-        ----
+        Parameters
+        ----------
             data: bytes to send to DMD
         """
-
         self.send.send_frame(data)

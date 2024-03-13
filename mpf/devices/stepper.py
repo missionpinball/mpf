@@ -25,11 +25,11 @@ class Stepper(SystemWideDevice):
     collection = 'steppers'
     class_label = 'stepper'
 
-    __slots__ = ["hw_stepper", "platform", "_target_position", "_current_position", "_ball_search_started",
+    __slots__ = ["hw_stepper", "_target_position", "_current_position", "_ball_search_started",
                  "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay"]
 
     def __init__(self, machine, name):
-        """initialize stepper."""
+        """Initialize stepper."""
         self.hw_stepper = None          # type: Optional[StepperPlatformInterface]
         self.platform = None            # type: Optional[Stepper]
         self._target_position = 0       # in user units

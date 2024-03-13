@@ -26,10 +26,10 @@ class DigitalOutput(SystemWideDevice):
     collection = 'digital_outputs'
     class_label = 'digital_output'
 
-    __slots__ = ["hw_driver", "platform", "type", "__dict__"]
+    __slots__ = ["hw_driver", "type", "__dict__"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """initialize digital output."""
+        """Initialize digital output."""
         self.hw_driver = None           # type: Optional[Union[DriverPlatformInterface, LightPlatformInterface]]
         self.platform = None            # type: Optional[Union[DriverPlatform, LightsPlatform]]
         self.type = None                # type: Optional[str]
@@ -37,7 +37,7 @@ class DigitalOutput(SystemWideDevice):
         self.delay = DelayManager(self.machine)
 
     async def _initialize(self):
-        """initialize the hardware driver for this digital output."""
+        """Initialize the hardware driver for this digital output."""
         await super()._initialize()
         if self.config['type'] == "driver":
             self._initialize_driver()

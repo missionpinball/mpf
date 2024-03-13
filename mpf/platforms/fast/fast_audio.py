@@ -9,6 +9,7 @@ class FASTAudioInterface(LogMixin):
     __slots__ = ["platform", "machine", "communicator", "amps", "control_pin_pulse_times"]
 
     def __init__(self, platform, communicator):
+        """Initialize audio interface."""
         self.platform = platform
         self.machine = platform.machine
         self.communicator = communicator
@@ -30,7 +31,7 @@ class FASTAudioInterface(LogMixin):
         self._register_event_handlers()
 
     def _configure_machine_vars(self):
-        for amp_name in self.amps.keys():
+        for amp_name in self.amps:
             var_name = f'fast_audio_{amp_name}_volume'
 
             # Is there a race condition on first boot if the linked amp
@@ -39,15 +40,14 @@ class FASTAudioInterface(LogMixin):
                 self.machine.variables.set_machine_var(
                     name=var_name,
                     value=self.machine.variables.get_machine_var('fast_audio_main_volume'),
-                    persist=self.communicator.config[f'persist_volume_settings'])
+                    persist=self.communicator.config['persist_volume_settings'])
 
             elif not self.machine.variables.is_machine_var(var_name):
                 self.machine.variables.set_machine_var(name=var_name,
                                                     value=self.communicator.config[f'default_{amp_name}_volume'],
-                                                    persist=self.communicator.config[f'persist_volume_settings'])
+                                                    persist=self.communicator.config['persist_volume_settings'])
     def _init_amps(self):
-        for amp_name in self.amps.keys():
-            amp = self.amps[amp_name]
+        for amp_name, amp in self.amps.items():
             amp['steps'] = self.communicator.config[f'{amp_name}_steps']
             amp['max_volume'] = self.communicator.config[f'max_hw_volume_{amp_name}']
             amp['levels_list'] = self.communicator.config[f'{amp_name}_levels_list']
@@ -123,16 +123,18 @@ class FASTAudioInterface(LogMixin):
     def send_volume_to_hw(self, amp_name=None, send_now=True):
         """Send the current volume to the hardware."""
         if amp_name is None:
-            for amp_name in self.amps.keys():
-                self.send_volume_to_hw(amp_name, send_now)
+            for each_amp_name in self.amps:
+                self.send_volume_to_hw(each_amp_name, send_now)
             return
 
         self.communicator.set_volume(amp_name, self.get_volume(amp_name), send_now)
 
     def _set_volume(self, amp_name, value=0, **kwargs):
         """Set the amp volume to the specified level, in absolute units.
-            This is a private method, volume changes should be instigated by
-            updating the corresponding machine variable."""
+
+        This is a private method, volume changes should be instigated by
+        updating the corresponding machine variable.
+        """
         value = int(value)
 
         if value > self.amps[amp_name]['max_volume']:
@@ -144,32 +146,37 @@ class FASTAudioInterface(LogMixin):
         self.send_volume_to_hw(amp_name)
 
         if amp_name == 'main':
-            for other_amp_name in self.amps.keys():
-                if other_amp_name != amp_name and self.amps[other_amp_name]['link_to_main']:
+            for other_amp_name, other_amp in self.amps.items():
+                if other_amp_name != amp_name and other_amp['link_to_main']:
                     # Update the machine var, which will be caught and handled
                     self._set_machine_var_volume(other_amp_name, value)
 
     def get_volume(self, amp_name, **kwargs):
+        del kwargs
         return self.machine.variables.get_machine_var(f'fast_audio_{amp_name}_volume')
 
     def _set_machine_var_volume(self, amp_name, value):
         self.machine.variables.set_machine_var(f'fast_audio_{amp_name}_volume', value)
 
     def temp_volume(self, amp_name, change=1, **kwargs):
-        """Temporarily change the volume by the specified number of units, up or down,
-        but without changing the machine var. This is used for ducking or other
+        """Temporarily change the volume by the specified number of units, up or down.
+
+        This changes without changing the machine var, and is used for ducking or other
         temporary volume changes where you don't want to save it to disk.
         """
+        del kwargs
         change = int(change)
         self.communicator.set_volume(amp_name, self.get_volume(amp_name) + change,
                                      send_now=True)
 
     def restore_volume(self, amp_name, **kwargs):
-        """Restore the volume to the value to the machine var value"""
+        del kwargs
+        """Restore the volume to the value to the machine var value."""
         self.communicator.set_volume(amp_name, self.get_volume(amp_name),
                                      send_now=True)
 
     def pulse_lcd_pin(self, pin, ms=None, **kwargs):
+        del kwargs
         """Pulse the specified LCD pin for the specified number of milliseconds.
 
         pin is the label from the board, 1-6
@@ -183,12 +190,14 @@ class FASTAudioInterface(LogMixin):
         self.communicator.pulse_control_pin(pin-1, ms)
 
     def pulse_power_pin(self, ms=None, **kwargs):
+        del kwargs
         """Pulse the specified power pin for the specified number of milliseconds."""
         if not ms:
             ms = self.control_pin_pulse_times[6]
         self.communicator.pulse_control_pin(6, ms)
 
     def pulse_reset_pin(self, ms=None, **kwargs):
+        del kwargs
         """Pulse the specified reset pin for the specified number of milliseconds."""
         if not ms:
             ms = self.control_pin_pulse_times[7]

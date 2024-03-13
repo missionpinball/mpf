@@ -40,7 +40,7 @@ class SpiBitBangPlatform(SwitchPlatform):
         return self._switch_states
 
     def __init__(self, machine):
-        """initialize platform."""
+        """Initialize platform."""
         super().__init__(machine)
         self.log = logging.getLogger('SPI Bit Bang')
         self.log.debug("Configuring SPI Bit Bang.")
@@ -59,7 +59,7 @@ class SpiBitBangPlatform(SwitchPlatform):
         self.machine.events.add_handler("init_phase_3", self._late_init)
 
     def _late_init(self, **kwargs):
-        """initialize this when other platforms are already loaded."""
+        """Initialize this when other platforms are already loaded."""
         del kwargs
         self.config = self.machine.config_validator.validate_config("spi_bit_bang",
                                                                     self.machine.config.get('spi_bit_bang', {}))

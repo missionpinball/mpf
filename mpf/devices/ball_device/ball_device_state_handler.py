@@ -11,7 +11,7 @@ class BallDeviceStateHandler:
     __slots__ = ["ball_device", "machine", "_task"]
 
     def __init__(self, ball_device):
-        """initialize handler.
+        """Initialize handler.
 
         Args:
         ----
@@ -43,7 +43,7 @@ class BallDeviceStateHandler:
         self.ball_device.warning_log(*args, **kwargs)
 
     async def initialize(self):
-        """initialize handler."""
+        """Initialize handler."""
         self._task = asyncio.create_task(self._run())
         self._task.add_done_callback(Util.raise_exceptions)
 

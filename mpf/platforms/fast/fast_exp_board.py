@@ -1,4 +1,4 @@
-"""Contains the base classes for FAST expansion and breakout boards"""
+"""Contains the base classes for FAST expansion and breakout boards."""
 
 import asyncio
 from base64 import b16decode
@@ -18,18 +18,19 @@ class FastExpansionBoard:
                  "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate"]
 
     def __init__(self, name: str, communicator, address: str, config: dict) -> None:
-        """Initializes a FAST Expansion Board
+        """Initializes a FAST Expansion Board.
 
-        Args:
+        Parameters
+        ----------
             name (str): Name of this board from the config file
             communicator (FastExpCommunicator): FAST EXP Communicator
             address (str): Two-character hex address of this board
             config (dict): This board's section from the config file
 
-        Raises:
+        Raises
+        ------
             AssertionError: If a breakout board in the config is not valid.
         """
-
         self.name = name
         self.communicator = communicator
         self.config = config
@@ -74,6 +75,7 @@ class FastExpansionBoard:
         self.platform.register_breakout_board(brk_board)
 
     def __repr__(self):
+        """Return representation of this expansion board."""
         return f'EXP "{self.name}" ({self.model}, @{self.address})'
 
     def get_description_string(self) -> str:
@@ -81,13 +83,13 @@ class FastExpansionBoard:
         return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
 
     def verify_hardware(self, id_string: str, active_board: str) -> None:
-        """Verifies an EXP or breakout board firmware versions
+        """Verifies an EXP or breakout board firmware versions.
 
-        Args:
+        Parameters
+        ----------
             id_string (str): ID string returned from the ID: FAST Serial Command
             active_board (str): 2 or 3 hex character address of the EXP or BRK board
         """
-
         self.log.info('Verifying hardware for %s with ID string "%s", board address %s',
                       self, id_string, active_board)
 
@@ -96,12 +98,11 @@ class FastExpansionBoard:
 
         try:
             _, product_id, firmware_version = id_string.split()
-        except ValueError:
+        except ValueError as e:
             if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
                 self.log.error('Breakout %s on %s is not responding', brk_board, self)
-                raise AssertionError(f'Breakout {brk_board} on {self} is not responding')
-            else:
-                raise AssertionError(f'Invalid ID string {id_string} from {self}')
+                raise AssertionError(f'Breakout {brk_board} on {self} is not responding') from e
+            raise AssertionError(f'Invalid ID string {id_string} from {self}') from e
 
         assert exp_board == self.address
         self.firmware_version = firmware_version
@@ -116,8 +117,7 @@ class FastExpansionBoard:
 
             if product_id != brk.model:
                 raise AssertionError(f'EXP Board {self}, Breakout Port {brk.index}: Config is set for {brk.model}, but actually found "{id_string}"')
-            else:
-                brk.hw_verified = True
+            brk.hw_verified = True
 
         else:
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
@@ -127,8 +127,7 @@ class FastExpansionBoard:
 
             if product_id != self.model:
                 raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
-            else:
-                self.hw_verified = True
+            self.hw_verified = True
 
     async def reset(self):
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
@@ -167,7 +166,6 @@ class FastExpansionBoard:
 
     def set_led_fade(self, rate: int) -> None:
         """Set LED fade rate in ms."""
-
         self.led_fade_rate = rate
         self.communicator.set_led_fade_rate(self.address, rate)
 
@@ -199,13 +197,12 @@ class FastBreakoutBoard:
         self.platform.machine.events.add_handler('init_phase_2', self._initialize)
 
     def __repr__(self):
+        """Return representation of the breakout board."""
         return f"Breakout {self.model} on {self.expansion_board}"
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""
-
         # TODO move to a mixin class based on device type
-
         found = False
         for number, led in self.platform.fast_exp_leds.items():
             if number.startswith(self.address):

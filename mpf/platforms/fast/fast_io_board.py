@@ -9,7 +9,7 @@ class FastIoBoard:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, communicator, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
-        """initialize FastIoBoard."""
+        """Initialize FastIoBoard."""
         self.communicator = communicator
         self.name = str(name)
         self.node_id = node_id  # position in the I/O loop, 0-indexed
@@ -23,6 +23,7 @@ class FastIoBoard:
         assert self.model in VALID_IO_BOARDS, "Invalid I/O board model: {}".format(self.model)
 
     def __repr__(self):
+        """Return representation of this I/O board."""
         return f'{self.model} "{self.name}"'
 
     def get_description_string(self) -> str:

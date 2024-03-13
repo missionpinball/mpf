@@ -10,7 +10,8 @@ class FastNetRetroCommunicator(FastNetNeuronCommunicator):
 
     async def query_io_boards(self):
 
-         # No external I/O boards on a Retro Controller, so create one to represent the onboard switches & drivers
+        # No external I/O boards on a Retro Controller, so create one
+        # to represent the onboard switches & drivers
 
         self.io_loop = ['retro']  # Manually create the internal I/O board since it's not in the config
         self.config['io_loop']['retro'] = {'model': 'FP-RETRO-I/O',

@@ -190,14 +190,14 @@ class Command(MpfCommandLineParser):
         """Create the basic hierarchy of a new machine folder including test and config files."""
         os.makedirs(os.path.normpath(machine_path))
         os.makedirs(os.path.normpath(os.path.join(machine_path, "config")))
-        with open(os.path.normpath(os.path.join(machine_path, "config", "config.yaml")), "w") as f:
+        with open(os.path.normpath(os.path.join(machine_path, "config", "config.yaml")), "w", encoding="utf-8") as f:
             f.write("#config_version=6")
 
         # create test folder
         os.makedirs(os.path.normpath(os.path.join(machine_path, "tests")))
 
         test_file_name = "test_{}.yaml".format(config_name)
-        with open(os.path.normpath(os.path.join(machine_path, "tests", test_file_name)), "w"):
+        with open(os.path.normpath(os.path.join(machine_path, "tests", test_file_name)), "w", encoding="utf-8"):
             pass
 
     @staticmethod
@@ -232,5 +232,5 @@ class Command(MpfCommandLineParser):
     def write_config_file(path, config_file_content):
         """Create config files for machine folders or modes."""
         # create config file
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(config_file_content)

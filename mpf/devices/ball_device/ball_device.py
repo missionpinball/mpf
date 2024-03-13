@@ -36,7 +36,7 @@ class BallDevice(SystemWideDevice):
                  "counted_balls", "_state"]
 
     def __init__(self, machine, name):
-        """initialize ball device."""
+        """Initialize ball device."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine)

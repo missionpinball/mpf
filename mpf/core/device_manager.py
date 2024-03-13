@@ -158,7 +158,7 @@ class DeviceManager(MpfController):
                 collection[device_name].load_config(config[device_name])
 
     async def initialize_devices(self):
-        """initialize devices."""
+        """Initialize devices."""
         futures = []
         for collection_name in self.machine.config['mpf']['device_modules'].keys():
             if collection_name not in self.machine.config:
@@ -194,14 +194,14 @@ class DeviceManager(MpfController):
             * The device object
         """
         config_spec = self.machine.config_validator.get_config_spec()
-        for collection in self.collections:
-            config_section = self.collections[collection].config_section
+        for collection_name, collection in self.collections.items():
+            config_section = collection.config_section
             if config_section in config:
                 for device, settings in iter(config[config_section].items()):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events') and x != "control_events"]
-                    device_obj = self.collections[collection][device]
+                    device_obj = collection[device]
 
                     for control_event in control_events:
                         # get events from this device's config
@@ -210,7 +210,7 @@ class DeviceManager(MpfController):
                                 continue
                             raise AssertionError(
                                 "Type of {}:{} should be event_handler|event_handler:ms| in config_spec".format(
-                                    collection, control_event))
+                                    collection_name, control_event))
                         # try the new style first
                         try:
                             method = getattr(device_obj, "event_{}".format(control_event[:-7]))
@@ -260,7 +260,7 @@ class DeviceCollection(dict):
     __slots__ = ["machine", "name", "config_section", "_tag_cache"]
 
     def __init__(self, machine, collection, config_section):
-        """initialize device collection."""
+        """Initialize device collection."""
         super().__init__()
 
         self.machine = machine
@@ -285,7 +285,9 @@ class DeviceCollection(dict):
         """
         # We used this to allow the programmer to access a hardware item like
         # self.coils.coilname
-
+        self.machine.log.warning("Accessing devices by attribute is deprecated and will be removed. "
+                                 "Access by value instead: %s.%s -> %s['%s']",
+                                 self.name, attr, self.name, attr)
         try:
             return self[attr]
         except KeyError:
@@ -296,6 +298,9 @@ class DeviceCollection(dict):
 
         This method is DEPRECATED and will be removed soon. Use .values() instead.
         """
+        self.machine.log.warning("Iterating device collections directly is deprecated and will be removed. "
+                                 "Access by value() instead: device_collections[%s] -> device_collections['%s'].values()",
+                                 self.name, self.name)
         for item in self.values():
             yield item
 

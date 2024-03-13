@@ -12,7 +12,7 @@ class FASTGIString(LightPlatformSoftwareFade):
     # __slots__ = ["log", "send"]
 
     def __init__(self, number, connection, machine, software_fade_ms: int) -> None:
-        """initialize GI string."""
+        """Initialize GI string."""
         super().__init__(number, machine.clock.loop, software_fade_ms)
         self.log = logging.getLogger('FASTGIString.0x' + str(number))
         self.connection = connection

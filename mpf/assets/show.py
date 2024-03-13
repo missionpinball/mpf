@@ -75,7 +75,7 @@ class Show:
                  "_step_cache", "machine"]
 
     def __init__(self, machine, name):
-        """initialize show."""
+        """Initialize show."""
         self.machine = machine
         self._autoplay_settings = dict()
         self.tokens = set()
@@ -493,7 +493,7 @@ class RunningShow:
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, start_step, start_running, callback, start_time, start_callback, show_config):
-        """initialize an instance of a show."""
+        """Initialize an instance of a show."""
         self.machine = machine
         self.show = show
         self.show_config = show_config

@@ -22,7 +22,7 @@ class ExtraBall(ModeDevice):
     __slots__ = ["player", "group", "_player_var_name"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """initialize extra ball."""
+        """Initialize extra ball."""
         super().__init__(machine, name)
         self.player = None  # type: Optional[Player]
         """The current player"""

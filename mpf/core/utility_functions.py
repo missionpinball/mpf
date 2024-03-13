@@ -64,11 +64,12 @@ class Util:
     def keys_to_lower(source: Optional[Union[dict, list, int, float, str]]) -> Union[dict, list, int, float, str]:
         """Convert the keys of a dictionary to lowercase.
 
-        Args:
+        Args
         ----
             source: The dictionary, list, or basic data type you want to convert.
 
-        Returns:
+        Returns
+        -------
             Dictionary or list with lowercase keys for dictionaries, or the basic data type unchanged.
         """
         if source is None:
@@ -635,7 +636,6 @@ class Util:
 
         Returns a reference to the python class object.
         """
-
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
         m = importlib.import_module(module)
@@ -803,11 +803,13 @@ class Util:
     def set_bit(hex_string, bit):
         """Sets a bit in a hex string.
 
-        Args:
+        Parameters
+        ----------
             hex_string (_type_): Hex string, e.g. '81'
             bit (_type_): Bit to set, e.g. 3
 
-        Returns:
+        Returns
+        -------
             _type_: Returns the hex string with the bit set, e.g. '89'.
             The return string will be the same length as the input string.
         """
@@ -819,11 +821,13 @@ class Util:
     def clear_bit(hex_string, bit):
         """Clears a bit in a hex string.
 
-        Args:
+        Parameters
+        ----------
             hex_string (str): Hex string to modify, e.g. '81'
             bit (int): Position of the bit to clear, e.g. 3
 
-        Returns:
+        Returns
+        -------
             str: Returns the modified hex string with the bit cleared, e.g. '80'
         """
         num = int(hex_string, 16)
@@ -834,11 +838,13 @@ class Util:
     def check_bit(hex_string, bit):
         """Checks the status of a bit in a hex string.
 
-        Args:
+        Parameters
+        ----------
             hex_string (str): Hex string, e.g. '81'
             bit (int): Bit to check, e.g. 3
 
-        Returns:
+        Returns
+        -------
             bool: True if the bit is set, False otherwise
         """
         num = int(hex_string, 16)

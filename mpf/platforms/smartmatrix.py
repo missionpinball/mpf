@@ -19,7 +19,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
     __slots__ = ["devices"]
 
     def __init__(self, machine):
-        """initialize RGB DMD."""
+        """Initialize RGB DMD."""
         super().__init__(machine)
         self.features['tickless'] = True
 
@@ -38,7 +38,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
             self.devices[name] = SmartMatrixDevice(config, machine)
 
     async def initialize(self):
-        """initialize platform."""
+        """Initialize platform."""
         for device in self.devices.values():
             await device.connect()
 
@@ -69,7 +69,7 @@ class SmartMatrixDevice(DmdPlatformInterface):
     __slots__ = ["config", "writer", "port", "control_data_queue", "current_frame", "new_frame_event", "machine", "log"]
 
     def __init__(self, config, machine):
-        """initialize smart matrix device."""
+        """Initialize smart matrix device."""
         self.config = config
         self.writer = None
         self.port = None
@@ -116,8 +116,8 @@ class SmartMatrixDevice(DmdPlatformInterface):
             raise AssertionError("Autodetect has been removed. Please specify the port in your config.")
             # Does anyone even use this? We can use the new FAST auto-detect if we want it. I removed the old auto-detect
             # since it was only used for this now.
-        else:
-            port = self.config['port']
+
+        port = self.config['port']
         self.port = serial.Serial(port, self.config['baud'])
         self.new_frame_event = threading.Event()
         self.control_data_queue = []

@@ -22,7 +22,7 @@ class OPPSolenoid(DriverPlatformInterface):
     __slots__ = ["sol_card", "log", "switch_rule", "_switches", "_config_state", "platform_settings", "switches"]
 
     def __init__(self, sol_card, number):
-        """initialize OPP solenoid driver."""
+        """Initialize OPP solenoid driver."""
         super().__init__({}, number)
         self.sol_card = sol_card        # type: OPPSolenoidCard
         self.log = sol_card.log
@@ -243,7 +243,7 @@ class OPPSolenoidCard:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
-        """initialize OPP solenoid card."""
+        """Initialize OPP solenoid card."""
         self.log = logging.getLogger('OPPSolenoid {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr

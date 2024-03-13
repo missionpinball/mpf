@@ -30,6 +30,6 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
             self.machine.stop("FAST NET Nano rebooted")
 
         if msg == '02':  # reboot done
-            self._process_reboot_done()
+            self._process_reboot_done(msg)
             # TODO what else? Mark all configs as dirty? Log and warn if this was unexpected?
             # TODO add ignore_reboot option to config

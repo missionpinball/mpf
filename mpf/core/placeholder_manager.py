@@ -36,14 +36,14 @@ class ConditionalEvent:
     __slots__ = ["name", "condition", "number"]
 
     def __init__(self, name, condition, number):
-        """initialize conditional event."""
+        """Initialize conditional event."""
         self.name = name
         self.condition = condition
         self.number = number
 
     def __repr__(self):
         """Return string representation."""
-        return "{}-{}-{}".format(self.name, self.condition, self.number)
+        return f"{self.name}-{self.condition}-{self.number}"
 
 
 class TemplateEvalError(Exception):
@@ -57,7 +57,7 @@ class TemplateEvalError(Exception):
 
     def __str__(self):
         """Return description."""
-        return "<TemplateEvalError with subscriptions {}>".format(self.subscriptions)
+        return f"<TemplateEvalError with subscriptions {self.subscriptions}>"
 
 
 class BaseTemplate(metaclass=abc.ABCMeta):
@@ -67,7 +67,7 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     __slots__ = ["template", "placeholder_manager", "default_value", "text"]
 
     def __init__(self, template, text, placeholder_manger, default_value):
-        """initialize template."""
+        """Initialize template."""
         self.text = str(text)
         self.template = template
         self.placeholder_manager = placeholder_manger
@@ -86,8 +86,8 @@ class BaseTemplate(metaclass=abc.ABCMeta):
         except ConfigFileError:     # pylint: disable-msg=try-except-raise
             raise
         except Exception as e:
-            raise AssertionError("Failed to evaluate {} template {} with parameters {}".format(
-                type(self), self.text, parameters)) from e
+            raise AssertionError(
+                f"Failed to evaluate {type(self)} template {self.text} with parameters {parameters}") from e
 
         if result is None:
             return self.default_value
@@ -209,7 +209,7 @@ class NativeTypeTemplate:
 
     def __repr__(self):
         """Return String."""
-        return "<NativeTemplate {}>".format(self.value)
+        return f"<NativeTemplate {self.value}>"
 
 
 class MpfFormatter(string.Formatter):
@@ -219,7 +219,7 @@ class MpfFormatter(string.Formatter):
     __slots__ = ["machine", "parameters", "subscriptions", "subscribe"]
 
     def __init__(self, machine, parameters, subscribe):
-        """initialize formatter."""
+        """Initialize formatter."""
         self.machine = machine
         self.parameters = parameters
         self.subscriptions = []
@@ -259,7 +259,7 @@ class TextTemplate:
     __slots__ = ["machine", "text", "_change_callback"]
 
     def __init__(self, machine: "MachineController", text: str) -> None:
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self.machine = machine
         self.text = str(text)
         self._change_callback = None
@@ -293,17 +293,14 @@ class BasePlaceholder:
 
     __slots__ = []  # type: List[str]
 
-    # pylint: disable-msg=no-self-use
     def subscribe(self):
         """Subscribe to placeholder."""
         raise AssertionError("Not possible to subscribe this.")
 
-    # pylint: disable-msg=no-self-use
     def subscribe_attribute(self, item):
         """Subscribe to attribute."""
         raise AssertionError("Not possible to subscribe to attribute {}.".format(item))
 
-    # pylint: disable-msg=no-self-use
     def subscribe_item(self, item):
         """Subscribe to item."""
         raise AssertionError("Not possible to subscribe to item {}.".format(item))
@@ -316,7 +313,7 @@ class DevicePlaceholder:
     __slots__ = ["_device", "_attribute", "_machine"]
 
     def __init__(self, device, attribute, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._device = device
         self._attribute = attribute
         self._machine = machine
@@ -346,7 +343,7 @@ class DeviceClassPlaceholder:
     __slots__ = ["_devices", "_device_name", "_machine"]
 
     def __init__(self, devices, device_name, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._devices = devices
         self._device_name = device_name
         self._machine = machine
@@ -382,7 +379,7 @@ class DevicesPlaceholder:
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine
 
     def __getitem__(self, item):
@@ -415,7 +412,7 @@ class ModeClassPlaceholder:
     __slots__ = ["_mode"]
 
     def __init__(self, mode):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._mode = mode
 
     def __getitem__(self, item):
@@ -435,7 +432,7 @@ class ModePlaceholder:
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine
 
     def __getitem__(self, item):
@@ -457,7 +454,7 @@ class PlayerPlaceholder(BasePlaceholder):
     __slots__ = ["_machine", "_number"]
 
     def __init__(self, machine, number=None):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine     # type: MachineController
         self._number = number
 
@@ -501,7 +498,7 @@ class PlayersPlaceholder(BasePlaceholder):
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine     # type: MachineController
 
     def subscribe(self):
@@ -528,7 +525,7 @@ class TimePlaceholder(BasePlaceholder):
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine     # type: MachineController
 
     def subscribe(self):
@@ -577,7 +574,7 @@ class MachinePlaceholder(BasePlaceholder):
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine     # type: MachineController
 
     def subscribe(self):
@@ -611,7 +608,7 @@ class SettingsPlaceholder(BasePlaceholder):
     __slots__ = ["_machine"]
 
     def __init__(self, machine):
-        """initialize placeholder."""
+        """Initialize placeholder."""
         self._machine = machine  # type: MachineController
 
     def subscribe(self):
@@ -642,7 +639,7 @@ class BasePlaceholderManager(MpfController):
     __slots__ = ["_eval_methods"]
 
     def __init__(self, machine):
-        """initialize."""
+        """Initialize."""
         super().__init__(machine)
         self._eval_methods = {
             ast.Num: self._eval_num,

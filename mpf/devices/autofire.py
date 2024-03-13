@@ -38,7 +38,7 @@ class AutofireCoil(SystemWideDevice):
                  "_timeout_disable_time", "_timeout_hits"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize autofire."""
+        """Initialize autofire."""
         self._enabled = False
         self._rule = None       # type: Optional[HardwareRule]
         super().__init__(machine, name)
@@ -61,7 +61,7 @@ class AutofireCoil(SystemWideDevice):
             self._timeout_max_hits = self.config['timeout_max_hits']
             self._timeout_disable_time = self.config['timeout_disable_time']
 
-        if '{}_active'.format(self.config['playfield'].name) in self.config['switch'].tags:
+        if f"{self.config['playfield'].name}_active" in self.config['switch'].tags:
             self.raise_config_error(
                 "Autofire device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "

@@ -18,7 +18,7 @@ class TrinamicsStepRocker(StepperPlatform):
     """
 
     def __init__(self, machine):
-        """initialize Trinamics Step Rocker platform."""
+        """Initialize Trinamics Step Rocker platform."""
         super().__init__(machine)
         self.log = logging.getLogger("Trinamics StepRocker")
         self.log.debug("Configuring template hardware interface.")
@@ -32,7 +32,7 @@ class TrinamicsStepRocker(StepperPlatform):
         return '<Platform.TrinamicsStepRocker>'
 
     async def initialize(self):
-        """initialize trinamics steprocker platform."""
+        """Initialize trinamics steprocker platform."""
         await super().initialize()
 
         # validate our config (has to be in intialize since config_processor
@@ -68,7 +68,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
     """A stepper on a TMCL based controller such as Trinamics StepRocker."""
 
     def __init__(self, number, config, tmcl_device, machine):
-        """initialize stepper."""
+        """Initialize stepper."""
         self._pulse_div = 5     # tbd add to config
         self._ramp_div = 9      # tbd add to config
         self._clock_freq = 16000000.0

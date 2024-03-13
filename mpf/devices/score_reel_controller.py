@@ -30,7 +30,7 @@ class ScoreReelController:
     config_name = "score_reel_controller"
 
     def __init__(self, machine):
-        """initialize score reel controller."""
+        """Initialize score reel controller."""
         self.machine = machine
         self.log = logging.getLogger("ScoreReelController")
         self.log.debug("Loading the ScoreReelController")

@@ -53,15 +53,15 @@ class FASTExpLED(FASTRGBLED):
 
     """FAST RGB LED on an expansion board."""
 
-    __slots__ = ["board_address", "platform", "breakout_board", "port", "dirty", "machine", "platform", "hardware_fade_ms",
-                 "log", "channels", "breakout", "index", "address", "exp_board"]
+    __slots__ = ["board_address", "breakout_board", "port",
+                 "breakout", "index", "address", "exp_board"]
 
     def __repr__(self):
+        """Return representation of this LED."""
         return f'<FASTExpLED: {self.number}>'
 
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED."""
-
         self.number = number  # 5 char hex string, board address, breakout
         self.number_int = int(number, 16)
         self.platform = platform
@@ -87,10 +87,11 @@ class FASTLEDChannel(LightPlatformInterface):
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
 
     def __repr__(self):
+        """Return representation of this LED."""
         return f'<FASTLEDChannel: {self.led.number}-{self.channel}>'
 
     def __init__(self, led: FASTRGBLED, channel) -> None:
-        """initialize LED."""
+        """Initialize LED."""
         super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)
@@ -140,7 +141,7 @@ class FASTLEDChannel(LightPlatformInterface):
         return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
 
     def get_successor_number(self):
-        """Return next number. We want this in the config format"""
+        """Return next number. We want this in the config format."""
         # if self.channel == 2:
         #     hex_int = int(self.number, 16) + 1  # number is hex string so we need to launder it through an int
         #     return f"{hex_int:X}-0"

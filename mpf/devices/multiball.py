@@ -22,7 +22,7 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
                  "grace_period", "hurry_up"]
 
     def __init__(self, machine, name):
-        """initialize multiball."""
+        """Initialize multiball."""
         self.ball_locks = None
         self.source_playfield = None
         super().__init__(machine, name)

@@ -26,7 +26,7 @@ class BaseSmartVirtualCoilAction(metaclass=abc.ABCMeta):
     """A action for a coil."""
 
     def __init__(self, actions: List[str], machine: "MachineController") -> None:
-        """initialize switch enable action."""
+        """Initialize switch enable action."""
         self.log = logging.getLogger("SmartVirtual Coil Action")
         self.actions = actions
         self.machine = machine
@@ -81,7 +81,7 @@ class ResetDropTargetAction(BaseSmartVirtualCoilAction):
     """Set switches inactive when coil is pulsed."""
 
     def __init__(self, actions, machine, drop_target_bank):
-        """initialize switch enable action."""
+        """Initialize switch enable action."""
         super().__init__(actions, machine)
         self.drop_target_bank = drop_target_bank
 
@@ -103,7 +103,7 @@ class SwitchDisableAction(BaseSmartVirtualCoilAction):
     """Disable switches when coil is pulsed."""
 
     def __init__(self, actions, machine, switches):
-        """initialize switch enable action."""
+        """Initialize switch enable action."""
         super().__init__(actions, machine)
         self.switches = switches
 
@@ -132,7 +132,7 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, actions, machine, switch_map, limit_lo, limit_hi, name):
-        """initialize virtual score reel."""
+        """Initialize virtual score reel."""
         super().__init__(actions, machine)
         self.switch_map = switch_map
         self.position = limit_lo
@@ -172,7 +172,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, actions, machine, platform, device: BallDevice):
-        """initialize add ball to target action."""
+        """Initialize add ball to target action."""
         super().__init__(actions, machine)
         self.device = device    # type: BallDevice
         self.ball_switches = device.ball_count_handler.counter.config.get('ball_switches', [])
@@ -270,7 +270,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
     """Base class for the smart_virtual hardware platform."""
 
     def __init__(self, machine):
-        """initialize smart virtual platform."""
+        """Initialize smart virtual platform."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine)
         self.actions = {}       # type: Dict[BallDevice, AddBallToTargetAction]
@@ -284,7 +284,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.debug_log("Configuring smart_virtual hardware interface.")
 
     async def start(self):
-        """initialize platform when all devices are ready."""
+        """Initialize platform when all devices are ready."""
         self._initialize_ball_devices()
         self._initialize_drop_targets()
         self._initialize_drop_target_banks()
@@ -424,7 +424,7 @@ class SmartVirtualDriver(VirtualDriver):
     """Smart virtual driver."""
 
     def __init__(self, config, number):
-        """initialize smart virtual driver."""
+        """Initialize smart virtual driver."""
         super().__init__(config, number)
         self.action = None
 

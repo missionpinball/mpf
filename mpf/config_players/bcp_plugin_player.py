@@ -12,7 +12,7 @@ class BcpPluginPlayer(DeviceConfigPlayer):
     __slots__ = ["bcp_client"]
 
     def __init__(self, machine):
-        """initialize plugin player."""
+        """Initialize plugin player."""
         super().__init__(machine)
         self.bcp_client = None
         self.instances['_global_bcp'] = dict()

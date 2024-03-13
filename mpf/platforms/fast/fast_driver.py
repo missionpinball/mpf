@@ -66,7 +66,8 @@ class FASTDriver:
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
         """Sets the initial config for this driver based on the MPF config.
 
-        Args:
+        Parameters
+        ----------
             mpf_config: DriverConfig instance which holds the MPF DriverConfig settings for this driver from the config file. This already incorporates
                 any machine-wide defaults, etc. so it's ready to go.
             platform_settings: FastDriverConfig instance which holds any platform_settings: entries for this driver from the config file.
@@ -82,8 +83,9 @@ class FASTDriver:
 
     def convert_mpf_config_to_fast(self, mpf_config: DriverConfig, platform_settings) -> FastDriverConfig:
         """Convert a DriverConfig (used throughout MPF) to FastDriverConfig (FAST specific version).
-        This is only used for the initial configuration of drivers. Autofire rules update these."""
 
+        This is only used for the initial configuration of drivers. Autofire rules update these.
+        """
         if mpf_config.default_recycle:
             raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
 
@@ -129,11 +131,13 @@ class FASTDriver:
     def set_bit(self, hex_string, bit):
         """Sets a bit in a hex string.
 
-        Args:
+        Parameters
+        ----------
             hex_string (_type_): Hex string, e.g. '81'
             bit (_type_): Bit to set, e.g. 3
 
-        Returns:
+        Returns
+        -------
             _type_: Returns the hex string with the bit set, e.g. '89'
         """
         num = int(hex_string, 16)
@@ -164,7 +168,7 @@ class FASTDriver:
             self.communicator.send_and_forget(msg)
 
     def get_current_config(self):
-
+        """Return the current configuration of this driver."""
         config = (f'{self.communicator.DRIVER_CMD}:{self.hw_number},{self.current_driver_config.trigger},'
                   f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
                   f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
@@ -175,7 +179,6 @@ class FASTDriver:
 
     def get_board_name(self):
         """Return the board of this driver."""
-
         coil_index = 0
         for board_obj in self.communicator.platform.io_boards.values():
             if coil_index <= self.number < coil_index + board_obj.driver_count:
@@ -222,8 +225,8 @@ class FASTDriver:
         else:
             self.log.debug("Received disable command for driver %s but reenabled autofire instead", self.number)
 
-    def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):
-
+    def set_hardware_rule(self, mode, switch, coil_settings, **kwargs):  # noqa: MC0001
+        """Write a hardware rule to the FAST controller for this driver."""
         self.log.debug("Setting hardware rule for driver %s. Mode: %s. Switch: %s. coil_settings: %s. kwargs: %s.",
                        self.number, mode, switch.hw_switch.hw_number, coil_settings, kwargs)
 
@@ -331,7 +334,10 @@ class FASTDriver:
                                 "are on different boards. Cannot apply rule!")
 
     def is_new_config_needed(self, current, new):
-        # figures out if bits other than 6 and 7 changed, meaning we need a full new DL command not just TL update
+        """Determines if bits other than 6 and 7 changed.
+
+        If so, it means we need a full new DL command not just TL update.
+        """
         current_num = int(current, 16)
         new_num = int(new, 16)
         bitmask = 0x3F  # 0011 1111 in binary
@@ -358,7 +364,6 @@ class FASTDriver:
 
     def set_relay(self, relay_switch, debounce_closed_ms, debounce_open_ms):
         """Set an AC Relay rule with virtual switch."""
-
         self.log.debug("Setting A/C Relay for driver %s (0x%s) and switch %s (0x%s)",
                        self.number, self.hw_number, relay_switch.number, relay_switch.hw_number)
         self.current_driver_config = FastDriverConfig(number=self.hw_number, trigger='81',
@@ -373,7 +378,6 @@ class FASTDriver:
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
-
         self.log.debug("Enabling (turning on) driver %s (0x%s) mode %s with pulse_settings: %s and hold_settings: %s.",
                        self.number, self.hw_number, self.current_driver_config.mode, pulse_settings, hold_settings)
 
@@ -420,13 +424,12 @@ class FASTDriver:
             # Trigger the driver directly using the existing configuration
             self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},03')
             return
-        else:  # Send a new driver config and also trigger it now
-            self.current_driver_config.trigger = 'C1'
-            self.send_config_to_driver(one_shot=False)
+        # Send a new driver config and also trigger it now
+        self.current_driver_config.trigger = 'C1'
+        self.send_config_to_driver(one_shot=False)
 
     def timed_enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Pulse and hold this driver for a specified duration."""
-
         self.log.debug("Timed enabling (pulsing and holding) driver %s with pulse_settings: %s and hold_settings: %s.",
                        self.number, pulse_settings, hold_settings)
 
@@ -448,7 +451,6 @@ class FASTDriver:
         The FAST platform supports pulse and hold configuration in the same command, so
         this method can be used for both pulse() and timed_enable() behavior.
         """
-
         reconfigured = False
         mode = self.current_driver_config.mode
 
@@ -475,7 +477,7 @@ class FASTDriver:
         if hold_settings is not None:
             if hold_settings.duration > 25500:
                 raise AssertionError("FAST platform does not support hold durations > 25500ms")
-            elif 25500 >= hold_settings.duration > 255:
+            if 25500 >= hold_settings.duration > 255:
                 hold_ms = Util.int_to_hex_string(hold_settings.duration // 100)
                 mode = '70'
             elif 255 >= hold_settings.duration >= 0:
@@ -513,7 +515,8 @@ class FASTDriver:
     def _reenable_autofire_if_configured(self):
         """Reenable autofire if configured.
 
-        Returns True if autofire was reenabled, False otherwise."""
+        Returns True if autofire was reenabled, False otherwise.
+        """
         self._check_and_clear_delay()
         if self.autofire_config and self.autofire_config != self.current_driver_config:
             self.log.debug("Re-enabling autofire mode")

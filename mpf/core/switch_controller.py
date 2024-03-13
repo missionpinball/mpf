@@ -28,7 +28,7 @@ class RegisteredSwitch:
     __slots__ = ["ms", "callback", "cancelled"]
 
     def __init__(self, ms, callback):
-        """initialize registered switch."""
+        """Initialize registered switch."""
         self.ms = ms
         self.callback = callback
         self.cancelled = False
@@ -44,7 +44,7 @@ class SwitchController(MpfController):
                  "_switch_lookup", "monitors", "_initialized"]
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize switch controller."""
+        """Initialize switch controller."""
         super().__init__(machine)
         self.registered_switches = dict()                       # type: Dict[Switch, List[List[RegisteredSwitch]]]
         # Dictionary of switches and states that have been registered for
@@ -307,8 +307,8 @@ class SwitchController(MpfController):
     def process_switch_obj(self, obj: Switch, state, logical, timestamp=None):
         """Process a new switch state change for a switch by name.
 
-        Args:
-        ----
+        Parameters
+        ----------
             obj: The switch object.
             state: Boolean or int of state of the switch you're processing,
                 True/1 is active, False/0 is inactive.
@@ -332,7 +332,6 @@ class SwitchController(MpfController):
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
         """
-
         assert obj.hw_switch is not None
         # We need int, but this lets it come in as boolean also
         if state:

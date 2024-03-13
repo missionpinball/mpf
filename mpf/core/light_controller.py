@@ -22,7 +22,7 @@ class LightController(MpfController):
     config_name = "light_controller"
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize lights controller."""
+        """Initialize lights controller."""
         super().__init__(machine)
         self.brightness_factor = 1.0
 
@@ -57,7 +57,7 @@ class LightController(MpfController):
             RGBColor.add_color(name, color)
 
     def initialize_light_subsystem(self):
-        """initialize the light subsystem."""
+        """Initialize the light subsystem."""
         if self._initialized:
             return
         self._initialized = True

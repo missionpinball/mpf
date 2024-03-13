@@ -464,7 +464,7 @@ class RstBuilder(object):
 
             for name in self.doc_sections.keys():
                 with open(os.path.join(
-                        templates_path[0], '{}{}.rst'.format(name, suffix)), 'r') as f:
+                        templates_path[0], '{}{}.rst'.format(name, suffix)), 'r', encoding="utf-8") as f:
                     self.templates[name + suffix] = f.read()
 
     def build_rst_files(self):

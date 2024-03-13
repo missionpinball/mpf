@@ -24,7 +24,7 @@ class Smbus2I2cDevice(I2cPlatformInterface):
 
     # noinspection PyNoneFunctionAssignment
     def __init__(self, number: str, platform, busses) -> None:
-        """initialize smbus2 device."""
+        """Initialize smbus2 device."""
         super().__init__(number)
         self.loop = platform.machine.clock.loop
         self.platform = platform
@@ -85,7 +85,7 @@ class Smbus2(I2cPlatform):
     __slots__ = ["_i2c_busses"]
 
     def __init__(self, machine):
-        """initialize Smbus2 platform."""
+        """Initialize Smbus2 platform."""
         super().__init__(machine)
         self._i2c_busses = {}
         self.log = logging.getLogger('Smbus2')

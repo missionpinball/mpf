@@ -20,7 +20,7 @@ class ShowPlayer(DeviceConfigPlayer):
     __slots__ = ["_actions"]
 
     def __init__(self, machine):
-        """initialize show player."""
+        """Initialize show player."""
         super().__init__(machine)
         self._actions = {
             'play': self._play,

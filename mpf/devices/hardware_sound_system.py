@@ -16,7 +16,7 @@ class HardwareSoundSystem(SystemWideDevice):
     __slots__ = ["hw_device", "_volume"]
 
     def __init__(self, machine, name):
-        """initialize hardware sound system."""
+        """Initialize hardware sound system."""
         super().__init__(machine, name)
         self.hw_device = None       # type: HardwareSoundPlatformInterface
         self.platform = None

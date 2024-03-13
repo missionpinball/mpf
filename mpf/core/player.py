@@ -82,7 +82,7 @@ class Player:
     """
 
     def __init__(self, machine, index):
-        """initialize player."""
+        """Initialize player."""
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
@@ -163,6 +163,7 @@ class Player:
         :param value: The value to add to the existing value
         :param kwargs: Arguments to include in the posted player_<name> event
         """
+        # pylint: disable-msg=unnecessary-dunder-call
         self.__setattr__(name, self[name] + value, **kwargs)
 
     def set_with_kwargs(self, name: str, value, **kwargs):
@@ -172,6 +173,7 @@ class Player:
         :param value: The value to set
         :param kwargs: Arguments to include in the posted player_<name> event
         """
+        # pylint: disable-msg=unnecessary-dunder-call
         self.__setattr__(name, value, **kwargs)
 
     # pylint: disable-msg=too-many-arguments
@@ -248,7 +250,7 @@ class Player:
     def __repr__(self):
         """Return string representation."""
         try:
-            return "<Player {}>".format(self.vars['number'])
+            return f"<Player {self.vars['number']}>"
         except KeyError:
             return '<Player (new)>'
 

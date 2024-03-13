@@ -38,7 +38,7 @@ class BaseAssetManager(MpfController, LogMixin):
                  "num_bcp_assets_loaded", "_next_id", "_last_asset_event_time", "initial_assets_loaded", "_start_time"]
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize asset manager.
+        """Initialize asset manager.
 
         Args:
         ----
@@ -650,7 +650,7 @@ class AssetPool:
 
     # Could possibly combine some or make @properties?
     def __init__(self, mc, name, config, member_cls):
-        """initialize asset pool."""
+        """Initialize asset pool."""
         self.machine = mc
         self.priority = None
         self.name = name
@@ -740,9 +740,8 @@ class AssetPool:
         self._total_weights = sum([x[1] for x in self.assets])
 
         if self.config['type'] == 'sequence':
-            for index in range(len(self.assets)):
-                self._asset_sequence.extend([self.assets[index][0]] *
-                                            self.assets[index][1])
+            for asset in self.assets:
+                self._asset_sequence.extend([asset[0]] * asset[1])
             self._asset_sequence.rotate(1)
 
     def load(self, callback=None, priority=None) -> bool:
@@ -889,7 +888,7 @@ class Asset:
 
     @classmethod
     def initialize(cls, machine):
-        """initialize asset class."""
+        """Initialize asset class."""
         if not cls.disk_asset_section:
             cls.disk_asset_section = cls.config_section
 
@@ -904,7 +903,7 @@ class Asset:
             pool_config_section=cls.pool_config_section)
 
     def __init__(self, machine, name, file, config):
-        """initialize asset."""
+        """Initialize asset."""
         self.machine = machine      # type: MachineController
         self.name = name
         self.file = file

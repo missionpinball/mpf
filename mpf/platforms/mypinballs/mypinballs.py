@@ -12,7 +12,7 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
     """A physical display on the mypinballs controller."""
 
     def __init__(self, number, platform) -> None:
-        """initialize segment display."""
+        """Initialize segment display."""
         super().__init__(number)
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
@@ -45,7 +45,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
     """Hardware platform for MyPinballs 7-segment controller."""
 
     def __init__(self, machine):
-        """initialize mypinballs hardware."""
+        """Initialize mypinballs hardware."""
         super().__init__(machine)
 
         self._writer = None
@@ -54,7 +54,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         self._configure_device_logging_and_debug("MyPinballs", self.config)
 
     async def initialize(self):
-        """initialize hardware."""
+        """Initialize hardware."""
         # connect to serial
         connector = self.machine.clock.open_serial_connection(
             url=self.config['port'], baudrate=self.config['baud'])

@@ -60,7 +60,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                  "_off_color", "_drivers_loaded", "_last_fade_target", "_rbgw_style"]
 
     def __init__(self, machine, name):
-        """initialize light."""
+        """Initialize light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)

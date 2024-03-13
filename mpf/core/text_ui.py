@@ -66,7 +66,7 @@ class TextUi(MpfController):
 
     config_name = "text_ui"
 
-    __slots__ = ["start_time", "machine", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
+    __slots__ = ["start_time", "_tick_task", "screen", "mpf_process", "ball_devices", "switches",
                  "config", "_pending_bcp_connection", "_asset_percent", "_player_widgets", "_machine_widgets",
                  "_bcp_status", "frame", "layout", "scene", "footer_memory", "switch_widgets", "mode_widgets",
                  "ball_device_widgets", "footer_cpu", "footer_mc_cpu", "footer_uptime", "delay", "_layout_change"]

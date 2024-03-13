@@ -17,7 +17,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
     config_name = None  # type: str
 
     def __init__(self, machine: "MachineController") -> None:
-        """initialize controller.
+        """Initialize controller.
 
         Args:
         ----

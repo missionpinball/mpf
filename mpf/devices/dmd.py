@@ -15,7 +15,7 @@ class Dmd(SystemWideDevice):
     collection = 'dmds'
     class_label = 'dmd'
 
-    __slots__ = ["hw_device", "platform"]
+    __slots__ = ["hw_device"]
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -28,7 +28,7 @@ class Dmd(SystemWideDevice):
         machine.bcp.interface.register_command_callback("dmd_frame", partial(cls._bcp_receive_dmd_frame, machine))
 
     def __init__(self, machine, name):
-        """initialize DMD."""
+        """Initialize DMD."""
         self.hw_device = None
         self.platform = None        # type: DmdPlatform
         super().__init__(machine, name)
