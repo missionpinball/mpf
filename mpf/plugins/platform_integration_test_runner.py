@@ -7,6 +7,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.plugin import MpfPlugin
 from mpf.core.utility_functions import Util
 
+
 class MpfPlatformIntegrationTestRunner(MpfPlugin):
 
     """Runs a Platform Integration test provided by the command line.
@@ -16,13 +17,15 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
     mpf -pit path.to.ModuleFile.ModuleClassName
     """
 
-    __slots__ = ( "delay", "_task", "_keep_alive", "_start_time", "_test_obj",
+    __slots__ = ("delay", "_task", "_keep_alive", "_start_time", "_test_obj",
                  "trough_switches")
 
     def __init__(self, *args, **kwargs):
         """Initialize the test runner."""
         super().__init__(*args, **kwargs)
         self._keep_alive = None
+        self._task = None
+        self._test_obj = None
         self._start_time = None
         self.delay = None
         self.trough_switches = None
@@ -35,7 +38,8 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
     def initialize(self):
         """Initialize test runner and load test module."""
         self.configure_logging('MpfPlatformIntegration', 'basic', 'full')
-        self.info_log("Platform Integration Test is here! Arg value is %s", self.machine.options["platform_integration_test"])
+        self.info_log("Initializing Platform Integration Test: Arg value is %s",
+                      self.machine.options["platform_integration_test"])
         self.delay = DelayManager(self.machine)
 
         # Find the file with the test
@@ -89,7 +93,6 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             for ball_device in self.machine.ball_devices.items_tagged('trough'):
                 ball_device.ball_count_handler.counter.trigger_recount()
             self.machine.ball_controller.num_balls_known = len(self.trough_switches)
-
 
     def _run_test(self, **kwargs):
         del kwargs
@@ -152,6 +155,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 "exception": AssertionError(f"Awaited event '{event}' failed to trigger within {timeout}s.")
             })
 
+    # pylint: disable-msg=too-many-arguments
     async def set_switch(self, switch_name, state=None, duration_secs=None, wait_after=None, blocking=True):
         """Set a switch to a given state.
 
@@ -170,8 +174,9 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 self.set_switch_sync(switch_name, int(not state))
             else:
                 # Remove any existing reversion, add a new one if necessary
-                self.delay.add(name=switch_name, ms=duration_secs*1000, callback=self.set_switch_sync,
-                            switch_name=switch_name, state=int(not state))
+                self.delay.add(name=switch_name, ms=duration_secs * 1000,
+                               callback=self.set_switch_sync,
+                               switch_name=switch_name, state=int(not state))
 
         if wait_after:
             await asyncio.sleep(wait_after)
@@ -187,6 +192,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         assert self.machine.game, "Game failed to start"
 
     async def eject_and_plunge_ball(self, plunger_switch_name, plunger_lane_settle_time=2, **kwargs):
+        """Shuffle the trough switches and plunger to simulate an eject."""
         del kwargs
         self.info_log("Ejecting and plunging ball...")
         self.set_switch_sync(self.trough_switches[0], 0)
@@ -199,6 +205,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         await asyncio.sleep(1)
 
     async def move_ball_from_drain_to_trough(self, **kwargs):
+        """Move a ball from the drain device to the trough device."""
         del kwargs
         drain_switches = self.machine.ball_devices.items_tagged('drain')[0].config.get('ball_switches')
         self.set_switch_sync(drain_switches[-1], 0)
