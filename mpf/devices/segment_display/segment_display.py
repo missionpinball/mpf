@@ -128,13 +128,14 @@ class SegmentDisplay(SystemWideDevice):
         config['platform_settings'] = platform.validate_segment_display_section(self,
                                                                                 config.get('platform_settings', None))
 
-        # For backwards compatibility, an undefined update method will be mapped
-        # to "stack". However the default in a future version will be "single", so
-        # note the change before mapping.
+        # For backwards compatibility, an undefined update_method config will be mapped
+        # to "stack". However the default in a future version will be "replace", so inform
+        # the user that they should explicitly define "stack" to avoid a breaking change.
         if config['update_method'] is None:
-            self.warning_log("Segment display update_method will default to 'single' in a future MPF release. "
-                          "You have no config value specified and are currently getting 'stack' for backwards compatibility. "
-                          "To avoid a breaking change, please set 'update_method: \"stack\"' in your segment display config.")
+            self.warning_log("Segment display update_method will default to 'replace' in a future MPF release. "
+                             "You have no config value specified and are currently getting 'stack' for backwards "
+                             "compatibility. To avoid a breaking change, please set 'update_method: \"stack\"' "
+                             "in your segment display config.")
             config['update_method'] = "stack"
         return config
 
@@ -150,10 +151,13 @@ class SegmentDisplay(SystemWideDevice):
             self._update_stack()
             return
 
-        # For the single-text update method, skip the stack and write straight to the display
+        if self.config['update_method'] != "replace":
+            raise ValueError(f"Unknown update_method '{self.config['update_method']}' for segment display {self.name}")
+
+        # For the replace-text update method, skip the stack and write straight to the display
         new_text = TextTemplate(self.machine, text).evaluate({})
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
-                                            self.config['integrated_commas'], color)
+                                           self.config['integrated_commas'], color)
         self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:

@@ -197,6 +197,21 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual("       ", display5.hw_display.text)
         self.assertEqual(FlashingType.NO_FLASH, display5.hw_display.flashing)
 
+    def test_update_method(self):
+        display_stack = self.machine.segment_displays["display_stack"]
+        display_replace = self.machine.segment_displays["display_replace"]
+
+        for i in range(0, 10):
+            display_stack.add_text(f"STACK {i}", key=i, priority=i)
+            display_replace.add_text(f"REPLC {i}", key=i, priority=i)
+            self.advance_time_and_run(0.5)
+
+        self.assertEqual("STACK 9", display_stack.hw_display.text)
+        self.assertEqual("REPLC 9", display_replace.hw_display.text)
+
+        self.assertEqual(len(display_stack._text_stack), 10)
+        self.assertEqual(len(display_replace._text_stack), 0)
+
     def test_player(self):
         display1 = self.machine.segment_displays["display1"]
         display2 = self.machine.segment_displays["display2"]

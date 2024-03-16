@@ -19,6 +19,12 @@ segment_displays:
     number: 1
     size: 10
     integrated_dots: true
+  display_stack:
+    number: 4
+    update_method: stack
+  display_replace:
+    number: 5
+    update_method: replace
 
 segment_display_player:
   test_event1:
