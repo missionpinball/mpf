@@ -39,6 +39,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
             if s.next_color:
                 self.send_and_forget(('PC:{},{}').format(s.hex_id, s.next_color))
+                s.current_color = s.next_color
                 s.next_color = None
 
     async def soft_reset(self):
@@ -49,3 +50,4 @@ class FastSegCommunicator(FastSerialCommunicator):
             self.send_and_forget(f'PA:{s.hex_id},')
             s.next_text = None
             s.next_color = None
+            s.current_color = None
