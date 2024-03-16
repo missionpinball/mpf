@@ -16,7 +16,8 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
     mpf -pit path.to.ModuleFile.ModuleClassName
     """
 
-    __slots__ = ( "delay", "_task", "_keep_alive", "_start_time", "_test_obj")
+    __slots__ = ( "delay", "_task", "_keep_alive", "_start_time", "_test_obj",
+                 "trough_switches")
 
     def __init__(self, *args, **kwargs):
         """Initialize the test runner."""
@@ -24,6 +25,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         self._keep_alive = None
         self._start_time = None
         self.delay = None
+        self.trough_switches = None
 
     @property
     def is_plugin_enabled(self):
@@ -65,18 +67,29 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         # Create an event handler to begin the test run
         self.machine.events.add_handler(self._test_obj.test_start_event, self._run_test)
 
+        self.trough_switches = []
+        for ball_device in self.machine.ball_devices.items_tagged('trough'):
+            jam_switch = ball_device.config.get('jam_switch')
+            for s in Util.string_to_list(ball_device.config["ball_switches"]):
+                if s != jam_switch:
+                    self.trough_switches.append(s)
+
         # Pre-set initial switches defined in the test
         if self._test_obj.initial_switches is not None:
             for s in self._test_obj.initial_switches:
-                self.machine.switch_controller.process_switch(s, 1)
+                s_state = 0 if self.machine.switches[s].invert else 1
+                self.machine.switch_controller.process_switch(s, s_state)
         # Pre-fill the trough with balls if no initial switches are defined
         else:
+            for s in self.trough_switches:
+                s_state = 0 if self.machine.switches[s].invert else 1
+                self.info_log("Initializing trough switch %s", s)
+                self.machine.switch_controller.process_switch(s, s_state)
+            self.info_log("Re-initializing trough ball counts")
             for ball_device in self.machine.ball_devices.items_tagged('trough'):
-                for s in Util.string_to_list(ball_device.config["ball_switches"]):
-                    self.info_log("Initializing trough switch %s", s)
-                    self.machine.switch_controller.process_switch(s, 1)
-                self.info_log("Re-initializing trough ball count")
                 ball_device.ball_count_handler.counter.trigger_recount()
+            self.machine.ball_controller.num_balls_known = len(self.trough_switches)
+
 
     def _run_test(self, **kwargs):
         del kwargs
@@ -96,7 +109,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             self._task = None
         duration = datetime.now() - self._start_time
         msg = f"All tests completed successfully in {duration.seconds}.{duration.microseconds // 1000} seconds."
-        if not self.keep_alive:
+        if not self._keep_alive:
             self.machine.stop(msg)
         else:
             self.info_log("%s Keep Alive is enabled, runner will not exit game." % msg)
@@ -120,6 +133,8 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         """Set a switch to a given state, synchronously."""
         if state is None:
             state = int(not self.machine.switches[switch_name].state)
+        if self.machine.switches[switch_name].invert:
+            state ^= 1
         self.delay.remove(switch_name)
         self.info_log("Setting switch %s to state %s", switch_name, state)
         self.machine.switch_controller.process_switch(switch_name, state)
@@ -161,32 +176,32 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         if wait_after:
             await asyncio.sleep(wait_after)
 
-    async def start_game(self, player_count=1):
+    async def start_game(self, num_players=1):
         """Start a game with the requested number of players."""
         self.info_log("Starting game.")
         await asyncio.sleep(1)
         start_button = self.machine.switches.items_tagged('start')[0]
-        for _ in range(0, player_count+1):
+        for _ in range(0, num_players):
             await self.set_switch(start_button.name, 1, 0.2)
             await asyncio.sleep(0.5)
+        assert self.machine.game, "Game failed to start"
 
-    async def eject_and_plunge_ball(self, plunger_lane_settle_time=2, **kwargs):
-        # TODO: Use dynamic switch names to find the plunger and trough
+    async def eject_and_plunge_ball(self, plunger_switch_name, plunger_lane_settle_time=2, **kwargs):
         del kwargs
         self.info_log("Ejecting and plunging ball...")
-        self.set_switch_sync("s_trough_1", 0)
+        self.set_switch_sync(self.trough_switches[0], 0)
         await asyncio.sleep(0.03)
-        self.set_switch_sync("s_trough_3", 0)
+        self.set_switch_sync(self.trough_switches[-1], 0)
         await asyncio.sleep(0.1)
-        self.set_switch_sync("s_trough_1", 1)
+        self.set_switch_sync(self.trough_switches[0], 1)
         await asyncio.sleep(0.25)
-        await self.set_switch("s_plunger_lane", 1, plunger_lane_settle_time)
+        await self.set_switch(plunger_switch_name, 1, duration_secs=plunger_lane_settle_time)
         await asyncio.sleep(1)
 
     async def move_ball_from_drain_to_trough(self, **kwargs):
-        # TODO: Use dynamic switch names to find drain and trough
         del kwargs
-        self.set_switch_sync("s_drain", 0)
+        drain_switches = self.machine.ball_devices.items_tagged('drain')[0].config.get('ball_switches')
+        self.set_switch_sync(drain_switches[-1], 0)
         await asyncio.sleep(0.25)
-        self.set_switch_sync("s_trough_3", 1)
+        self.set_switch_sync(self.trough_switches[-1], 1)
         await asyncio.sleep(0.25)
