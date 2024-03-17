@@ -89,7 +89,8 @@ class FASTSwitch:
 
         Returns a tuple of (debounce_open, debounce_close) in hex string format.
         """
-        # Set the debounce from the generic true/false first, then override if the platform settings have specific values
+        # Set the debounce from the generic true/false first, then override
+        # if the platform settings have specific values
         if config.debounce in ['normal', 'auto']:
             debounce_open = self.communicator.config['default_normal_debounce_open']
             debounce_close = self.communicator.config['default_normal_debounce_close']

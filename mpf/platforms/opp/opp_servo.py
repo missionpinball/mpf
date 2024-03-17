@@ -2,7 +2,6 @@
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-import logging
 
 MYPY = False
 if MYPY:  # pragma: no cover

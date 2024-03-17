@@ -12,7 +12,7 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-from typing import Dict, List
+from typing import Dict
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
