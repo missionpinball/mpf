@@ -1,3 +1,4 @@
+"""FAST Neuron Serial Communicator."""
 # mpf/platforms/fast/communicators/net_neuron.py
 
 from packaging import version
@@ -54,23 +55,34 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                       "Order values must be sequential starting at 1.", 7, self.log.name)  # TODO
 
     async def init(self):
+        """Initialize the hardware switches and drivers."""
         self.create_switches()
         self.create_drivers()
-        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
         await self.configure_hardware()
-        self.send_and_forget('WD:1') # Force expire the watchdog since who knows what state the board is in?
+        # Force expire the watchdog since who knows what state the board is in?
+        self.send_and_forget('WD:1')
         await self.query_io_boards()
 
     async def configure_hardware(self):
-        await self.send_and_wait_for_response_processed(f'CH:{fast_defines.HARDWARE_KEY[self.platform.machine_type]},FF', 'CH:')
+        """Send the hardware configuration command."""
+        await self.send_and_wait_for_response_processed(
+            f'CH:{fast_defines.HARDWARE_KEY[self.platform.machine_type]},FF', 'CH:')
 
     def create_switches(self):
-        # Neuron tracks all switches regardless of how many are connected
+        """Track switches for the FAST loop.
+
+        Neuron tracks all switches regardless of how many are connected.
+        """
         for i in range(self.MAX_SWITCHES):
             self.switches.append(FASTSwitch(self, i))
 
     def create_drivers(self):
-        # Neuron tracks all drivers regardless of how many are connected
+        """Track drivers for the FAST loop.
+
+        Neuron tracks all drivers regardless of how many are connected.
+        """
         for i in range(self.MAX_DRIVERS):
             self.drivers.append(FASTDriver(self, i))
 
@@ -86,14 +98,16 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
 
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
-        pass  # Not needed on the Neuron
+        # Not needed on the Neuron
 
     def _process_boot_message(self, msg):
         """Reset the NET CPU."""
+        del msg
         self.log.info("Resetting NET Processor...")
         # TODO Do something?
 
     def _process_reboot_done(self, msg):
+        del msg
         self.log.info("Processor reset complete.")
         # TODO Mark all configs as dirty
 
@@ -103,8 +117,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         Compare that to how they should be configured, and send new configuration
         commands for any that are different.
         """
-        for switch in self.switches:  # all physical switches, not just ones defined in the config
-            await self.send_and_wait_for_response_processed(f'{self.SWITCH_CMD}:{switch.hw_number}', f'{self.SWITCH_CMD}:{switch.hw_number}')
+        # all physical switches, not just ones defined in the config
+        for switch in self.switches:
+            await self.send_and_wait_for_response_processed(
+                f'{self.SWITCH_CMD}:{switch.hw_number}', f'{self.SWITCH_CMD}:{switch.hw_number}')
 
         self.platform.switches_initialized = True
 
@@ -116,7 +132,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """
         # self.drivers contains a list of all drivers, not just ones defined in the config
         for driver in self.drivers:
-            await self.send_and_wait_for_response_processed(f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', f"{self.DRIVER_CMD}:")
+            await self.send_and_wait_for_response_processed(
+                f'{self.DRIVER_CMD}:{Util.int_to_hex_string(driver.number)}', f"{self.DRIVER_CMD}:")
 
         self.platform.drivers_initialized = True
 
@@ -162,9 +179,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             return
 
         name = self.io_loop[node_id]
-        model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()  # Fp-I/O-3208-2 -> FP-I/O-3208
+        # Fp-I/O-3208-2 -> FP-I/O-3208
+        model_string_from_config = ('-').join(self.config['io_loop'][name]['model'].split('-')[:3]).upper()
 
-        assert model == model_string_from_config, f'I/O board config error. Board {node_id} is reporting as model {model}, but the config file says it\'s model {model_string_from_config}'
+        assert model == model_string_from_config, \
+            f"I/O board config error. Board {node_id} is reporting as model {model}, " + \
+            f"but the config file says it\'s model {model_string_from_config}"
 
         prior_sw = 0
         prior_drv = 0
@@ -191,7 +211,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.done_processing_msg_response()
 
     def process_driver_config_msg(self, msg):
-        # Got an incoming DL/DN: message
+        """Handle an incoming DL/DN: message."""
         if msg == 'P':
             self.done_processing_msg_response()
             return
@@ -242,6 +262,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             self.done_processing_msg_response()
 
     async def update_switches_from_hardware(self):
+        """Process an SA: message and update switch states."""
         await self.send_and_wait_for_response_processed('SA:', 'SA:')
 
     def _process_sa(self, msg):
@@ -267,9 +288,10 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.done_processing_msg_response()
 
     def update_switches_from_hw_data(self):
-        """Uses the existing platform.hw_switch_data dict to update the switch states in the machine's switch controller.
+        """Uses the existing platform.hw_switch_data dict to update switch states in the machine's switch controller.
 
-        This will silently sync the switch.hw_state. If the logical state changes, it will process it like any switch change.
+        This will silently sync the switch.hw_state. If the logical state changes,
+        it will process it like any switch change.
         """
         for switch in self.machine.switches:
             hw_state = self.platform.hw_switch_data[switch.hw_switch.number]

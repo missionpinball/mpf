@@ -1,3 +1,4 @@
+"""FAST Audio Board Serial Communicator."""
 # mpf/platforms/fast/communicators/aud.py
 
 from packaging import version
@@ -49,10 +50,13 @@ class FastAudCommunicator(FastSerialCommunicator):
         self._watchdog_ms = 0
 
     async def init(self):
-        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        """Initialize the serial connection and identify the board."""
+        # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
         self.platform.audio_interface = FASTAudioInterface(self.platform, self)
 
     async def soft_reset(self):
+        """Send a soft reset command to the board."""
         self.update_config(send_now=True)
         for amp_name, amp in self.amps.items():
             self.set_volume(amp_name, amp['volume'])
@@ -67,6 +71,7 @@ class FastAudCommunicator(FastSerialCommunicator):
         return f"{volume:02X}"
 
     def update_config(self, send_now=True):
+        """Write a new configuration to the platform."""
         byte = '00'
         if self.amps['main']['enabled']:
             byte = Util.set_bit(byte, 0)
@@ -88,6 +93,7 @@ class FastAudCommunicator(FastSerialCommunicator):
             self.send_config_to_board()
 
     def set_volume(self, amp_name, volume, send_now=True):
+        """Set the volume for a specific amp."""
         if amp_name not in self.amps:
             raise AssertionError(f"Invalid amp {amp_name}")
 
@@ -103,18 +109,21 @@ class FastAudCommunicator(FastSerialCommunicator):
         return self.amps[amp_name]['volume']
 
     def enable_amp(self, amp_name, send_now=True):
+        """Enable a specific amp."""
         if amp_name not in self.amps:
             raise AssertionError(f"Invalid amp {amp_name}")
         self.amps[amp_name]['enabled'] = True
         self.update_config(send_now)
 
     def disable_amp(self, amp_name, send_now=True):
+        """Disable a specific amp."""
         if amp_name not in self.amps:
             raise AssertionError(f"Invalid amp {amp_name}")
         self.amps[amp_name]['enabled'] = False
         self.update_config(send_now)
 
     def set_phones_level(self, mode, send_now=True):
+        """Set the volume level for headphones."""
         if mode == 'line':
             self.phones_level = False
         elif mode == 'headphones':
@@ -125,6 +134,7 @@ class FastAudCommunicator(FastSerialCommunicator):
         self.update_config(send_now)
 
     def set_phones_behavior(self, behavior, send_now=True):
+        """Set the audio board behavior when headphones are plugged in."""
         # Will return False if not possible, true if ok
         if not self.phones_level:  # phones are line level, this does not apply
             return False
@@ -140,23 +150,26 @@ class FastAudCommunicator(FastSerialCommunicator):
         return True
 
     def send_config_to_board(self):
+        """Write the current configuration to the board."""
         self.send_and_forget(f"AM:{self.current_config_byte}")
 
     def save_settings_to_firmware(self):
+        """Save the current configuration on the board's persistent memory."""
         self.send_and_forget("AW:")
 
     def set_watchdog(self, timeout):
-        pass
+        """Set a watchdog timer on the audio board."""
         # TODO setup task to send watchdog
 
     def get_phones_status(self):
-        pass
+        """Request the current status of the headphone port."""
         # TODO WD command processing
 
     def get_power_status(self):
-        pass
+        """Request the current status of the power detection port."""
         # TODO WD command processing
 
     def pulse_control_pin(self, pin, ms):
+        """Pulse an LCD control pin."""
         assert 0 <= pin <= 7, f"Invalid pin {pin}"
         self.send_and_forget(f"XO:{pin:02X},{hex(ms)[2:].upper()}")

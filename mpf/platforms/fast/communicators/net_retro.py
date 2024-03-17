@@ -1,3 +1,4 @@
+"""Retro Platform Serial Communicator."""
 # mpf/platforms/fast/communicators/net_retro.py
 
 from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicator
@@ -21,4 +22,6 @@ class FastNetRetroCommunicator(FastNetNeuronCommunicator):
 
         # Simplest way is just to fake a response to the NN: query
         # NN:<NODE_ID>,<NODE_NAME>,<NODE_FIRMWARE>,<DRIVER_COUNT>,<SWITCH_COUNT>,<EXTRADATA_IN>,<EXTRADATA_OUT>
-        self._process_nn(f'00,FP-RETRO-I/O,{self.remote_firmware},{self.MAX_DRIVERS:02X},{self.MAX_SWITCHES:02X},0,0,0,0,0,0')
+        self._process_nn(
+            f'00,FP-RETRO-I/O,{self.remote_firmware},{self.MAX_DRIVERS:02X},{self.MAX_SWITCHES:02X},0,0,0,0,0,0'
+        )

@@ -151,8 +151,11 @@ class FastExpansionBoard:
         for breakout in self.breakouts.values():
             await breakout.soft_reset()
 
-    def _update_leds(self):
-        # Called every tick to update the LEDs on this board
+    def update_leds(self):
+        """Look for LEDs that need updating and send to the platform.
+
+        Called every tick to update the LEDs on this board.
+        """
         for breakout_address in self.breakouts_with_leds:
             dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() \
                           if (v.dirty and v.address == breakout_address)}
