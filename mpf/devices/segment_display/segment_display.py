@@ -157,7 +157,8 @@ class SegmentDisplay(SystemWideDevice):
         # For the replace-text update method, skip the stack and write straight to the display
         new_text = TextTemplate(self.machine, text).evaluate({})
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
-                                           self.config['integrated_commas'], color)
+                                           self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                           color)
         self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
