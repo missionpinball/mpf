@@ -442,7 +442,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                             self._eject_queue.get_nowait()
                             self._eject_queue.task_done()
                     self.info_log("Necessary queue requests are cancelled. Updating ball count to %s." % new_balls)
-                    self.ball_device.ball_count_handler._set_ball_count(new_balls)
+                    self.ball_device.ball_count_handler._set_ball_count(new_balls)  # pylint: disable=protected-access
 
             return result
         except asyncio.CancelledError:

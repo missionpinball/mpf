@@ -299,7 +299,7 @@ class DeviceCollection(dict):
         This method is DEPRECATED and will be removed soon. Use .values() instead.
         """
         self.machine.log.warning("Iterating device collections directly is deprecated and will be removed. "
-                                 "Access by value() instead: device_collections[%s] -> device_collections['%s'].values()",
+                                 "Access by value(): device_collections[%s] -> device_collections['%s'].values()",
                                  self.name, self.name)
         for item in self.values():
             yield item

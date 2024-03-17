@@ -144,7 +144,7 @@ class VariablePlayer(ConfigPlayer):
 
     def clear_context(self, context: str) -> None:
         """Clear context."""
-        for var, block in self.blocks.items():
+        for _, block in self.blocks.items():  # Unused variable "var"
             for entry, s in enumerate(block):
                 if s.context == context:
                     del block[entry]

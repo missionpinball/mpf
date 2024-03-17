@@ -2,7 +2,7 @@
 
 import uuid
 from functools import partial
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False

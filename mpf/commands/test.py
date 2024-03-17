@@ -1,3 +1,4 @@
+"""Base module for running tests."""
 import os
 
 import argparse
@@ -31,7 +32,7 @@ class Command(MpfCommandLineParser):
 
     """Run a text unit test from cli."""
 
-    def __init__(self, args, path):
+    def __init__(self, args, path):  # pylint: disable=too-many-locals
         """Parse args."""
         super().__init__(args, path)
         test_file = self.argv.pop(1)

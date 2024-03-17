@@ -185,7 +185,8 @@ class RGBColor:
             try:
                 self._color = (color[0], color[1], color[2])
             except IndexError:
-                raise ValueError(f"Invalid RGB color value provided: {color}. Do you need to add quotes around a color that starts or ends with zeros?")
+                raise ValueError(f"Invalid RGB color value provided: {color}. Do you need to add quotes "
+                                 "around a color that starts or ends with zeros?")
         else:
             self._color = RGB_MIN
 

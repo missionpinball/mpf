@@ -1,7 +1,6 @@
 """Contains the MPF Plugin class."""
 
 from mpf.core.logging import LogMixin
-from mpf.core.utility_functions import Util
 
 class MpfPlugin(LogMixin):
 
@@ -25,7 +24,6 @@ class MpfPlugin(LogMixin):
 
         Override with plugin-specific init behavior.
         """
-        pass
 
     @property
     def is_plugin_enabled(self):

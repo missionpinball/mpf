@@ -244,6 +244,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     def _lost_ball(self, device, balls, **kwargs):
         """Handle the ball hold devices losing a ball."""
+        del kwargs
         if self.balls_held:
             self.balls_held -= balls
             self.info_log("Ball device %s lost %s balls, hold now has %s balls held", device, balls, self.balls_held)

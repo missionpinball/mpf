@@ -133,7 +133,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
-                        raise ConfigFileError(f"Duplicate light number {type(driver)} {driver.number} for light {light}",
+                        raise ConfigFileError(f"Duplicate number {type(driver)} {driver.number} for light {light}",
                                               10, "light", key, "light")
 
                     check_set.add(key)
