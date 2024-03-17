@@ -81,8 +81,20 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         # Pre-set initial switches defined in the test
         if self._test_obj.initial_switches is not None:
             for s in self._test_obj.initial_switches:
-                s_state = 0 if self.machine.switches[s].invert else 1
+                # If a tuple is provided, the second value is the target state
+                if type(s) == tuple:
+                    s, s_state = s
+                else:
+                    s_state = 1
+                if self.machine.switches[s].invert:
+                    s_state ^= 1
                 self.machine.switch_controller.process_switch(s, s_state)
+            # Recheck all the ball counts
+            for ball_device in self.machine.ball_devices.values():
+                if hasattr(ball_device, "ball_count_handler"):
+                    self.info_log("Resetting ball count for %s", ball_device)
+                    ball_device.ball_count_handler.counter.trigger_recount()
+                    ball_device.ball_count_handler._count_valid.clear()
         # Pre-fill the trough with balls if no initial switches are defined
         else:
             for s in self.trough_switches:
