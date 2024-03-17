@@ -94,7 +94,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 if hasattr(ball_device, "ball_count_handler"):
                     self.info_log("Resetting ball count for %s", ball_device)
                     ball_device.ball_count_handler.counter.trigger_recount()
-                    ball_device.ball_count_handler._count_valid.clear()
+                    # ball_device.ball_count_handler._count_valid.clear()
         # Pre-fill the trough with balls if no initial switches are defined
         else:
             for s in self.trough_switches:

@@ -76,6 +76,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     @property
     def a_side_enabled(self):
+        """Return true if the A side is currently enabled."""
         if self.ac_relay_in_transition:
             return False
         if self.relay_switch:
@@ -94,6 +95,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
     @property
     def c_side_enabled(self):
+        """Return true if the C side is currently enabled."""
         if self.relay_switch:
             # Never enabled if the relay is in transition
             return not self.ac_relay_in_transition and self.relay_switch.state
@@ -295,6 +297,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
 
         self.platform.clear_hw_rule(switch, coil)
 
+    # pylint: disable-msg=too-many-arguments
     def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings],
                       side: str, timed_enable: bool = False):
         """Add a driver action for a switched driver to the queue (for either the A-side or C-side queue).
@@ -324,7 +327,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                 # Sometimes it doesn't make sense to queue the C side (flashers) and play them after
                 # switching to the A side (coils) and back. If we are on A side or have a queue on
                 # the A side, ignore this C side request.
-                if (self.a_side_queue or not self.c_side_enabled) and not self.system11_config['queue_c_side_while_preferred']:
+                if (self.a_side_queue or not self.c_side_enabled) and \
+                not self.system11_config['queue_c_side_while_preferred']:
                     return
                 self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition:

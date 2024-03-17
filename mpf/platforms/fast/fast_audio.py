@@ -1,3 +1,5 @@
+"""Hardware sound system using the FAST Audio board."""
+
 from math import ceil
 from mpf.core.logging import LogMixin
 
@@ -24,6 +26,7 @@ class FASTAudioInterface(LogMixin):
         self.machine.events.add_handler('init_phase_1', self._initialize, priority=100)
 
     def _initialize(self, **kwargs):
+        del kwargs
         self._configure_machine_vars()
         self._init_amps()
         self._configure_control_pins()
@@ -93,9 +96,12 @@ class FASTAudioInterface(LogMixin):
         self.communicator.set_phones_behavior(phones, send_now=False)
 
     def _register_event_handlers(self):
-        self.platform.machine.events.add_handler('machine_var_fast_audio_main_volume', self._set_volume, amp_name='main')
-        self.platform.machine.events.add_handler('machine_var_fast_audio_sub_volume', self._set_volume, amp_name='sub')
-        self.platform.machine.events.add_handler('machine_var_fast_audio_headphones_volume', self._set_volume, amp_name='headphones')
+        self.platform.machine.events.add_handler('machine_var_fast_audio_main_volume',
+                                                 self._set_volume, amp_name='main')
+        self.platform.machine.events.add_handler('machine_var_fast_audio_sub_volume',
+                                                 self._set_volume, amp_name='sub')
+        self.platform.machine.events.add_handler('machine_var_fast_audio_headphones_volume',
+                                                 self._set_volume, amp_name='headphones')
         self.platform.machine.events.add_handler('fast_audio_temp_volume', self.temp_volume)
         self.platform.machine.events.add_handler('fast_audio_restore', self.restore_volume)
         self.platform.machine.events.add_handler('fast_audio_pulse_lcd_pin', self.pulse_lcd_pin)
@@ -135,6 +141,7 @@ class FASTAudioInterface(LogMixin):
         This is a private method, volume changes should be instigated by
         updating the corresponding machine variable.
         """
+        del kwargs
         value = int(value)
 
         if value > self.amps[amp_name]['max_volume']:
@@ -152,6 +159,7 @@ class FASTAudioInterface(LogMixin):
                     self._set_machine_var_volume(other_amp_name, value)
 
     def get_volume(self, amp_name, **kwargs):
+        """Return the current volume of the specified amp."""
         del kwargs
         return self.machine.variables.get_machine_var(f'fast_audio_{amp_name}_volume')
 
@@ -170,17 +178,17 @@ class FASTAudioInterface(LogMixin):
                                      send_now=True)
 
     def restore_volume(self, amp_name, **kwargs):
-        del kwargs
         """Restore the volume to the value to the machine var value."""
+        del kwargs
         self.communicator.set_volume(amp_name, self.get_volume(amp_name),
                                      send_now=True)
 
     def pulse_lcd_pin(self, pin, ms=None, **kwargs):
-        del kwargs
         """Pulse the specified LCD pin for the specified number of milliseconds.
 
         pin is the label from the board, 1-6
         """
+        del kwargs
         if not ms:
             ms = self.control_pin_pulse_times[pin-1]
 
@@ -190,19 +198,20 @@ class FASTAudioInterface(LogMixin):
         self.communicator.pulse_control_pin(pin-1, ms)
 
     def pulse_power_pin(self, ms=None, **kwargs):
-        del kwargs
         """Pulse the specified power pin for the specified number of milliseconds."""
+        del kwargs
         if not ms:
             ms = self.control_pin_pulse_times[6]
         self.communicator.pulse_control_pin(6, ms)
 
     def pulse_reset_pin(self, ms=None, **kwargs):
-        del kwargs
         """Pulse the specified reset pin for the specified number of milliseconds."""
+        del kwargs
         if not ms:
             ms = self.control_pin_pulse_times[7]
         self.communicator.pulse_control_pin(7, ms)
 
     def save_settings_to_firmware(self, **kwargs):
+        """Write the current volume settings to the platform's memory."""
         del kwargs
         self.communicator.save_settings_to_firmware()

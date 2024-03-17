@@ -241,6 +241,7 @@ class Auditor(MpfPlugin):
             self._save_audits()
 
     def report_missing_switches(self, missing_switch_min_games=None):
+        """Generate a report of switches that have not been hit in a while."""
         min_threshold = missing_switch_min_games or \
             self.config['missing_switch_min_games']
         missing_switches = self.current_audits['missing_switches'].items()

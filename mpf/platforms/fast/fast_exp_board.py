@@ -65,6 +65,7 @@ class FastExpansionBoard:
             self.create_breakout(brk)
 
     def create_breakout(self, config: dict) -> None:
+        """Define a breakout board within an EXP board."""
         if BREAKOUT_FEATURES[config['model']].get('device_class'):
             module = import_module('mpf.platforms.fast.fast_exp_board')
             brk_board = module.FastBreakoutBoard(config, self)
@@ -109,27 +110,34 @@ class FastExpansionBoard:
 
         if brk_board:
             if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
-                self.log.error('Firmware on breakout board %s is too old. Required: %s, Actual: %s. Update at fastpinball.com/firmware',
+                self.log.error('Firmware on breakout board %s is too old. Required: %s, Actual: %s. '
+                               'Update at fastpinball.com/firmware',
                                product_id, self.breakouts[brk_board].features["min_fw"], firmware_version)
-                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. Required: {self.breakouts[brk_board].features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on breakout board {product_id} is too old. '
+                                           f'Required: {self.breakouts[brk_board].features["min_fw"]}, '
+                                           f'Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             brk = self.breakouts[brk_board]
 
             if product_id != brk.model:
-                raise AssertionError(f'EXP Board {self}, Breakout Port {brk.index}: Config is set for {brk.model}, but actually found "{id_string}"')
+                raise AssertionError(f'EXP Board {self}, Breakout Port {brk.index}: '
+                                     f'Config is set for {brk.model}, but actually found "{id_string}"')
             brk.hw_verified = True
 
         else:
             if version.parse(firmware_version) < version.parse(self.features['min_fw']):
-                self.log.error('Firmware on %s is too old. Required: %s, Actual: %s. Update at fastpinball.com/firmware',
+                self.log.error('Firmware on %s is too old. Required: %s, Actual: %s. '
+                               'Update at fastpinball.com/firmware',
                                self, self.features["min_fw"], firmware_version)
-                self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, Actual: {firmware_version}. Update at fastpinball.com/firmware')
+                self.platform.machine.stop(f'Firmware on {self} is too old. Required: {self.features["min_fw"]}, '
+                                           f'Actual: {firmware_version}. Update at fastpinball.com/firmware')
 
             if product_id != self.model:
                 raise AssertionError(f"Expected {self.model} but got {id_string} from {self}")
             self.hw_verified = True
 
     async def reset(self):
+        """Send a reset command to the EXP board."""
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
 
         # TODO move this to mixin classes for device types?
@@ -139,17 +147,20 @@ class FastExpansionBoard:
         # TODO re-initialize servos? Or call each breakout to do that?
 
     async def soft_reset(self):
+        """Trigger a 'soft' reset of each breakout board on the EXP."""
         for breakout in self.breakouts.values():
             await breakout.soft_reset()
 
     def _update_leds(self):
         # Called every tick to update the LEDs on this board
         for breakout_address in self.breakouts_with_leds:
-            dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() if (v.dirty and v.address == breakout_address)}
+            dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() \
+                          if (v.dirty and v.address == breakout_address)}
 
             if dirty_leds:
                 # TODO add the pre-encoded address to the defines file?
-                msg_header = ''.join([f'{x:02X}' for x in f'RD@{breakout_address}:'.encode()])  # RD@<address>:, encode to binary then convert to hex chars
+                # RD@<address>:, encode to binary then convert to hex chars
+                msg_header = ''.join([f'{x:02X}' for x in f'RD@{breakout_address}:'.encode()])
                 msg = f'{len(dirty_leds):02X}'
 
                 for led_num, color in dirty_leds.items():
@@ -160,7 +171,8 @@ class FastExpansionBoard:
                 try:
                     self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
                 except Exception as e:
-                    self.log.error(f"Error decoding the following message for board {breakout_address} : {msg_header}{msg}")
+                    self.log.error(
+                        f"Error decoding the following message for board {breakout_address} : {msg_header}{msg}")
                     self.log.debug("Attempted update that caused this error: %s", dirty_leds)
                     raise e
 
@@ -202,6 +214,7 @@ class FastBreakoutBoard:
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""
+        del kwargs
         # TODO move to a mixin class based on device type
         found = False
         for number, led in self.platform.fast_exp_leds.items():
