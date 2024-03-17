@@ -1,6 +1,6 @@
 """Contains the YamlInterface class for reading & writing YAML files."""
 import copy
-from typing import Any, Iterable, List, Dict
+from typing import Any, Iterable, Dict
 
 from ruamel import yaml
 from ruamel.yaml.error import MarkedYAMLError

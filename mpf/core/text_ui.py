@@ -80,7 +80,8 @@ class TextUi(MpfController):
         self.screen = None
 
         if not machine.options['text_ui'] or not Scene:
-            self.log.debug("Text UI is disabled. TUI option setting: %s, Asciimatics loaded: %s", machine.options['text_ui'], Scene)
+            self.log.debug("Text UI is disabled. TUI option setting: %s, Asciimatics loaded: %s",
+                           machine.options['text_ui'], Scene)
             return
 
         # hack to add themes until https://github.com/peterbrittain/asciimatics/issues/207 is implemented
@@ -460,7 +461,8 @@ class TextUi(MpfController):
     def _bcp_connected(self, **kwargs):
         del kwargs
         self.scene.remove_effect(self._pending_bcp_connection)
-        self._create_window()  # The MC will write any SDL or other messages on top of the TUI, so recreate it to get rid of that stuff
+        # The MC will write any SDL or other messages on top of the TUI, so recreate it to get rid of that stuff
+        self._create_window()
         self._schedule_draw_screen()
 
     def _asset_load_change(self, percent, **kwargs):

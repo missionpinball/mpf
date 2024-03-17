@@ -1,3 +1,4 @@
+"""Base class for FAST serial interfaces."""
 # mpf/platforms/fast/communicators/base.py
 
 import asyncio
@@ -40,7 +41,8 @@ class FastSerialCommunicator(LogMixin):
         self.port = None  # string of the port we're connected to
         self.port_debug = config['debug']
 
-        self.remote_firmware = None  # TODO some connections have more than one processor, should there be a processor object?
+        # TODO some connections have more than one processor, should there be a processor object?
+        self.remote_firmware = None
 
         self.send_queue = asyncio.Queue()  # Tuples of ( message, pause_until_string)
 
@@ -70,9 +72,11 @@ class FastSerialCommunicator(LogMixin):
         return f'[FAST {self.remote_processor}]'
 
     async def soft_reset(self):
+        """Trigger a soft reset of the serial communicator."""
         raise NotImplementedError(f"{self.__class__.__name__} does not implement soft_reset()")
 
     async def connect(self):
+        """Connect to the port(s) for this serial interface."""
         for port in self.config['port']:
             # If this is an auto-detect that failed to detect, the port will
             # just be 'auto' and there's no reason to try and connect to it.
@@ -141,6 +145,7 @@ class FastSerialCommunicator(LogMixin):
         self.write_to_port(b'\r\r\r\r')
 
     async def init(self):
+        """Initialize the communicator with any board-specific logic."""
         raise NotImplementedError(f"{self.__class__.__name__} does not implement init()")
 
     def _process_xx(self, msg):
@@ -166,7 +171,9 @@ class FastSerialCommunicator(LogMixin):
         self.done_processing_msg_response()
 
     def _processor_mismatch(self, processor):
-        print(f"PORT CONFIG ERROR: You config lists port '{self.port}' for the {self.remote_processor} connection, but the ID: response shows that port is the {processor} connection. Update your config.")
+        self.error_log(f"PORT CONFIG ERROR: You config lists port '{self.port}' for the {self.remote_processor} "
+                       f"connection, but the ID: response shows that port is the {processor} connection. "
+                       f"Please update your config.")
         self.machine.stop('FAST Serial port mismatch')
 
     # pylint: disable-msg=inconsistent-return-statements
@@ -201,7 +208,6 @@ class FastSerialCommunicator(LogMixin):
 
         Called once on MPF boot, not at game start.
         """
-        pass
 
     def stopping(self):
         """The serial connection is about to stop.
@@ -210,10 +216,12 @@ class FastSerialCommunicator(LogMixin):
         to go out before the connection is closed. A 100ms delay to allow
         for this happens after this is called.
         """
-        pass
 
     def cancel_tasks(self):
-        # called after stopping()
+        """Cancel all outstanding tasks.
+
+        This method is called after stopping()
+        """
         for task in self.tasks:
             task.cancel()
 
@@ -234,7 +242,8 @@ class FastSerialCommunicator(LogMixin):
                 self.machine.clock.loop.run_until_complete(self.writer.wait_closed())
             except RuntimeError as e:
                 if 'Event loop stopped before Future completed.' in str(e):
-                    self.log.warning("Event loop stopped before writer could close. This may not be an issue if the event loop was stopped intentionally.")
+                    self.log.warning("Event loop stopped before writer could close. "
+                                     "This may not be an issue if the event loop was stopped intentionally.")
                 else:
                     raise e
             self.writer = None
@@ -246,29 +255,36 @@ class FastSerialCommunicator(LogMixin):
         ----------
             msg (_type_): Message to send
             pause_sending_until (_type_): Response to wait for before sending the next message
-            log_msg (_type_, optional): Optional version of the message that will be used in logs. Typically used with binary messages so the longs
-                can contain human readable versions. Defaults to None which means the actual msg will be used in the logs.
+            log_msg (_type_, optional): Optional version of the message that will be used in logs.
+                Typically used with binary messages so the longs can contain human readable versions.
+                Defaults to None which means the actual msg will be used in the logs.
         """
         await self.no_response_waiting.wait()
         self.no_response_waiting.clear()
         self.send_with_confirmation(msg, pause_sending_until, log_msg)
 
-    async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1, max_retries=0, log_msg=None):
+    # pylint: disable-msg=too-many-arguments
+    async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1,
+                                                   max_retries=0, log_msg=None):
         """Send a message and wait for the response to be processed.
 
         Unlike send_and_wait_for_response(), this method will not release the wait when the response is received.
-        Instead, the wait must manually be released by calling done_processing_msg_response(). This is useful for messages that require multiple responses, or for messages that
-        require real processing where you don't want the next messages to be sent until the processing is complete.
+        Instead, the wait must manually be released by calling done_processing_msg_response(). This is useful for
+        messages that require multiple responses, or for messages that require real processing where you don't want
+        the next messages to be sent until the processing is complete.
 
         Parameters
         ----------
             msg (_type_): Message to send
             pause_sending_until (_type_): Response to wait for before sending the next message
-            timeout (int, optional): The time (in seconds) this communicator will wait for a response. If a response is not received by then
-                (based on the pause_sending_until), the message will be resent. Defaults to 1.
-            max_retries (int, optional): How many times the message will be resent if the response is not received by the timeout. -1 means unlimited retries. Defaults to 0.
-            log_msg (_type_, optional): Optional version of the message that will be used in logs. Typically used with binary messages so the longs
-                can contain human readable versions. Defaults to None which means the actual msg will be used in the logs.
+            timeout (int, optional): The time (in seconds) this communicator will wait for a response.
+                If a response is not received by then (based on the pause_sending_until), the message will be resent.
+                Defaults to 1.
+            max_retries (int, optional): How many times the message will be resent if the response is not
+                received by the timeout. -1 means unlimited retries. Defaults to 0.
+            log_msg (_type_, optional): Optional version of the message that will be used in logs.
+                Typically used with binary messages so the longs can contain human readable versions.
+                Defaults to None which means the actual msg will be used in the logs.
         """
         self.done_waiting.clear()
 
@@ -276,7 +292,8 @@ class FastSerialCommunicator(LogMixin):
 
         while max_retries == -1 or retries <= max_retries:
             try:
-                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until, log_msg), timeout=timeout)
+                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until,
+                                                                       log_msg), timeout=timeout)
                 break
             except asyncio.TimeoutError:
                 self.log.error("Timeout waiting for response to %s. Retrying...", msg)
@@ -293,7 +310,9 @@ class FastSerialCommunicator(LogMixin):
         self.done_waiting.set()
 
     def send_with_confirmation(self, msg, pause_sending_until, log_msg=None):
-        """Sends a message without blocking (returns immediately), but will hold future messages in the queue until the response is received.
+        """Sends a message without blocking (returns immediately).
+
+        Will hold future messages in the queue until the response is received.
 
         Parameters
         ----------
@@ -314,10 +333,12 @@ class FastSerialCommunicator(LogMixin):
             self.send_queue.put_nowait((f'{msg}\r'.encode(), None, msg))
 
     def send_bytes(self, msg, log_msg):
+        """Send a raw list of bytes to the communicator."""
         # Forcing log_msg since bytes are not human readable
         self.send_queue.put_nowait((msg, None, log_msg))
 
     def parse_incoming_raw_bytes(self, msg):
+        """Parse a bytestring from the serial communicator."""
         self.received_msg += msg
 
         while True:
@@ -366,8 +387,10 @@ class FastSerialCommunicator(LogMixin):
             self._resume_sending()
 
     def pause_sending(self, msg_header):
+        """Pause the sending of serial messages until unblocked."""
         if __debug__:
-            assert len(msg_header) >= 3, f"Confirmation headers should be at least three characters, received '{msg_header}'"
+            assert len(msg_header) >= 3, \
+                f"Confirmation headers should be at least three characters, received '{msg_header}'"
         self.pause_sending_until = msg_header
         self.pause_sending_flag.set()
 
@@ -428,7 +451,7 @@ class FastSerialCommunicator(LogMixin):
                 return  # TODO better way to catch shutting down?
 
     def write_to_port(self, msg, log_msg=None):
-        # Sends a message as is, without encoding or adding a <CR> character
+        """Send a message as is, without encoding or adding a <CR> character."""
         if self.port_debug:
             if log_msg:
                 self.log.info(">>>> %s", log_msg)

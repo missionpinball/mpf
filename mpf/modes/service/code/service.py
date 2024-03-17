@@ -423,7 +423,7 @@ sort_devices_by_number: single|bool|True
                                  test_color=color)
 
     def _update_light_chain_slide(self, items, position, color):
-        board, chain, lights = items[position]
+        board, chain, _ = items[position]  # Unused variable "lights"
         self.machine.events.post("service_light_test_start",
                                  board_name=board,
                                  light_name=" ",
@@ -475,11 +475,11 @@ sort_devices_by_number: single|bool|True
 
         while True:
             self._update_light_chain_slide(items, position, colors[color_position])
-            for addr, l in items[position].light:
+            for _, l in items[position].light:  # Unused variable "addr"
                 l.color(colors[color_position], key="service", priority=1000000)
 
             key = await self._get_key()
-            for addr, l in items[position].light:
+            for _, l in items[position].light:  # Unused variable "addr"
                 l.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
@@ -499,7 +499,7 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_light_test_stop")
 
-    def _generate_light_chains(self):
+    def _generate_light_chains(self):  # pylint: disable=too-many-locals
         items = self.machine.service.get_light_map(do_sort=self._do_sort)
 
         # Categorize by platform and address
@@ -519,9 +519,9 @@ sort_devices_by_number: single|bool|True
                     else:
                         chain, addr = bits
                 elif len(bits) == 3:
-                    chain, addr, color = bits
+                    chain, addr, _ = bits  # Unused variable "color"
                 elif len(bits) == 4:
-                    _, chain, addr, color = bits
+                    _, chain, addr, _ = bits
                 else:
                     self.warning_log("Unknown bits in parsing light address: %s", bits)
                     continue
@@ -572,7 +572,8 @@ sort_devices_by_number: single|bool|True
                     "label": config.get("label", track),
                     "is_platform": bool(platform),
                     # TODO: Give each software track a 'name' property
-                    "value": self.machine.variables.get_machine_var(f"{config['name'] if platform else track}_volume") or config['volume']
+                    "value": self.machine.variables.get_machine_var(
+                        f"{config['name'] if platform else track}_volume") or config['volume']
                  } for track, config in item_configs.items()]
 
         # do not crash if no items

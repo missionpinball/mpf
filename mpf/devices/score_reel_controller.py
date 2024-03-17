@@ -1,9 +1,6 @@
 """Score reel controller."""
 import logging
 
-import asyncio
-from functools import partial
-
 
 class ScoreReelController:
 
