@@ -634,6 +634,7 @@ class AsyncioSyncAssetManager(BaseAssetManager):
         task.add_done_callback(Util.raise_exceptions)
 
 
+# pylint: disable-msg=invalid-name
 TUnconditionalAssetEntry = Tuple[AssetClass, int]
 TConditionalAssetEntry = Tuple[AssetClass, int, BoolTemplate]
 TMaybeConditionalAssetEntry = Union[TUnconditionalAssetEntry, TConditionalAssetEntry]

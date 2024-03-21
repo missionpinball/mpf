@@ -54,7 +54,7 @@ class EventPlayer(FlatConfigPlayer):
 
                 if s["number"] is not None:
                     self.delay.add(callback=self._post_event, ms=s["number"],
-                                event=event, priority=s["priority"], params=s["params"])
+                                   event=event, priority=s["priority"], params=s["params"])
                 else:
                     self._post_event(event, s["priority"], s["params"])
 

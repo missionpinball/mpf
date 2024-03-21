@@ -2,9 +2,12 @@
 
 from mpf.core.logging import LogMixin
 
+
 class MpfPlugin(LogMixin):
 
-    __slots__ = ("machine", "name")
+    """Base class for a plugin module."""
+
+    __slots__ = ("machine", "name", "config")
 
     config_section = None
 
@@ -13,11 +16,12 @@ class MpfPlugin(LogMixin):
         super().__init__()
         self.machine = machine
         self.name = type(self).__name__
+        self.config = None
 
         if self.config_section and self.config_section not in self.machine.config:
             self.machine.log.debug('"%s:" section not found in machine '
-                    'configuration, so the %s will not be '
-                    'used.', self.config_section, self.name)
+                                   'configuration, so the %s will not be '
+                                   'used.', self.config_section, self.name)
 
     def initialize(self):
         """Called when the plugin is enabled and loaded into MPF.

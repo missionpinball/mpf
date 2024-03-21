@@ -14,6 +14,7 @@ class FastExpansionBoard:
 
     """A FAST Expansion board on the EXP connection."""
 
+    # pylint: disable-msg=too-many-instance-attributes
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
                  "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate"]
 
@@ -39,6 +40,7 @@ class FastExpansionBoard:
         self.address = address
         self.model = config['model']
 
+        self.led_fade_rate = None
         self.firmware_version = None
         self.hw_verified = False  # have we made contact with the board and verified it's the right hardware?
 
@@ -81,7 +83,8 @@ class FastExpansionBoard:
 
     def get_description_string(self) -> str:
         """Return description string."""
-        return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}" #TODO add brk
+        # TODO add breakout boards
+        return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}"
 
     def verify_hardware(self, id_string: str, active_board: str) -> None:
         """Verifies an EXP or breakout board firmware versions.
@@ -157,7 +160,7 @@ class FastExpansionBoard:
         Called every tick to update the LEDs on this board.
         """
         for breakout_address in self.breakouts_with_leds:
-            dirty_leds = {k:v.current_color for (k, v) in self.platform.fast_exp_leds.items() \
+            dirty_leds = {k: v.current_color for (k, v) in self.platform.fast_exp_leds.items()
                           if (v.dirty and v.address == breakout_address)}
 
             if dirty_leds:

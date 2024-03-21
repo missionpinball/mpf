@@ -168,7 +168,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             if self.debug:
                 # pylint: disable-msg=undefined-loop-variable
                 self.debug_log("Ensure incands are OFF on %s:%s", chain_serial,
-                            "".join(HEX_FORMAT % b for b in send_cmd))
+                               "".join(HEX_FORMAT % b for b in send_cmd))
 
             # Disabling linting on this until understood what 'chain_serial' means here,
             # because we are no longer in the for-loop that defines chain_serial
@@ -1143,6 +1143,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             coil.hw_driver.remove_switch_rule()
 
     async def configure_servo(self, number, config: dict) -> OPPServo:
+        """Generate an OPPServo class with the given number."""
         del config
         chain_serial, _, pin_number = number.split('-')  # Unused value is 'card'
 

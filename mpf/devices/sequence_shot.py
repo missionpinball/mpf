@@ -180,7 +180,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             elapsed = 0
 
         """Post sequence complete event including its elapsed time to complete."""
-        self.machine.events.post("{}_hit".format(self.name),elapsed=elapsed)
+        self.machine.events.post("{}_hit".format(self.name), elapsed=elapsed)
         '''event: (name)_hit
         desc: The sequence_shot called (name) was just completed.
         '''

@@ -14,8 +14,12 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.fast.fast import \
         FastHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
+
 @dataclass
 class FastDriverConfig:
+
+    """Class for FAST hardware driver configuration."""
+
     number: str
     trigger: str
     switch_id: str
@@ -25,6 +29,7 @@ class FastDriverConfig:
     param3: str
     param4: str
     param5: str
+
 
 class FASTDriver:
 
@@ -108,7 +113,7 @@ class FASTDriver:
         else:
             mode = '10'
 
-        return FastDriverConfig(number = self.hw_number,
+        return FastDriverConfig(number=self.hw_number,
                                 trigger='81',
                                 switch_id='00',
                                 mode=mode,
@@ -223,14 +228,14 @@ class FASTDriver:
     async def reset(self):
         """Reset the driver to fresh (disabled/unconfigured) state."""
         self.log.debug("Resetting driver %s", self.number)
-        self.current_driver_config.trigger =   '00'
+        self.current_driver_config.trigger = '00'
         self.current_driver_config.switch_id = '00'
-        self.current_driver_config.mode =      '00'
-        self.current_driver_config.param1 =    '00'
-        self.current_driver_config.param2 =    '00'
-        self.current_driver_config.param3 =    '00'
-        self.current_driver_config.param4 =    '00'
-        self.current_driver_config.param5 =    '00'
+        self.current_driver_config.mode = '00'
+        self.current_driver_config.param1 = '00'
+        self.current_driver_config.param2 = '00'
+        self.current_driver_config.param3 = '00'
+        self.current_driver_config.param4 = '00'
+        self.current_driver_config.param5 = '00'
 
         await self.communicator.send_and_wait_for_response_processed(self.get_current_config(),
                                                                      self.get_current_config())
@@ -352,7 +357,7 @@ class FASTDriver:
 
         if self.get_board_name() != switch.hw_switch.get_board_name():
             raise AssertionError(f"Driver {coil.number} and switch {switch.hw_switch.number} "
-                                "are on different boards. Cannot apply rule!")
+                                 "are on different boards. Cannot apply rule!")
 
     def is_new_config_needed(self, current, new):
         """Determines if bits other than 6 and 7 changed.
@@ -387,14 +392,16 @@ class FASTDriver:
         """Set an AC Relay rule with virtual switch."""
         self.log.debug("Setting A/C Relay for driver %s (0x%s) and switch %s (0x%s)",
                        self.number, self.hw_number, relay_switch.number, relay_switch.hw_number)
-        self.current_driver_config = FastDriverConfig(number=self.hw_number, trigger='81',
-                                        switch_id=relay_switch.hw_number,
-                                        mode='25',
-                                        param1=Util.int_to_hex_string(debounce_closed_ms),
-                                        param2=Util.int_to_hex_string(debounce_open_ms),
-                                        param3='00',
-                                        param4='00',
-                                        param5='00')
+        self.current_driver_config = FastDriverConfig(
+            number=self.hw_number, trigger='81',
+            switch_id=relay_switch.hw_number,
+            mode='25',
+            param1=Util.int_to_hex_string(debounce_closed_ms),
+            param2=Util.int_to_hex_string(debounce_open_ms),
+            param3='00',
+            param4='00',
+            param5='00'
+        )
         self.send_config_to_driver(wait_to_confirm=True)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):

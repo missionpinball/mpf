@@ -9,7 +9,15 @@ class SwitchPlayer(MpfPlugin):
 
     """Plays back switch sequences from a config file, used for testing."""
 
+    __slots__ = ["current_step", "delay", "step_list"]
     config_section = 'switch_player'
+
+    def __init__(self, *args, **kwargs):
+        """Initialize class variables."""
+        super().__init__(*args, **kwargs)
+        self.current_step = None
+        self.delay = None
+        self.step_list = None
 
     def initialize(self):
         """Initialize switch player."""

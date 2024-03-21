@@ -9,9 +9,10 @@ from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE, SerialException
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
-MIN_FW = version.parse('0.00') # override in subclass
+MIN_FW = version.parse('0.00')  # override in subclass
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class FastSerialCommunicator(LogMixin):
 
     """Handles the serial communication to the FAST platform."""
@@ -25,6 +26,7 @@ class FastSerialCommunicator(LogMixin):
 
     def __init__(self, platform, processor, config):
         """Initialize FastSerialCommunicator."""
+        super().__init__()  # Initialize logging
         self.platform = platform
         self.remote_processor = processor.upper()
         self.remote_model = str()
@@ -446,7 +448,7 @@ class FastSerialCommunicator(LogMixin):
                 if self.pause_sending_flag.is_set():
                     await self.pause_sending_flag.wait()
 
-            except Exception as e:
+            except SerialException as e:
                 self.log.error(e)
                 return  # TODO better way to catch shutting down?
 

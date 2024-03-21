@@ -12,13 +12,14 @@ class FASTAudioInterface(LogMixin):
 
     def __init__(self, platform, communicator):
         """Initialize audio interface."""
+        super().__init__()
         self.platform = platform
         self.machine = platform.machine
         self.communicator = communicator
         self.amps = {
-            'main': { 'name': 'fast_audio_main', 'label': "Speakers" },
-            'sub': { 'name': 'fast_audio_sub', 'label': "Subwoofer" },
-            'headphones': { 'name': 'fast_audio_headphones', 'label': "Headphones" }
+            'main': {'name': 'fast_audio_main', 'label': "Speakers"},
+            'sub': {'name': 'fast_audio_sub', 'label': "Subwoofer"},
+            'headphones': {'name': 'fast_audio_headphones', 'label': "Headphones"}
         }
         self.control_pin_pulse_times = list()
 
@@ -43,12 +44,15 @@ class FASTAudioInterface(LogMixin):
                 self.machine.variables.set_machine_var(
                     name=var_name,
                     value=self.machine.variables.get_machine_var('fast_audio_main_volume'),
-                    persist=self.communicator.config['persist_volume_settings'])
-
+                    persist=self.communicator.config['persist_volume_settings']
+                )
             elif not self.machine.variables.is_machine_var(var_name):
-                self.machine.variables.set_machine_var(name=var_name,
-                                                    value=self.communicator.config[f'default_{amp_name}_volume'],
-                                                    persist=self.communicator.config['persist_volume_settings'])
+                self.machine.variables.set_machine_var(
+                    name=var_name,
+                    value=self.communicator.config[f'default_{amp_name}_volume'],
+                    persist=self.communicator.config['persist_volume_settings']
+                )
+
     def _init_amps(self):
         for amp_name, amp in self.amps.items():
             amp['steps'] = self.communicator.config[f'{amp_name}_steps']
@@ -75,7 +79,6 @@ class FASTAudioInterface(LogMixin):
         # Write the volume levels to the hardware layer, but no need to send
         # them because (regular priority) init_phase_1 includes a soft_reset()
         self.send_volume_to_hw(send_now=False)
-
 
     def _configure_control_pins(self):
         for i in range(6):
@@ -190,12 +193,12 @@ class FASTAudioInterface(LogMixin):
         """
         del kwargs
         if not ms:
-            ms = self.control_pin_pulse_times[pin-1]
+            ms = self.control_pin_pulse_times[pin - 1]
 
         pin = int(pin)
         assert 1 <= pin <= 6, f"Invalid pin {pin}"
         # pins are zero indexed in the hardware
-        self.communicator.pulse_control_pin(pin-1, ms)
+        self.communicator.pulse_control_pin(pin - 1, ms)
 
     def pulse_power_pin(self, ms=None, **kwargs):
         """Pulse the specified power pin for the specified number of milliseconds."""

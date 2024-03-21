@@ -11,6 +11,7 @@ MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
+
 class FastExpCommunicator(FastSerialCommunicator):
 
     """Handles the serial communication for the FAST EXP bus."""
@@ -28,19 +29,22 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.message_processors['BR:'] = self._process_br
 
     async def init(self):
+        """Query the expansion boards."""
         await self.query_exp_boards()
 
     def start_tasks(self):
         """Start listening for commands and schedule watchdog."""
         for board in self.exp_boards_by_address.values():
             self.tasks.append(self.platform.machine.clock.schedule_interval(
-                          board.update_leds, 1 / board.config['led_hz']))
+                              board.update_leds, 1 / board.config['led_hz']))
 
     def stopping(self):
+        """Stop listening to the board and clear it."""
         for board in self.exp_boards_by_address.values():
             board.communicator.send_and_forget(f'BR@{board.address}:')
 
     async def soft_reset(self):
+        """Trigger a soft reset for the board and all breakouts."""
         for board in self.exp_boards_by_address.values():
             await board.soft_reset()
 

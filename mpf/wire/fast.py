@@ -504,20 +504,22 @@ def wire(machine: MachineController):
     switches_specify_boards = None
     for switch in machine.switches.values():
         num_spec = switch.config["number"]
+        has_dash = "-" in num_spec
         if switches_specify_boards is None:
-            switches_specify_boards = ("-" in num_spec)
+            switches_specify_boards = has_dash
         else:
-            if ("-" in num_spec) != switches_specify_boards:
+            if switches_specify_boards != has_dash:
                 print(inconsistent_err)
                 return None
 
     drivers_specify_boards = None
     for coil in machine.coils.values():
         num_spec = coil.config["number"]
+        has_dash = "-" in num_spec
         if drivers_specify_boards is None:
-            drivers_specify_boards = ("-" in num_spec)
+            drivers_specify_boards = has_dash
         else:
-            if ("-" in num_spec) != drivers_specify_boards:
+            if drivers_specify_boards != has_dash:
                 print(inconsistent_err)
                 return None
 
