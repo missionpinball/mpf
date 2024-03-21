@@ -170,7 +170,7 @@ class TextUi(MpfController):
 
     def _update_stats(self):
         # Runtime
-        rt = (datetime.now() - self.start_time)
+        rt = datetime.now() - self.start_time
         mins, sec = divmod(rt.seconds + rt.days * 86400, 60)
         hours, mins = divmod(mins, 60)
         self.footer_uptime.text = 'RUNNING {:d}:{:02d}:{:02d}'.format(hours, mins, sec)

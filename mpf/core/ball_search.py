@@ -279,7 +279,7 @@ class BallSearch(MpfController):
 
             # if a callback returns True we wait for the next one
             self.debug_log("Ball search: %s (phase: %s  iteration: %s)",
-                element.name, self.phase, self.iteration)
+                           element.name, self.phase, self.iteration)
             if element.callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self._run, ms=timeout)
                 return

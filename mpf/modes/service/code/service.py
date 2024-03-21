@@ -13,6 +13,7 @@ from mpf.core.utility_functions import Util
 ServiceMenuEntry = namedtuple("ServiceMenuEntry", ["label", "callback"])
 LightChainMap = namedtuple("LightMap", ["board", "chain", "light"])
 
+
 class Service(AsyncMode):
 
     """The service mode."""
@@ -558,7 +559,7 @@ sort_devices_by_number: single|bool|True
         if not items:   # pragma: no cover
             return
 
-        items.sort(key=lambda x: x.chain )
+        items.sort(key=lambda x: x.chain)
 
     async def _volume_menu(self, platform=None):
         position = 0
@@ -567,14 +568,14 @@ sort_devices_by_number: single|bool|True
         else:
             item_configs = self.machine.config["sound_system"]["tracks"]
         items = [{
-                    **config,
-                    "name": config.get("name", track),
-                    "label": config.get("label", track),
-                    "is_platform": bool(platform),
-                    # TODO: Give each software track a 'name' property
-                    "value": self.machine.variables.get_machine_var(
-                        f"{config['name'] if platform else track}_volume") or config['volume']
-                 } for track, config in item_configs.items()]
+            # TODO: Give each software track a 'name' property
+            **config,
+            "name": config.get("name", track),
+            "label": config.get("label", track),
+            "is_platform": bool(platform),
+            "value": self.machine.variables.get_machine_var(
+                f"{config['name'] if platform else track}_volume") or config['volume']
+        } for track, config in item_configs.items()]
 
         # do not crash if no items
         if not items:   # pragma: no cover
@@ -617,7 +618,6 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_volume_stop")
 
-
     def _update_volume_slide(self, items, position, is_change=False, focus_change=None):
         config = items[position]
         event = "service_volume_{}".format("edit" if is_change else "start")
@@ -636,7 +636,7 @@ sort_devices_by_number: single|bool|True
             values = items[position]["levels_list"]
         else:
             # Use ints for values to avoid floating-point comparisons
-            values = [int((0.05 * i) * 100) for i in range(0,21)]
+            values = [int((0.05 * i) * 100) for i in range(0, 21)]
         value_position = values.index(items[position]["value"])
         self._update_volume_slide(items, position, is_change=True)
 

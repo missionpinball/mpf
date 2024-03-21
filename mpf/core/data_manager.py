@@ -129,7 +129,7 @@ class DataManager(MpfController):
             # save data
             try:
                 FileManager.save(self.filename, data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
                 self.info_log("ERROR writing file %s: %s", self.filename, e)

@@ -10,6 +10,7 @@ from mpf.core.file_interface import FileInterface
 _yaml = yaml.YAML(typ='safe')
 _yaml.default_flow_style = False
 
+
 class YamlInterface(FileInterface):
 
     """File interface for yaml files."""

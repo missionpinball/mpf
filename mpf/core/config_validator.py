@@ -180,9 +180,7 @@ class ConfigValidator:
 
         if not isinstance(source, dict):
             raise self.validation_error(source, validation_failure_info,
-                                        "Config attribute should be dict but is {}".format(
-                source.__class__
-            ))
+                                        "Config attribute should be dict but is {}".format(source.__class__))
 
         for k in list(this_spec.keys()):
             if this_spec[k] == 'ignore' or k[0] == '_':
@@ -235,9 +233,10 @@ class ConfigValidator:
         if item == 'item not in config!@#':
             if default == 'default required!@#':
                 section = self._build_error_path(validation_failure_info.parent)
-                raise self.validation_error("None", validation_failure_info,
-                                      'Required setting "{}:" is missing from section "{}:" in your config.'.format(
-                                          validation_failure_info.item, section), 9)
+                raise self.validation_error(
+                    "None", validation_failure_info,
+                    f'Required setting "{validation_failure_info.item}:" is missing '
+                    f'from section "{section}:" in your config.', 9)
             item = default
 
         if item_type == 'single':
@@ -375,9 +374,9 @@ class ConfigValidator:
         if item is True and 'yes' in enum_values:
             return 'yes'
 
-        raise self.validation_error(item, validation_failure_info,
-                                     "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
-                                         item, str(param)))
+        raise self.validation_error(
+            item, validation_failure_info,
+            f'Entry "{item}" is not valid for enum. Valid values are: {str(param)}')
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
@@ -387,20 +386,20 @@ class ConfigValidator:
 
         if not isinstance(item, str):
             raise self.validation_error(item, validation_failure_info,
-                                         'Expected "{}" in "{}" to be string'.format(item, param),
-                                         10)
+                                        'Expected "{}" in "{}" to be string'.format(item, param),
+                                        10)
 
         if not item:
             raise self.validation_error(item, validation_failure_info,
-                                         'Setting "{}" is empty'.format(param),
-                                         14)
+                                        'Setting "{}" is empty'.format(param),
+                                        14)
 
         if item in section:
             return section[item]
 
         raise self.validation_error(item, validation_failure_info,
-                                     'Device "{}" not found in "{}:" section in your config.'.format(item, param),
-                                     6)
+                                    'Device "{}" not found in "{}:" section in your config.'.format(item, param),
+                                    6)
 
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):

@@ -527,19 +527,30 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 @dataclass
 class SwitchSettings:
+
+    """Base class for a switch configuration setting."""
+
     hw_switch: Any
     invert: Any
     debounce: Any
 
+
 @dataclass
 class DriverSettings:
+
+    """Base class for a driver configuration setting."""
+
     hw_driver: Any
     pulse_settings: Any
     hold_settings: Any
     recycle: Any
 
+
 @dataclass
 class DriverConfig:
+
+    """Base class for a driver platform configuration."""
+
     name: str
     default_pulse_ms: int
     default_pulse_power: float
@@ -550,11 +561,14 @@ class DriverConfig:
     max_pulse_power: float
     max_hold_power: float
 
+
 @dataclass
 class RepulseSettings:
+
+    """Base class for a driver repulse setting."""
+
     enable_repulse: bool
     debounce_ms: int
-
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):

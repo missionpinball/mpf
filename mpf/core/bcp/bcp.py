@@ -58,7 +58,8 @@ class Bcp(MpfController):
         """Connect to BCP servers from MPF config."""
         del kwargs
         if 'connections' not in self.machine.config['bcp'] or \
-        not self.machine.config['bcp']['connections'] or self.machine.config['bcp']['connections'] == 'None':
+                not self.machine.config['bcp']['connections'] or \
+                self.machine.config['bcp']['connections'] == 'None':
             return
 
         client_connect_futures = []

@@ -2,23 +2,23 @@
 import os
 
 import argparse
+import logging
 import re
 import unittest
 import sys
 
+from kivy.logger import Logger  # pylint: disable=import-error
 from mpf.commands import MpfCommandLineParser
 from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
 from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
 
 # some hacks to unbreak logging after loading the kivy logger
-import logging
 root = logging.root
 os.environ['KIVY_NO_FILELOG'] = '1'
 os.environ['KIVY_NO_CONSOLELOG'] = '1'
 os.environ["KIVY_NO_ARGS"] = "1"
 
 # pylint: disable-msg=import-error,wrong-import-position
-from kivy.logger import Logger
 for handler in Logger.handlers:
     Logger.removeHandler(handler)
 sys.stdout = sys.__stdout__
