@@ -12,7 +12,6 @@ class FASTDMD(DmdPlatformInterface):
         self.name = name
         self.send = sender
 
-
     def set_brightness(self, brightness: float):
         """Set brightness."""
         # not supported

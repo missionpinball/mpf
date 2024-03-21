@@ -15,6 +15,8 @@ from mpf.platforms.fast import fast_defines
 
 class FastNetNeuronCommunicator(FastSerialCommunicator):
 
+    """Serial communicator for the Neuron board."""
+
     MIN_FW = version.parse('2.06')
     IO_MIN_FW = version.parse('1.09')
     MAX_IO_BOARDS = 9
@@ -46,7 +48,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.message_processors[f'-{self.SWITCH_CMD[-1]}:'] = self._process_switch_closed
 
         for board, board_config in self.config['io_loop'].items():
-            board_config['index'] = int(board_config['order'])-1
+            board_config['index'] = int(board_config['order']) - 1
 
             try:
                 self.io_loop[board_config['index']] = board
@@ -196,13 +198,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.platform.register_io_board(FastIoBoard(self, name, node_id, model, fw, sw, dr, prior_sw, prior_drv))
 
         self.log.info('Registered I/O Board %s: Model: %s, Firmware: %s, Switches: %s, Drivers: %s',
-                                node_id, model, fw, sw, dr)
+                      node_id, model, fw, sw, dr)
 
         min_fw = self.IO_MIN_FW  # TODO move to IO board class
         if min_fw > version.parse(fw):
             self.platform.log.critical("Firmware version mismatch. MPF requires the I/O boards "
-                                        "to be firmware %s, but your Board %s (%s) is firmware %s",
-                                        min_fw, node_id, model, fw)
+                                       "to be firmware %s, but your Board %s (%s) is firmware %s",
+                                       min_fw, node_id, model, fw)
             firmware_ok = False
 
         if not firmware_ok:
@@ -251,11 +253,9 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
             return
 
         if (switch_obj.current_hw_config.mode != mode or
-            switch_obj.current_hw_config.debounce_close != debounce_close or
-            switch_obj.current_hw_config.debounce_open != debounce_open
-            ):
+                switch_obj.current_hw_config.debounce_close != debounce_close or
+                switch_obj.current_hw_config.debounce_open != debounce_open):
             # TODO this seems tedious, should we switch the dataclass to a namedtuple?
-
             switch_obj.send_config_to_switch()
             # it will get marked done via the :P response above
         else:
@@ -333,4 +333,5 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
                                                              logical=True)
 
     def stopping(self):
+        """Stop the Neuron processor and disable the watchdog."""
         self.send_and_forget('WD:1')

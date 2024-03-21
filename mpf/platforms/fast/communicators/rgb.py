@@ -5,7 +5,8 @@ from packaging import version
 
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
-MIN_FW = version.parse('0.87') # override in subclass
+MIN_FW = version.parse('0.87')  # override in subclass
+
 
 class FastRgbCommunicator(FastSerialCommunicator):
 
@@ -23,6 +24,7 @@ class FastRgbCommunicator(FastSerialCommunicator):
         self.message_processors['!B:'] = self._process_boot_msg
 
     async def init(self):
+        """Initialize the RGB processor and await an ID response."""
         # Loop here until we get a response
         await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
 
@@ -73,4 +75,5 @@ class FastRgbCommunicator(FastSerialCommunicator):
         # self.send_and_forget(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
 
     def stopping(self):
+        """Stop the RGB processor and reset it."""
         self.reset()

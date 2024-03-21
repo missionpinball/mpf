@@ -8,6 +8,8 @@ from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicato
 
 class FastNetNanoCommunicator(FastNetNeuronCommunicator):
 
+    """Serial communicator for FAST Nano board."""
+
     MIN_FW = version.parse('1.05')
     IO_MIN_FW = version.parse('1.05')
     IGNORED_MESSAGES = ['WD:P', 'TN:P']
@@ -19,7 +21,7 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
     SWITCH_CMD = 'SN'
 
     async def configure_hardware(self):
-        pass # Not used on a Nano
+        """Configure the hardware with CH. Not used on a Nano."""
 
     def _process_sa(self, msg):
         # Nano has slightly different variation of this value, get it into a format the base can process

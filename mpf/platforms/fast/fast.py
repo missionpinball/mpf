@@ -37,11 +37,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
     """Platform class for the FAST Pinball hardware."""
 
     __slots__ = ["config", "configured_ports", "machine_type", "is_retro",
-                "serial_connections", "fast_rgb_leds", "fast_exp_leds", "fast_segs",
-                "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
-                "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
-                "io_boards", "io_boards_by_name", "switches_initialized",
-                "drivers_initialized", "audio_interface"]
+                 "serial_connections", "fast_rgb_leds", "fast_exp_leds", "fast_segs",
+                 "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
+                 "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
+                 "io_boards", "io_boards_by_name", "switches_initialized",
+                 "drivers_initialized", "audio_interface"]
 
     port_types = ['net', 'exp', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 
@@ -243,32 +243,32 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             elif port == 'exp':
                 from mpf.platforms.fast.communicators.exp import \
                     FastExpCommunicator
-                communicator = FastExpCommunicator(platform=self, processor=port,config=config)
+                communicator = FastExpCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['exp'] = communicator
             elif port == 'seg':
                 from mpf.platforms.fast.communicators.seg import \
                     FastSegCommunicator
-                communicator = FastSegCommunicator(platform=self, processor=port,config=config)
+                communicator = FastSegCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['seg'] = communicator
             elif port == 'aud':
                 from mpf.platforms.fast.communicators.aud import \
                     FastAudCommunicator
-                communicator = FastAudCommunicator(platform=self, processor=port,config=config)
+                communicator = FastAudCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['aud'] = communicator
             elif port == 'dmd':
                 from mpf.platforms.fast.communicators.dmd import \
                     FastRgbDmdCommunicator
-                communicator = FastRgbDmdCommunicator(platform=self, processor=port,config=config)
+                communicator = FastRgbDmdCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['dmd'] = communicator
             elif port == 'emu':
                 from mpf.platforms.fast.communicators.emu import \
                     FastEmuCommunicator
-                communicator = FastEmuCommunicator(platform=self, processor=port,config=config)
+                communicator = FastEmuCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['emu'] = communicator
             elif port == 'rgb':
                 from mpf.platforms.fast.communicators.rgb import \
                     FastRgbCommunicator
-                communicator = FastRgbCommunicator(platform=self, processor=port,config=config)
+                communicator = FastRgbCommunicator(platform=self, processor=port, config=config)
                 self.serial_connections['rgb'] = communicator
             else:
                 raise AssertionError("Unknown processor type")  # TODO better error
@@ -305,8 +305,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         if not autodetect_processors:
             return
 
-        detector = FastPortDetector(platform=self, autodetect_processors=autodetect_processors,
-                                                  hardcoded_ports=hardcoded_ports)
+        detector = FastPortDetector(platform=self,
+                                    autodetect_processors=autodetect_processors,
+                                    hardcoded_ports=hardcoded_ports)
 
         await detector.detect_ports()
 
@@ -583,7 +584,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 try:
                     number = self.port_idx_to_hex(parts[0], parts[1], 64)
                 except IndexError:
-                    number = f'{int(parts[0]):02X}' # this is a legacy LED number as an int
+                    # this is a legacy LED number as an int
+                    number = f'{int(parts[0]):02X}'
 
                 if number not in self.fast_rgb_leds:
                     try:
@@ -627,7 +629,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 raise AssertionError(f"Device number {device_num} exceeds the number of devices per port "
                                      f"({devices_per_port})")
 
-        port_offset = ((port - 1) * devices_per_port)
+        port_offset = (port - 1) * devices_per_port
         device_num = device_num - 1
         return f'{(port_offset + device_num):02X}'
 

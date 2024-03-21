@@ -5,7 +5,8 @@ from packaging import version
 
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
-MIN_FW = version.parse('0.88') # override in subclass
+MIN_FW = version.parse('0.88')  # override in subclass
+
 
 class FastRgbDmdCommunicator(FastSerialCommunicator):
 

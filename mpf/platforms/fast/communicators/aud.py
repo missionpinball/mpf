@@ -43,7 +43,7 @@ class FastAudCommunicator(FastSerialCommunicator):
                  'volume': 0,
                  'enabled': False,
                  },
-            }
+        }
         self.current_config_byte = '00'
         self.phones_level = True  # False = line, True = phones
         self.phones_mute = False  # False = ignore phones insertion, True = mute main/sub when phones inserted
