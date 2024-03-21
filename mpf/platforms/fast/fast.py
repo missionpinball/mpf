@@ -27,7 +27,7 @@ from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast.fast_switch import FASTSwitch
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.system11 import System11Driver, System11OverlayPlatform
+from mpf.platforms.system11 import System11OverlayPlatform
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
@@ -55,7 +55,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         super().__init__(machine)
 
         self.config = self.machine.config_validator.validate_config("fast", self.machine.config['fast'])
-        self._configure_device_logging_and_debug("FAST", self.config, url_base='https://fastpinball.com/mpf/error')  # TODO
+        self._configure_device_logging_and_debug("FAST", self.config, url_base='https://fastpinball.com/mpf/error')
 
         self.configured_ports = list()
 
@@ -106,7 +106,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         info_string = ""
 
         for port in sorted(self.serial_connections.keys()):
-            info_string += f"{port.upper()}: {self.serial_connections[port].remote_model} v{self.serial_connections[port].remote_firmware}\n"
+            info_string += f"{port.upper()}: {self.serial_connections[port].remote_model} " + \
+                f"v{self.serial_connections[port].remote_firmware}\n"
 
         info_string += "\nI/O Boards:\n"
         for board in self.io_boards.values():
@@ -276,12 +277,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 await communicator.connect()
             except SerialException as e:
                 if config.get("optional"):
-                    self.info_log("Unable to connect to %s on port %s, flagged as optional so ignoring", port, config['port'])
+                    self.info_log("Unable to connect to %s on port %s, flagged as optional so ignoring",
+                                  port, config['port'])
                     del self.serial_connections[port]
                     continue
                 raise MpfRuntimeError(f"Could not open serial port {port}. Is something else connected to the port? "
-                                      "Did the port number or your computer change? Do you have permissions to the port? "
-                                      "", 1, self.log.name) from e
+                                      "Did the port number or your computer change? Do you have permissions "
+                                      "to access the port?", 1, self.log.name) from e
             await communicator.init()
             self.serial_connections[port] = communicator
 
@@ -328,7 +330,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         try:
             board_str, driver_str = number.split("-")
 
-        except ValueError as e:  # If there's no dash, assume it's a driver number
+        except ValueError:  # If there's no dash, assume it's a driver number
             return int(number, 16)
 
         try:
@@ -339,12 +341,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         driver = int(driver_str)
 
         if board.driver_count <= driver:
-            raise AssertionError(f"I/O Board {board} only has drivers 0-{board.driver_count-1}. Driver value {driver} is not valid.")
+            raise AssertionError(f"I/O Board {board} only has drivers 0-{board.driver_count-1}. "
+                                 f"Driver value {driver} is not valid.")
 
         index = board.start_driver + driver
 
         if index + 1 > self.serial_connections['net'].MAX_DRIVERS:
-            raise AssertionError(f"I/O Board {board} driver {driver} is out of range. This would be driver {index + 1} but this platform supports a max of {self.serial_connections['net'].MAX_DRIVERS} drivers.")
+            raise AssertionError(
+                f"I/O Board {board} driver {driver} is out of range. This would be driver {index + 1} "
+                f"but this platform supports a max of {self.serial_connections['net'].MAX_DRIVERS} drivers.")
 
         return index
 
@@ -445,7 +450,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         switch = int(switch_str)
 
         if board.switch_count <= switch:
-            raise AssertionError(f"Board {board} only has switches 0-{board.switch_count-1}. Switch value {switch} is not valid.")
+            raise AssertionError(f"Board {board} only has switches 0-{board.switch_count-1}. "
+                                 f"Switch value {switch} is not valid.")
 
         return Util.int_to_hex_string(board.start_switch + switch)
 
@@ -516,8 +522,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             return FASTMatrixLight(number, self.serial_connections['net'], self.machine,
                                    int(1 / self.config['net']['lamp_hz'] * 1000), self)
         if not subtype or subtype == "led":
-            parts, channel = number.lower().rsplit('-', 1)  # make everything lowercase and strip trailing channel number
-            parts = parts.split('-')  # split into board name, breakout, port, led
+            # make everything lowercase and strip trailing channel number
+            parts, channel = number.lower().rsplit('-', 1)
+            # split into board name, breakout, port, led
+            parts = parts.split('-')
 
             if parts[0] in self.exp_boards_by_name:
                 # this is an expansion board LED in config file format
@@ -534,13 +542,15 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 # Those are really 1-4 of the next breakout board, so if we get a port > 4
                 # then sort it out to the real internal values
                 if int(port) > 4:
-                    breakout = str((int(port) - 1) // 4)  # assume 4 LED ports per breakout, could change to a lookup
+                    # assume 4 LED ports per breakout, could change to a lookup
+                    breakout = str((int(port) - 1) // 4)
                     port = str((int(port) - 1) % 4 + 1)
 
                 try:
                     brk_board = exp_board.breakouts[breakout]
                 except KeyError:
-                    raise AssertionError(f'Board {exp_board} does not have a configuration entry for Breakout {breakout}')  # TODO change to mpf config exception
+                    # TODO change to mpf config exception
+                    raise AssertionError(f'Board {exp_board} does not have a config entry for Breakout {breakout}')
 
                 index = self.port_idx_to_hex(port, led, 32, config.name)
                 this_led_number = f'{brk_board.address}{index}'
@@ -548,7 +558,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 # this code runs once for each channel, so it will be called 3x per LED which
                 # is why we check this here
                 if this_led_number not in self.fast_exp_leds:
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number, exp_board.config['led_fade_time'], self)
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
+                                                                     exp_board.config['led_fade_time'], self)
 
                 fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
                 self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
@@ -560,7 +571,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
                 if this_led_number not in self.fast_exp_leds:
                     # RGBW LEDs could span multiple FAST LEDs, so make sure it exists
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number, exp_board.config['led_fade_time'], self)
+                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
+                                                                     exp_board.config['led_fade_time'], self)
 
                 fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
                 self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
@@ -600,17 +612,20 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         device_num = int(device_num)
 
         if device_num < 1:
-            raise AssertionError(f"Device number {device_num} is not valid for device {name}. The first device in the change should be 1, not 0")
+            raise AssertionError(f"Device number {device_num} is not valid for device {name}. "
+                                 "The first device in the change should be 1, not 0")
 
         if port < 1:
             raise AssertionError(f"Port {port} is not valid for device {device_num}")
 
         if device_num > devices_per_port:
             if name:
-                self.raise_config_error(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port}) "
-                                        f"for LED {name}", 8)  # TODO get a final error code
+                # TODO get a final error code
+                self.raise_config_error(f"Device number {device_num} exceeds the number of devices per port "
+                                        f"({devices_per_port}) for LED {name}", 8)
             else:
-                raise AssertionError(f"Device number {device_num} exceeds the number of devices per port ({devices_per_port})")
+                raise AssertionError(f"Device number {device_num} exceeds the number of devices per port "
+                                     f"({devices_per_port})")
 
         port_offset = ((port - 1) * devices_per_port)
         device_num = device_num - 1
@@ -812,7 +827,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         FAST Driver Mode 20
         """
-        coil.hw_driver.set_hardware_rule('20', enable_switch, coil, eos_switch=eos_switch, repulse_settings=repulse_settings)
+        coil.hw_driver.set_hardware_rule('20', enable_switch, coil, eos_switch=eos_switch,
+                                         repulse_settings=repulse_settings)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.

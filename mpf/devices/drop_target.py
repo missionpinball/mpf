@@ -217,7 +217,8 @@ class DropTarget(SystemWideDevice):
         self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
                        self.name, self.config['switch'].name, is_complete, self.complete)
         if self._in_ball_search or self._ignore_switch_hits:
-            self.debug_log("Ignoring state change in drop target %s due to being in ball search or ignoring switch hits", self.name)
+            self.debug_log("Ignoring state change in drop target %s due to being in ball search "
+                           "or ignoring switch hits", self.name)
             return
 
         if not reconcile:

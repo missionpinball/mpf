@@ -1,5 +1,4 @@
 """Fast servo implementation."""
-from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 
@@ -21,6 +20,7 @@ class FastServo(ServoPlatformInterface):
         self.write_config_to_servo()
 
     def write_config_to_servo(self):
+        """Send the servo configuration to the platform."""
         min_us = f"{self.config['min_us']:02X}"
         max_us = f"{self.config['max_us']:02X}"
         home_us = f"{self.config['home_us']:02X}"
@@ -36,17 +36,15 @@ class FastServo(ServoPlatformInterface):
             raise AssertionError("Position has to be between 0 and 1")
 
         # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
-        self.exp_connection.send_and_forget(f'MP@{self.base_address}:{self.servo_index},{int(position * 255):02X},{self.max_runtime}')
+        self.exp_connection.send_and_forget(f'MP@{self.base_address}:{self.servo_index},'
+                                            f'{int(position * 255):02X},{self.max_runtime}')
 
     def set_speed_limit(self, speed_limit):
         """Called during servo init."""
-        pass
 
     def set_acceleration_limit(self, acceleration_limit):
         """Called during servo init."""
-        pass
 
     def stop(self):
         """Called during shutdown."""
-        pass
         # TODO: send command to go home and power off servo

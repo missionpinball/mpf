@@ -181,7 +181,6 @@ class NeoSegDisplay(LightGroup):
 
 
     def _create_lights(self):
-        distance = 0
         if self.config['size'] == '8digit':
             count = 120
         elif self.config['size'] == '2digit':

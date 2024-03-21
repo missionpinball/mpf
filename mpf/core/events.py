@@ -168,16 +168,19 @@ class EventManager(MpfController):
         ``events.remove_handler(my_handler)``
 
 
-        A fully working example to get some initial working code might look like explained below. In your modes config file have the section
+        A fully working example to get some initial working code might look like
+        explained below. In your modes config file have the section
 
         .. code::
 
             mode:
                 start_events: ball_started
                 priority: 100
-                code: base.My_Base  #base is the name of my code file (base.py), My_Base is the name of the class to be used from that source file
+                code: base.My_Base  #base is the name of my code file (base.py),
+                    My_Base is the name of the class to be used from that source file
 
-        Here the mode being used is my base mode, of course it could be done for any mode. Some basic code to read and write some player variable might look like below.
+        Here the mode being used is my base mode, of course it could be done for any mode.
+        Some basic code to read and write some player variable might look like below.
 
         .. code::
 
@@ -194,7 +197,8 @@ class EventManager(MpfController):
                         return    # do something reasonable here but do not crash in the next line
 
                     # read player variable
-                    print(player["status_target_light_red_0"]) #the variable status_target_light_red_0 is defined in the player_vars section of the config.yaml file
+                    print(player["status_target_light_red_0"])
+                    #the variable status_target_light_red_0 is defined in the player_vars section of the config file
 
                     #with every fired event alternate variable value between 0 and 1
 

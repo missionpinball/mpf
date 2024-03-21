@@ -17,7 +17,8 @@ class TransitionBase(metaclass=abc.ABCMeta):
     __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas", "use_dots_for_commas"]
 
     # pylint: disable=too-many-arguments
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, config: dict) -> None:
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool,
+                 use_dots_for_commas: bool, config: dict) -> None:
         """Initialize the transition."""
         self.output_length = output_length
         self.config = config

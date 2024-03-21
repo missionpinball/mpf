@@ -1,8 +1,8 @@
+"""RGB Board Serial Communicator."""
 # mpf/platforms/fast/communicators/rgb.py
 
 from packaging import version
 
-from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
 MIN_FW = version.parse('0.87') # override in subclass
@@ -23,7 +23,8 @@ class FastRgbCommunicator(FastSerialCommunicator):
         self.message_processors['!B:'] = self._process_boot_msg
 
     async def init(self):
-        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
 
     def _process_boot_msg(self, msg):
         """Process bootloader message."""

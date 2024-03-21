@@ -1,3 +1,4 @@
+"""Segment Display serial communicator interface."""
 # mpf/platforms/fast/communicators/seg.py
 
 from packaging import version
@@ -17,7 +18,8 @@ class FastSegCommunicator(FastSerialCommunicator):
     IGNORED_MESSAGES = []
 
     async def init(self):
-        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
 
     def start_tasks(self):
 
@@ -31,6 +33,7 @@ class FastSegCommunicator(FastSerialCommunicator):
                               1 / self.config['fps']))
 
     def _update_segs(self, **kwargs):
+        del kwargs
         for s in self.platform.fast_segs:
 
             if s.next_text:

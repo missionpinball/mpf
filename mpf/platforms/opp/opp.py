@@ -1144,7 +1144,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
 
     async def configure_servo(self, number, config: dict) -> OPPServo:
         del config
-        chain_serial, card, pin_number = number.split('-')
+        chain_serial, _, pin_number = number.split('-')  # Unused value is 'card'
 
         if self.min_version[chain_serial] < 0x02020002:
             self.raise_config_error("Servos not supported on this OPP FW version: {}.".format(

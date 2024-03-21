@@ -1,5 +1,4 @@
 """Bcp server for clients which connect and disconnect randomly."""
-import asyncio
 
 from mpf.exceptions.runtime_error import MpfRuntimeError
 

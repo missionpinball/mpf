@@ -1,3 +1,4 @@
+"""FAST Expansion Board Serial Communicator."""
 # mpf/platforms/fast/communicators/exp.py
 
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
@@ -33,7 +34,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         """Start listening for commands and schedule watchdog."""
         for board in self.exp_boards_by_address.values():
             self.tasks.append(self.platform.machine.clock.schedule_interval(
-                          board._update_leds, 1 / board.config['led_hz']))
+                          board.update_leds, 1 / board.config['led_hz']))
 
     def stopping(self):
         for board in self.exp_boards_by_address.values():
@@ -47,7 +48,8 @@ class FastExpCommunicator(FastSerialCommunicator):
         """Query the EXP bus for connected boards."""
         for board_name, board_config in self.config['boards'].items():
 
-            board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()  # FP-eXp-0071-2 -> FP-EXP-0071
+            # FP-eXp-0071-2 -> FP-EXP-0071
+            board_config['model'] = ('-').join(board_config['model'].split('-')[:3]).upper()
 
             if board_config['address']:  # need to do it this way since valid config will have 'address' = None
                 board_address = board_config['address']

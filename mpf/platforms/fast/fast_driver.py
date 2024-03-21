@@ -36,7 +36,8 @@ class FASTDriver:
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
 
-        This is called once for each physical driver on the connected hardware, regardless of whether it's configured in MPF.
+        This is called once for each physical driver on the connected hardware,
+        regardless of whether it's configured in MPF.
         """
         self.log = logging.getLogger('FAST Driver')
         self.communicator = communicator
@@ -68,11 +69,14 @@ class FASTDriver:
 
         Parameters
         ----------
-            mpf_config: DriverConfig instance which holds the MPF DriverConfig settings for this driver from the config file. This already incorporates
+            mpf_config: DriverConfig instance which holds the MPF DriverConfig settings
+                for this driver from the config file. This already incorporates
                 any machine-wide defaults, etc. so it's ready to go.
-            platform_settings: FastDriverConfig instance which holds any platform_settings: entries for this driver from the config file.
+            platform_settings: FastDriverConfig instance which holds any platform_settings:
+                entries for this driver from the config file.
 
-        This method does not actually write the config to the driver. Is just figures out what the FastDriverConfig should be.
+        This method does not actually write the config to the driver. Is just figures out
+            what the FastDriverConfig should be.
 
         This will not be called for drivers that are not in the MPF config.
         """
@@ -87,10 +91,14 @@ class FASTDriver:
         This is only used for the initial configuration of drivers. Autofire rules update these.
         """
         if mpf_config.default_recycle:
-            raise ConfigFileError(f"FAST platform does not support default_recycle for coils. Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.", 7, self.log.name)
+            raise ConfigFileError("FAST platform does not support default_recycle for coils. "
+                                  f"Use platform_settings:recycle_ms instead. Coil '{mpf_config.name}'.",
+                                  7, self.log.name)
 
         if mpf_config.default_pulse_ms > 255:
-            raise ConfigFileError(f"FAST platform does not support default_pulse_ms > 255. Use platform_settings:pwm2_ms instead which goes up to 25,500ms. Coil '{mpf_config.name}'.", 7, self.log.name)
+            raise ConfigFileError("FAST platform does not support default_pulse_ms > 255. Use "
+                                  f"platform_settings:pwm2_ms which goes up to 25,500ms. Coil '{mpf_config.name}'.",
+                                  7, self.log.name)
 
         pwm2_ms, pwm2_power, recycle_ms = self._get_platform_settings(mpf_config, platform_settings)
 
@@ -124,7 +132,9 @@ class FASTDriver:
         if platform_settings['recycle_ms'] is not None:
             recycle_ms = platform_settings['recycle_ms']
         else:
-            recycle_ms = 0  # mpf_config.default_recycle is a bool and not well defined, so we ignore it in the FAST platform
+            # mpf_config.default_recycle is a bool and not well defined, so we ignore it
+            # in the FAST platform
+            recycle_ms = 0
 
         return pwm2_ms, pwm2_power, recycle_ms
 
@@ -145,11 +155,13 @@ class FASTDriver:
         return Util.int_to_hex_string(num)
 
     def clear_bit(self, hex_string, bit):
+        """Remove a given bit from a hex string."""
         num = int(hex_string, 16)
         num &= ~(1 << bit)
         return Util.int_to_hex_string(num)
 
     def send_config_to_driver(self, one_shot: bool = False, wait_to_confirm: bool = False):
+        """Send a driver configuration to the platform."""
         self.log.debug("Sending config to driver %s (0x%s). one_shot: %s. wait_to_confirm: %s",
                        self.number, self.hw_number, one_shot, wait_to_confirm)
 
@@ -159,8 +171,12 @@ class FASTDriver:
             trigger = self.current_driver_config.trigger
 
         msg = (f'{self.communicator.DRIVER_CMD}:{self.hw_number},{trigger},'
-               f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
-               f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
+               f'{self.current_driver_config.switch_id},'
+               f'{self.current_driver_config.mode},'
+               f'{self.current_driver_config.param1},'
+               f'{self.current_driver_config.param2},'
+               f'{self.current_driver_config.param3},'
+               f'{self.current_driver_config.param4},'
                f'{self.current_driver_config.param5}')
         if wait_to_confirm:
             self.communicator.send_with_confirmation(msg, f'{self.communicator.DRIVER_CMD}:')
@@ -170,8 +186,9 @@ class FASTDriver:
     def get_current_config(self):
         """Return the current configuration of this driver."""
         config = (f'{self.communicator.DRIVER_CMD}:{self.hw_number},{self.current_driver_config.trigger},'
-                  f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},{self.current_driver_config.param1},'
-                  f'{self.current_driver_config.param2},{self.current_driver_config.param3},{self.current_driver_config.param4},'
+                  f'{self.current_driver_config.switch_id},{self.current_driver_config.mode},'
+                  f'{self.current_driver_config.param1},{self.current_driver_config.param2},'
+                  f'{self.current_driver_config.param3},{self.current_driver_config.param4},'
                   f'{self.current_driver_config.param5}')
 
         self.log.debug("Current config for driver %s: %s", self.number, config)
@@ -215,7 +232,8 @@ class FASTDriver:
         self.current_driver_config.param4 =    '00'
         self.current_driver_config.param5 =    '00'
 
-        await self.communicator.send_and_wait_for_response_processed(self.get_current_config(), self.get_current_config())
+        await self.communicator.send_and_wait_for_response_processed(self.get_current_config(),
+                                                                     self.get_current_config())
 
     def disable(self):
         """Disable (turn off) this driver."""
@@ -256,7 +274,8 @@ class FASTDriver:
             new_settings['pwm2_ms'] = None
 
         if coil_settings.recycle is True:
-            if self.platform_settings['recycle_ms']:  # MPF autofire rules will use True, so pull it from the config if specified.
+            # MPF autofire rules will use True, so pull it from the config if specified.
+            if self.platform_settings['recycle_ms']:
                 new_settings['recycle_ms'] = Util.int_to_hex_string(self.platform_settings['recycle_ms'])
             else:
                 new_settings['recycle_ms'] = '00'
@@ -314,9 +333,11 @@ class FASTDriver:
         elif trigger_needed:  # We only need to update the triggers
             # Set the driver to automatic using the existing configuration
             if switch_needed:
-                self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00,{switch.hw_switch.hw_number}')
+                self.communicator.send_and_forget(
+                    f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00,{switch.hw_switch.hw_number}')
             else:
-                self.communicator.send_and_forget(f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00')
+                self.communicator.send_and_forget(
+                    f'{self.communicator.TRIGGER_CMD}:{self.hw_number},00')
 
     def _check_switch_coil_combination(self, switch, coil):
         # TODO move this to the communicator or something? Since it's only Nano?

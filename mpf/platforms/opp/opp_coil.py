@@ -214,6 +214,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
 
     def reconfigure_pulse_pwm(self, pulse_settings: PulseSettings):
+        """Send a new configuration for pulse PWM on this coil."""
         pwm_val = int((pulse_settings.power * 32) - 1)
         if pwm_val < 0:
             pwm_val = 0

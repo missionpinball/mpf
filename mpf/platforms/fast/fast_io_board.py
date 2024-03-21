@@ -1,6 +1,6 @@
-from mpf.platforms.fast.fast_defines import VALID_IO_BOARDS
-
 """FAST I/O Board."""
+
+from mpf.platforms.fast.fast_defines import VALID_IO_BOARDS
 
 
 class FastIoBoard:
@@ -8,7 +8,8 @@ class FastIoBoard:
     """A FAST I/O board on the NET processor."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, communicator, name, node_id, model_string, firmware_version, switch_count, driver_count, prior_switches, prior_drivers):
+    def __init__(self, communicator, name, node_id, model_string, firmware_version,
+                 switch_count, driver_count, prior_switches, prior_drivers):
         """Initialize FastIoBoard."""
         self.communicator = communicator
         self.name = str(name)
@@ -28,4 +29,5 @@ class FastIoBoard:
 
     def get_description_string(self) -> str:
         """Return description string."""
-        return f"Board {self.node_id} - Model: {self.model}, Firmware: {self.firmware_version}, Switches: {self.switch_count}, Drivers: {self.driver_count}"
+        return f"Board {self.node_id} - Model: {self.model}, Firmware: {self.firmware_version}, " + \
+            f"Switches: {self.switch_count}, Drivers: {self.driver_count}"

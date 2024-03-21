@@ -179,7 +179,8 @@ class ConfigValidator:
         processed_config = source
 
         if not isinstance(source, dict):
-            raise self.validation_error(source, validation_failure_info, "Config attribute should be dict but is {}".format(
+            raise self.validation_error(source, validation_failure_info,
+                                        "Config attribute should be dict but is {}".format(
                 source.__class__
             ))
 
@@ -448,6 +449,7 @@ class ConfigValidator:
         return self.machine.placeholder_manager.build_quoted_string_template(item)
 
     def _validate_type_template_float(self, item, validation_failure_info, param=None):
+        del param
         if item is None:
             return None
         if not isinstance(item, (str, float, int)):
@@ -506,9 +508,11 @@ class ConfigValidator:
         if param:
             param = param.split(",")
             if param[0] != "NONE" and value < float(param[0]):
-                raise self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(value, param[0]))
+                raise self.validation_error(item, validation_failure_info,
+                                            "{} is smaller then {}".format(value, param[0]))
             if param[1] != "NONE" and value > float(param[1]):
-                raise self.validation_error(item, validation_failure_info, "{} is larger then {}".format(value, param[1]))
+                raise self.validation_error(item, validation_failure_info,
+                                            "{} is larger then {}".format(value, param[1]))
 
     def _validate_type_float(self, item, validation_failure_info, param=None):
         if item is None:
@@ -625,7 +629,8 @@ class ConfigValidator:
             try:
                 color[i] = int(x) / 255
             except ValueError:
-                raise self.validation_error(item, validation_failure_info, "Color could not be converted to int for kivy.")
+                raise self.validation_error(item, validation_failure_info,
+                                            "Color could not be converted to int for kivy.")
 
         if len(color) == 3:
             color.append(1)

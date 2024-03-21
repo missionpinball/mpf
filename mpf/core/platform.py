@@ -321,7 +321,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    async def configure_servo(self, number: str, config: dict, platform_config: dict) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str, config: dict) -> "ServoPlatformInterface":
         """Configure a servo device in platform.
 
         Args:

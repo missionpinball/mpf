@@ -1,3 +1,4 @@
+"""FAST Nano Serial Interface."""
 # mpf/platforms/fast/communicators/net_nano.py
 
 from packaging import version

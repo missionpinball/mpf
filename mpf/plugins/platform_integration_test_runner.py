@@ -82,7 +82,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         if self._test_obj.initial_switches is not None:
             for s in self._test_obj.initial_switches:
                 # If a tuple is provided, the second value is the target state
-                if type(s) == tuple:
+                if isinstance(s, tuple):
                     s, s_state = s
                 else:
                     s_state = 1
@@ -94,7 +94,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
                 if hasattr(ball_device, "ball_count_handler"):
                     self.info_log("Resetting ball count for %s", ball_device)
                     ball_device.ball_count_handler.counter.trigger_recount()
-                    ball_device.ball_count_handler._count_valid.clear()
+                    # ball_device.ball_count_handler._count_valid.clear()
         # Pre-fill the trough with balls if no initial switches are defined
         else:
             for s in self.trough_switches:

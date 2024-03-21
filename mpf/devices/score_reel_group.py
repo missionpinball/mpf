@@ -1,8 +1,6 @@
 """A group of score reels."""
 from collections import deque
 
-import asyncio
-
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
 
