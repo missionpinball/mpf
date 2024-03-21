@@ -515,9 +515,9 @@ def wire(machine: MachineController):
     for coil in machine.coils.values():
         num_spec = coil.config["number"]
         if drivers_specify_boards is None:
-            drivers_specify_boards = ("-" in num_spec)
+            drivers_specify_boards = "-" in num_spec
         else:
-            if ("-" in num_spec) != drivers_specify_boards:
+            if "-" in num_spec != drivers_specify_boards:
                 print(inconsistent_err)
                 return None
 

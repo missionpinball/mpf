@@ -14,12 +14,22 @@ class Auditor(MpfPlugin):
 
     """Writes switch events, regular events, and player variables to an audit log file."""
 
-    __slots__ = ["switchnames_to_audit", "config", "_autosave",
+    __slots__ = ["switchnames_to_audit", "_autosave",
                  "current_audits", "enabled", "data_manager"]
 
     config_section = 'auditor'
 
+    def __init__(self, *args, **kwargs):
+        """Initialize class variables."""
+        super().__init__(*args, **kwargs)
+        self._autosave = None
+        self.current_audits = None
+        self.enabled = None
+        self.data_manager = None
+        self.switchnames_to_audit = None
+
     def initialize(self):
+        """Initialize the auditor."""
         self.configure_logging(self.name)
         self.machine.auditor = self
         self.switchnames_to_audit = set()       # type: Set[str]
@@ -66,9 +76,11 @@ class Auditor(MpfPlugin):
             # will throw. Assume this is a homebrew and is free to play.
             is_free_play = True
 
-        self.switchnames_to_audit = {x.name for x in self.machine.switches.values() if
+        self.switchnames_to_audit = {
             # Don't audit tagged switches, or credit switches during free play
-            ('no_audit' not in x.tags) and ('no_audit_free' not in x.tags or not is_free_play)}
+            x.name for x in self.machine.switches.values() if \
+            ('no_audit' not in x.tags) and ('no_audit_free' not in x.tags or not is_free_play)
+        }
 
         # Make sure we have all the switches in our audit dict
         for switch_name in self.switchnames_to_audit:

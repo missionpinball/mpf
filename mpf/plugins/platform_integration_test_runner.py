@@ -176,6 +176,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             - duration_secs: Number of seconds to hold the switch in that state. If none, will switch indefinitely.
             - wait_after: Number of seconds to wait after the switch before returning
             - blocking: If true, will wait for duration_secs before returning. If false, will fire-and-forget.
+
         """
         self.set_switch_sync(switch_name, state)
         if duration_secs:
