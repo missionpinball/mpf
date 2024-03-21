@@ -83,7 +83,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
             _lights = platform_settings['lights']
         else:
             #currently supporting 14segment displays
-            segments = ['a','b','c','d','e','f','g1','g2','h','j','k','l','m','n','dp']
+            segments = ['a', 'b', 'c', 'd', 'e', 'f', 'g1', 'g2', 'h', 'j', 'k', 'l', 'm', 'n', 'dp']
             digit_len = len(segments)
 
             #get single list of all lights
@@ -96,7 +96,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
 
             #split list into dicts of digits
             _lights = [_lights[i:i + digit_len] for i in range(0, len(_lights), digit_len)]
-            _lights = [dict(zip(segments,digit_lights)) for digit_lights in _lights]
+            _lights = [dict(zip(segments, digit_lights)) for digit_lights in _lights]
 
         display = LightSegmentDisplay(number,
                                       lights=_lights,

@@ -9,6 +9,8 @@ from mpf.platforms.fast.fast_defines import USB_IDS
 
 class FastPortDetector:
 
+    """Class for detecting FAST platform hardware on connected serial ports."""
+
     def __init__(self, platform, autodetect_processors, hardcoded_ports):
         """Initialize the port detector."""
         self.platform = platform

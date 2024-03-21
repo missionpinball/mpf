@@ -140,8 +140,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             if hasattr(self.system11_config['ac_relay_driver'].hw_driver, 'set_relay'):
                 self.system11_config['ac_relay_driver'].hw_driver.set_relay(
                     self.relay_switch.hw_switch,
-                    20, # Ms to delay before reporting closed
-                    20 # Ms to delay before reporting open
+                    20,  # Ms to delay before reporting closed
+                    20   # Ms to delay before reporting open
                 )
         self.debounce_secs = self.system11_config['ac_relay_debounce_ms'] / 1000.0
         self.log.debug("Configuring A/C Select Relay transition delay for %sms and debounce for %s",
@@ -328,7 +328,7 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
                 # switching to the A side (coils) and back. If we are on A side or have a queue on
                 # the A side, ignore this C side request.
                 if (self.a_side_queue or not self.c_side_enabled) and \
-                not self.system11_config['queue_c_side_while_preferred']:
+                        not self.system11_config['queue_c_side_while_preferred']:
                     return
                 self.c_side_queue.add((driver, pulse_settings, hold_settings, timed_enable))
                 if not self.ac_relay_in_transition:
@@ -351,8 +351,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
         # Without a relay switch, use a delay to wait for the relay to enable
         if not self.relay_switch:
             self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                        callback=self._on_c_side_enabled,
-                        name='enable_ac_relay')
+                           callback=self._on_c_side_enabled,
+                           name='enable_ac_relay')
 
     def _disable_ac_relay(self):
         self.system11_config['ac_relay_driver'].disable()
@@ -364,8 +364,8 @@ class System11OverlayPlatform(DriverPlatform, SwitchPlatform):
             self.c_side_queue.clear()
         if not self.relay_switch:
             self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
-                        callback=self._on_a_side_enabled,
-                        name='disable_ac_relay')
+                           callback=self._on_a_side_enabled,
+                           name='disable_ac_relay')
 
     # -------------------------------- A SIDE ---------------------------------
 

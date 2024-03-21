@@ -41,7 +41,6 @@ class OPPServo(ServoPlatformInterface):
         position_numeric = int(position * 255)
         servo_offset = 0x3000 + self.number
 
-
         if position_numeric == 0 or self.current_position == 0 or self.speed <= 0:
             fade_ms = 0
         else:
@@ -54,8 +53,8 @@ class OPPServo(ServoPlatformInterface):
         msg.append(OppRs232Intf.SERIAL_LED_CMD_FADE)
         msg.append(int(servo_offset / 256))
         msg.append(int(servo_offset % 256))
-        msg.append(int(0))  #number of servos (high)
-        msg.append(int(1))  #number of servos (low)...only commanding one at a time.
+        msg.append(int(0))  # number of servos (high)
+        msg.append(int(1))  # number of servos (low)...only commanding one at a time.
         msg.append(int(fade_ms / 256))
         msg.append(int(fade_ms % 256))
         msg.append(position_numeric)
@@ -67,7 +66,6 @@ class OPPServo(ServoPlatformInterface):
         self.platform.send_to_processor(self.chain_serial, cmd)
 
         self.current_position = position_numeric
-
 
     def set_speed_limit(self, speed_limit):
         """Set the speed of this servo.

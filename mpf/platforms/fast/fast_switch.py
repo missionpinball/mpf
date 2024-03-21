@@ -7,8 +7,12 @@ from mpf.core.utility_functions import Util
 
 MYPY = False
 
+
 @dataclass
 class FastSwitchConfig:
+
+    """Configuration class object for a FAST switch configuration."""
+
     number: str          # '00'-'68'
     mode: str            # '00'-'02'
     debounce_close: str  # '00'-'FF'
@@ -67,8 +71,8 @@ class FASTSwitch:
     def get_current_config(self):
         """Return the current config of this switch."""
         return (f'{self.communicator.SWITCH_CMD}:{self.current_hw_config.number},'
-               f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
-               f'{self.current_hw_config.debounce_open}')
+                f'{self.current_hw_config.mode},{self.current_hw_config.debounce_close},'
+                f'{self.current_hw_config.debounce_open}')
 
     def get_board_name(self):
         """Return the board of this switch."""

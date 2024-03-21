@@ -73,17 +73,17 @@ class ProcProcess:
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
-            except OSError as e:     # pragma: no cover
+            except OSError as er:     # pragma: no cover
                 self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s. Is your P/P3-Roc connected "
-                                 "and powered up?", machine_type, e)
+                                 "and powered up?", machine_type, er)
                 self.log.info("Will retry creating PinPROC in 1s.")
                 time.sleep(1)
                 continue
 
             try:
                 self.proc.reset(1)
-            except OSError as e:  # pragma: no cover
-                self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", e)
+            except OSError as er:  # pragma: no cover
+                self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", er)
                 self.log.info("Will retry creating PinPROC and resetting it in 1s.")
                 time.sleep(1)
                 continue

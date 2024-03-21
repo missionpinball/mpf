@@ -1,8 +1,7 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from packaging import version
-
 from typing import Dict, Optional, List
+from packaging import version
 
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
     ASCII_SEGMENTS

@@ -61,7 +61,7 @@ class OPPIncand(LightPlatformSoftwareFade):
         ----
             brightness: brightness 0 (off) to 255 (on) for this incandescent light. OPP only supports on (>0) or off.
         """
-        curr_bit = (1 << self.index)
+        curr_bit = 1 << self.index
         if brightness == 0:
             self.incand_card.new_state &= ~curr_bit
         else:
