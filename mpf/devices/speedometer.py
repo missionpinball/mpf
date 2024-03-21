@@ -37,5 +37,5 @@ class Speedometer(SystemWideDevice):
             delta = self.config['stop_switch'].last_change - self.time_start
             self.time_start = None
             print(delta)
-            self.machine.events.post("{}_hit".format(self.name), delta = delta)
+            self.machine.events.post("{}_hit".format(self.name), delta=delta)
             # TODO: post event

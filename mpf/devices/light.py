@@ -344,8 +344,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 self.default_fade_ms = (self.machine.config['light_settings']
                                         ['default_fade_ms'])
 
-            if len(self.hw_drivers) == 4 and all(
-                channel in self.hw_drivers for channel in ['red', 'green', 'blue', 'white']):
+            if len(self.hw_drivers) == 4 and all(channel in self.hw_drivers
+                                                 for channel in ['red', 'green', 'blue', 'white']):
                 self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
 
             self.debug_log("Initializing Light. CC Profile: %s, "

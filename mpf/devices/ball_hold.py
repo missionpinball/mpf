@@ -251,7 +251,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
         else:
             self.info_log("Ball device %s lost %s balls but hold is not holding. Doing nothing.", device, balls)
         # Do not claim this ball
-        return { 'balls': balls }
+        return {'balls': balls}
 
     def _hold_ball(self, device, new_balls, unclaimed_balls, **kwargs):
         """Handle result of _ball_enter event of hold_devices."""

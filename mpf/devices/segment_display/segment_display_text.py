@@ -47,7 +47,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         char_colors = [None] * len(text)
         return UncoloredSegmentDisplayText(
             cls._create_characters(text, display_size, collapse_dots, collapse_commas, use_dots_for_commas,
-            char_colors), collapse_dots, collapse_commas, use_dots_for_commas)
+                                   char_colors), collapse_dots, collapse_commas, use_dots_for_commas)
 
     @classmethod
     def _embed_dots_and_commas(cls, text: str, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool):

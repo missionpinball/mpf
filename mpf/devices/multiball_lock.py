@@ -335,7 +335,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         del kwargs
         self.info_log("Ball device %s lost %s balls, %s has %s locked balls and action %s",
                       device.name, balls, self.name, self.locked_balls,
-                      self.config['ball_lost_action'] )
+                      self.config['ball_lost_action'])
         if self.locked_balls and self.config['ball_lost_action'] == "add_to_play":
             self.info_log("Ball device %s lost %s balls, adding to balls_in_play", device.name, balls)
             self.machine.game.balls_in_play += balls

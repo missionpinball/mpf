@@ -152,7 +152,6 @@ class ScoreReelController:
             score_reel_group.set_value(0)
             await score_reel_group.wait_for_ready()
 
-
     def _game_ending(self, **kwargs):
         """Reset controller."""
         del kwargs
