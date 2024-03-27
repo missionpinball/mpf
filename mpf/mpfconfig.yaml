@@ -33,6 +33,7 @@ mpf:
         show: mpf.config_players.show_player.ShowPlayer
         variable: mpf.config_players.variable_player.VariablePlayer
         segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
+        slide_player: mpf.config_players.slide_player.SlidePlayer
         hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
         score_queue_player: mpf.config_players.score_queue_player.ScoreQueuePlayer
         blinkenlight: mpf.config_players.blinkenlight_player.BlinkenlightPlayer
