@@ -41,6 +41,9 @@ class ScoreReel(SystemWideDevice):
 
         self._destination_value = 0
         # Holds the index of the destination the reel is trying to advance to.
+        
+        self._quiet = True
+        # Whether to use chime when advancing
 
         self._runner = None
         # asyncio task which advances the reel
@@ -154,7 +157,8 @@ class ScoreReel(SystemWideDevice):
         while self._destination_value != self.assumed_value:
             self.machine.events.post('reel_{}_will_advance'.format(self.name))
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
-            self.machine.events.post('reel_{}_advancing'.format(self.name))
+            if not self._quiet:
+                self.machine.events.post('reel_{}_advancing'.format(self.name))
             previous_value = self.assumed_value
 
             await asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000)
@@ -180,7 +184,7 @@ class ScoreReel(SystemWideDevice):
         """Return a future for ready."""
         return self._ready.wait()
 
-    def set_destination_value(self, value):
+    def set_destination_value(self, value, quiet=False):
         """Return the integer value of the destination this reel is moving to.
 
         Args:
@@ -197,6 +201,7 @@ class ScoreReel(SystemWideDevice):
                            self._destination_value, value)
 
             self._destination_value = value
+            self._quiet = quiet
 
             self._busy.set()
             self._ready.clear()

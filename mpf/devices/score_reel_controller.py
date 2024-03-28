@@ -93,7 +93,7 @@ class ScoreReelController:
         # Make sure this score reel group is showing the right score
         self.log.debug("Current player's score: %s",
                        self.machine.game.player.score)
-        self.active_scorereelgroup.set_value(self.machine.game.player.score)
+        self.active_scorereelgroup.set_value(self.machine.game.player.score, True)
 
         self.active_scorereelgroup.light()
 
@@ -149,7 +149,7 @@ class ScoreReelController:
                     raise AssertionError('Need a score reel group tagged "player1"')
 
         for score_reel_group in self.machine.score_reel_groups.values():
-            score_reel_group.set_value(0)
+            score_reel_group.set_value(0, True) # No chime
             await score_reel_group.wait_for_ready()
 
     def _game_ending(self, **kwargs):
