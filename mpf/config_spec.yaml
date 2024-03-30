@@ -1699,7 +1699,8 @@ slide_player:
     expire: single|secs|None
     slide: single|str|None
     tokens: dict|str:str|None
-    action: single|enum(play,remove)|play
+    action: single|enum(play,remove,method,update,preload)|play
+    method: single|str|None
 slides:
     __valid_in__: machine, mode
     __type__: named_lists
