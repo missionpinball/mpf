@@ -1689,27 +1689,14 @@ slide_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     target: single|str|None
-    background_color: single|kivycolor|000000ff
     priority: single|int_or_token|None               # todo should this be 0?
-    show: single|bool|true
-    force: single|bool|false
     transition: ignore
     transition_out: ignore
-    widgets: ignore
     expire: single|secs|None
     slide: single|str|None
     tokens: dict|str:str|None
     action: single|enum(play,remove,method,update,preload)|play
     method: single|str|None
-slides:
-    __valid_in__: machine, mode
-    __type__: named_lists
-    debug: single|bool|false
-    expire: single|secs|None
-    background_color: single|kivycolor|000000ff
-    opacity: single|float|1.0
-    transition_out: ignore
-    __allow_others__:
 snux:
     __valid_in__: machine
     __type__: config
@@ -2164,9 +2151,9 @@ widget_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     slide: single|str|None
-    action: single|enum(add,remove,update)|add
+    action: single|enum(add,remove,update,preload,method)|add
+    method: single|str|None
     key: single|str|None
-    widget_settings: ignore
     target: single|str|None
 widget_styles:
     __valid_in__: machine, mode

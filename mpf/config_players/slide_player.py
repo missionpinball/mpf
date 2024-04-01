@@ -20,29 +20,11 @@ class SlidePlayer(PluginPlayer):
             'slide_player', device_settings)
 
 
-        if 'widgets' in device_settings:
-            device_settings['widgets'] = self.process_widgets(
-                device_settings['widgets'])
-
         return_dict = dict()
         return_dict[device] = device_settings
 
         return return_dict
 
-    def process_widgets(self, config):
-
-        if isinstance(config, dict):
-            config = [config]
-
-        # Note that we don't reverse the order of the widgets here since
-        # they'll be reversed when they're played
-
-        widget_list = list()
-
-        for widget in config:
-            widget_list.append(self.process_widget(widget))
-
-        return widget_list
 
     def _register_trigger(self, event, **kwargs):
         """Register trigger via BCP for MC."""

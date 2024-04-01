@@ -37,6 +37,7 @@ mpf:
         hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
         score_queue_player: mpf.config_players.score_queue_player.ScoreQueuePlayer
         blinkenlight: mpf.config_players.blinkenlight_player.BlinkenlightPlayer
+        widget_player: mpf.config_players.widget_player.WidgetPlayer
 
     device_modules:
         coils: mpf.devices.driver.Driver

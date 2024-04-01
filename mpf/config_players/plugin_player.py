@@ -80,6 +80,11 @@ class PluginPlayer(DeviceConfigPlayer):
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
+        # The triggering event's kwargs are passed through, and the triggering
+        # event may have come from BCP. Explicitly set _from_bcp=False so that
+        # this play event won't be swallowed.
+        if '_from_bcp' in kwargs:
+            del(kwargs['_from_bcp'])
         self.machine.bcp.interface.bcp_trigger(
             name='{}_play'.format(self.show_section),
             settings=settings, context=context, calling_context=calling_context,
