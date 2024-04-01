@@ -2153,11 +2153,13 @@ widget_player:
     priority: single|int_or_token|None
     slide: single|str|None
     action: single|enum(play,remove,update,preload,method)|play
-    method: single|str|None
+    method: ignore
     key: single|str|None
     target: single|str|None
     expire: single|secs|None
     tokens: dict|str:str|None
+    x: single|int|0
+    y: single|int|0
 widget_styles:
     __valid_in__: machine, mode
     __type__: config_dict
