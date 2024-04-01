@@ -2150,11 +2150,14 @@ vpe:
 widget_player:
     __valid_in__: machine, mode, show
     __type__: config_player
+    priority: single|int_or_token|None
     slide: single|str|None
-    action: single|enum(add,remove,update,preload,method)|add
+    action: single|enum(play,remove,update,preload,method)|play
     method: single|str|None
     key: single|str|None
     target: single|str|None
+    expire: single|secs|None
+    tokens: dict|str:str|None
 widget_styles:
     __valid_in__: machine, mode
     __type__: config_dict
