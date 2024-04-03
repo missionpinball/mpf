@@ -1,7 +1,7 @@
 from mpf.config_players.plugin_player import PluginPlayer
 
 
-class MpfSoundPlayer(PluginPlayer):
+class SoundPlayer(PluginPlayer):
     """Base class for part of the sound player which runs as part of MPF.
 
     Note: This class is loaded by MPF and everything in it is in the context of
@@ -14,14 +14,25 @@ class MpfSoundPlayer(PluginPlayer):
     config_file_section = 'sound_player'
     show_section = 'sounds'
 
-    def get_express_config(self, value):
-        """Parse express config."""
-        return {"action": value}
+
+    def _validate_config_item(self, device, device_settings):
+        # device is slide name, device_settings is configuration
+
+        device_settings = self.machine.config_validator.validate_config(
+            'sound_player', device_settings)
 
 
-player_cls = MpfSoundPlayer
+        return_dict = dict()
+        return_dict[device] = device_settings
+
+        return return_dict
 
 
-def register_with_mpf(machine):
-    """Registers the sound player plug-in with MPF"""
-    return 'sound', MpfSoundPlayer(machine)
+    def _register_trigger(self, event, **kwargs):
+        """Register trigger via BCP for MC."""
+        del kwargs
+        client = self.machine.bcp.transport.get_named_client("local_display")
+        if client:
+            self.machine.bcp.interface.add_registered_trigger_event_for_client(client, event)
+        else:
+            self.machine.events.add_handler("bcp_clients_connected", partial(self._register_trigger, event))
