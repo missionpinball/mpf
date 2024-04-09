@@ -1793,10 +1793,10 @@ sound_player:
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
     max_queue_time: single|secs|-1
-    events_when_played: list|event_posted|use_sound_setting
-    events_when_stopped: list|event_posted|use_sound_setting
-    events_when_looping: list|event_posted|use_sound_setting
-    events_when_about_to_finish: list|event_posted|use_sound_setting
+    events_when_played: list|event_posted|None
+    events_when_stopped: list|event_posted|None
+    events_when_looping: list|event_posted|None
+    events_when_about_to_finish: list|event_posted|None
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
     key: single|str|use_sound_setting
 sound_pools:
