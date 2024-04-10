@@ -1695,7 +1695,9 @@ slide_player:
     expire: single|secs|None
     slide: single|str|None
     tokens: dict|str:str|None
-    action: single|enum(play,remove,method,update,preload)|play
+    action: single|enum(play,remove,method,update,preload,queue,queue_first,queue_immediate)|play
+    queue: single|str|None
+    max_queue_time: single|secs|None
     method: single|str|None
 snux:
     __valid_in__: machine
