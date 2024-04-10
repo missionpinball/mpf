@@ -95,8 +95,10 @@ class Carousel(Mode):
     def _update_highlighted_item(self, direction):
         self.debug_log("Highlighted item: " + self._get_highlighted_item())
 
-        self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()),
-                                 direction=direction)
+        self.machine.events.post("item_highlighted",
+                                 carousel=self.name,
+                                 direction=direction,
+                                 item=self._get_highlighted_item())
         '''event (carousel_name)_(item)_highlighted
             desc: Player highlighted an item in a carousel. Mostly used to play shows or trigger slides.
             args:
