@@ -327,6 +327,16 @@ class ConfigValidator:
                                          'not a valid setting name.',
                                          path_string)
 
+                    elif k == "track":
+                        # MPF 0.80 DEPRECATED
+                        self.log.error('Your config contains a value for "track" in '
+                                       'setting "%s", but "track" has been replaced '
+                                       'with "bus" in MPF 0.80.', path_string)
+
+                        raise ConfigFileError('Your config contains a value for "track" in '
+                                              'setting "' + path_string + '", but "track" has '
+                                              'been replaced with "bus" in MPF 0.80.', 2, self.log.name)
+
                     else:
                         self.log.error('Your config contains a value for the '
                                        'setting "%s", but this is not a valid '
