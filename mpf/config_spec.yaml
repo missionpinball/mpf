@@ -1693,7 +1693,7 @@ sound_player:
     fade_in: single|secs|None
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
-    max_queue_time: single|secs|-1
+    max_queue_time: single|secs|None
     events_when_played: list|event_posted|None
     events_when_stopped: list|event_posted|None
     events_when_looping: list|event_posted|None
