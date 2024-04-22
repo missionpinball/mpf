@@ -91,6 +91,10 @@ class Bonus(Mode):
             self._subtotal()
             return
 
+        # Because all bonus events are 'bonus_entry' with a name arg, the
+        # following names are reserved for end-of-bonus behavior.
+        assert entry not in ["subtotal", "multiplier", "total"], "Bonus entry cannot be reserved word '%s'" % entry
+
         # Calling player.vars.get() instead of player.get() bypasses the
         # auto-fill zero and will throw if there is no player variable.
         # The fallback value of 1 is used for bonus entries that don't use
@@ -100,7 +104,7 @@ class Bonus(Mode):
 
         if (not score and entry['skip_if_zero']) or (score < 0 and entry['skip_if_negative']):
             self.debug_log("Skipping bonus entry '%s' because its value is 0",
-                           entry['event'])
+                           entry['entry'])
             self._bonus_next_item()
             return
 
@@ -113,11 +117,15 @@ class Bonus(Mode):
                 score += self.settings["rounding_value"] - r
 
         self.debug_log("Bonus Entry '%s': score: %s player_score_entry: %s=%s",
-                       entry['event'], score, entry['player_score_entry'], hits)
+                       entry['entry'], score, entry['player_score_entry'], hits)
 
         self.bonus_score += score
-        self.machine.events.post(entry['event'], score=score,
+        self.machine.events.post("bonus_entry", entry=entry['entry'],
+                                 score=score, text=entry['text'],
                                  bonus_score=self.bonus_score, hits=hits)
+        if entry.get("event"):
+            self.machine.events.post(entry['event'], score=score,
+                                     bonus_score=self.bonus_score, hits=hits)
         if entry['reset_player_score_entry']:
             self.player.vars[entry['player_score_entry']] = 0
 
@@ -132,7 +140,8 @@ class Bonus(Mode):
 
         else:
             self.debug_log("Bonus subtotal: %s", self.bonus_score)
-            self.machine.events.post('bonus_subtotal', score=self.bonus_score)
+            self.machine.events.post('bonus_entry', entry='subtotal',
+                                     text="Subtotal", score=self.bonus_score)
             '''event: bonus_subtotal
 
             desc: Posted by the bonus mode after all the individual bonus
@@ -153,16 +162,17 @@ class Bonus(Mode):
     def _do_multiplier(self):
         multiplier = self.player.vars.get("bonus_multiplier", 1)
         self.debug_log("Bonus multiplier: %s", multiplier)
-        self.machine.events.post('bonus_multiplier', multiplier=multiplier)
+        self.machine.events.post('bonus_entry', entry='multiplier',
+                                 text="Multiplier", score=multiplier)
         '''event: bonus_multiplier
 
-        desc: Posted after "bonus_subtotal" and used to trigger the bonus
+        desc: Posted after bonus subtotal and used to trigger the bonus
         multiplier screen. If the bonus multiplier is 1, then this event is
         skipped.
 
         args:
 
-        multiplier: The numeric value of the bonus multiplier.
+        score: The numeric value of the bonus multiplier.
 
         '''
         self.bonus_score *= multiplier
@@ -173,7 +183,8 @@ class Bonus(Mode):
         self.player.add_with_kwargs("score", self.bonus_score,
                                     source=self.name)
         self.debug_log("Bonus Total: %s", self.bonus_score)
-        self.machine.events.post('bonus_total', score=self.bonus_score)
+        self.machine.events.post('bonus_entry', entry='total',
+                                 text="Total Bonus", score=self.bonus_score)
 
         if not self.settings['end_bonus_event']:
             self.delay.add(name='bonus', ms=self.display_delay,

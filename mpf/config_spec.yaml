@@ -295,7 +295,8 @@ bonus_mode_settings:
     rounding_value: single|int|None
     rounding_direction: single|str|up
 bonus_entries:
-    event: single|event_posted|
+    entry: single|str|
+    text: single|str|None
     score: single|template_int|
     reset_player_score_entry: single|bool|false
     player_score_entry: single|str|None
