@@ -124,7 +124,7 @@ class VirtualPinballDriver(DriverPlatformInterface):
             return bool(self.clock.get_time() < self._state)
 
 
-class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
+class VirtualPinballSegmentDisplay(SegmentDisplayPlatformInterface):
 
     """Virtual segment display."""
 
@@ -168,7 +168,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
         self._drivers = {}          # type: Dict[str, VirtualPinballDriver]
         self._last_drivers = {}     # type: Dict[str, bool]
         self._last_lights = {}      # type: Dict[str, float]
-        self._configured_segment_displays = []  # type: List[VirtualSegmentDisplay]
+        self._configured_segment_displays = []  # type: List[VirtualPinballSegmentDisplay]
         self._last_segment_text = {}# type: Dict[str, str]
         self._started = asyncio.Event()
         self.log = logging.getLogger("VPX Platform")
@@ -450,7 +450,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
         """Configure segment display."""
         del platform_settings
         del display_size
-        segment_display = VirtualSegmentDisplay(number, self.machine)
+        segment_display = VirtualPinballSegmentDisplay(number, self.machine)
         self._configured_segment_displays.append(segment_display)
         self._last_segment_text[number] = None
         return segment_display
