@@ -75,7 +75,7 @@ class VirtualPinballLight(LightPlatformInterface):
         As there is not real number format for virtual is this is all we can do here.
         """
         return self.number + "+1"
-    
+
     def __lt__(self, other):
         """Not implemented."""
         raise AssertionError("Not implemented. Let us know if you need it.")
