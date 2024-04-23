@@ -329,7 +329,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
         """Not implemented."""
         self.log.warning("Command \"set_mech\" unimplemented: %s %s", number, value)
         return True
-    
+
     def vpx_changed_segment_text(self):
         """Return changed segment text since last call."""
         return self._get_changed_segment_text()
@@ -444,7 +444,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
             ]
         else:
             raise AssertionError("Unknown subtype {}".format(subtype))
-        
+
     async def configure_segment_display(self, number: str, display_size: int,
                                         platform_settings) -> SegmentDisplayPlatformInterface:
         """Configure segment display."""
@@ -454,4 +454,3 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
         self._configured_segment_displays.append(segment_display)
         self._last_segment_text[number] = None
         return segment_display
-    
