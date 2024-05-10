@@ -1682,7 +1682,7 @@ sound_player:
     __valid_in__: machine, mode, show
     __type__: config_player
     block: single|bool|false
-    action: single|enum(play,stop,stop_looping,load,unload)|play
+    action: single|enum(play,replace,stop,stop_looping,load,unload)|play
     delay: single|secs|None
     bus: single|str|None
     volume: single|gain|None
