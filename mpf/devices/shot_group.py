@@ -47,7 +47,7 @@ class ShotGroup(ModeDevice):
         self.rotation_pattern = deque(self.profile.config['rotation_pattern'])
         self.rotation_enabled = not self.config['enable_rotation_events']
         for shot in self.config['shots']:
-            self.machine.events.add_handler("{}_hit".format(shot.name), self._hit)
+            self.machine.events.add_handler("{}_hit".format(shot.name), self._hit, shot=shot.name)
             self.machine.events.add_handler("player_shot_{}".format(shot.name), self._check_for_complete)
 
     def device_removed_from_mode(self, mode):
@@ -145,7 +145,7 @@ class ShotGroup(ModeDevice):
         for shot in self.config['shots']:
             shot.restart()
 
-    def _hit(self, advancing, **kwargs):
+    def _hit(self, advancing, shot, **kwargs):
         """One of the member shots in this shot group was hit.
 
         Args:
@@ -157,12 +157,12 @@ class ShotGroup(ModeDevice):
             }
         """
         del advancing
-        self.machine.events.post(self.name + '_hit')
+        self.machine.events.post(self.name + '_hit', shot=shot)
         '''event: (name)_hit
         desc: A member shots in the shot group called (name)
         has been hit.
         '''
-        self.machine.events.post("{}_{}_hit".format(self.name, kwargs['state']))
+        self.machine.events.post("{}_{}_hit".format(self.name, kwargs['state']), shot=shot)
         '''event: (name)_(state)_hit
         desc: A member shot with state (state) in the shot group (name)
         has been hit.
