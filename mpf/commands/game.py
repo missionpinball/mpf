@@ -202,10 +202,25 @@ class Command:
             file_log_queue, file_log)
         self.file_queue_listener.start()
 
+        # initialize a socket handler
+        # socket_log = logging.handlers.SocketHandler("localhost", 5058)
+        socket_log = logging.handlers.SysLogHandler(address=('localhost', 5058), socktype=socket.SOCK_STREAM)
+        socket_log.setFormatter(logging.Formatter(
+            '%(asctime)s : %(levelname)s : %(name)s : %(message)s'))
+
+        # initialize async handler for socket log
+        socket_log_queue = Queue()
+        socket_queue_handler = QueueHandler(socket_log_queue)
+        self.socket_queue_listener = logging.handlers.QueueListener(
+            socket_log_queue, socket_log
+        )
+        self.socket_queue_listener.start()
+
         # add loggers
         logger = logging.getLogger()
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
+        logger.addHandler(socket_log)
         logger.setLevel(self.args.loglevel)
         logger.info("Loading config.")
 
@@ -275,6 +290,7 @@ class Command:
         logging.shutdown()
         self.console_queue_listener.stop()
         self.file_queue_listener.stop()
+        self.socket_queue_listener.stop()
 
         if self.args.pause:
             input('Press ENTER to continue...')     # nosec
