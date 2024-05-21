@@ -273,8 +273,12 @@ class Command:
             logging.exception(exception)
 
         logging.shutdown()
-        self.console_queue_listener.stop()
-        self.file_queue_listener.stop()
+        if self.console_queue_listener:
+            self.console_queue_listener.stop()
+            self.console_queue_listener = None
+        if self.file_queue_listener:
+            self.file_queue_listener.stop()
+            self.file_queue_listener = None
 
         if self.args.pause:
             input('Press ENTER to continue...')     # nosec

@@ -1,12 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
+import platform
+from mpf._version import __version__ as mpf_version
+
 datas = [('mpf/config_spec.yaml', 'config_spec.yaml'), ('mpf/mpfconfig.yaml', 'mpfconfig.yaml')]
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('mpf')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+filename = "_".join([
+    f"mpf-{mpf_version}",
+    f"{platform.python_implementation().lower()}-{platform.python_version()}",
+    platform.system().lower(),
+    platform.machine().lower()
+])
 
 a = Analysis(
     ['mpf/__main__.py'],
@@ -17,7 +26,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['mpf.tests', 'mpf.platforms.p_roc', 'mpf.platforms.p3_roc', 'mpf.platforms.pinproc'],
+    excludes=['mpf.tests', 'mpf.wire', 'mpf.platforms.p_roc', 'mpf.platforms.p3_roc', 'mpf.platforms.pinproc'],
     noarchive=False,
     optimize=0,
 )
@@ -29,7 +38,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='mpf',
+    name=filename,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
