@@ -93,6 +93,11 @@ class MachineVariables(LogMixin):
 
         desc: Architecture of your machine (32bit/64bit).
         '''
+        self.set_machine_var(name="log_file_path", value=self.machine.options['full_logfile_path'])
+        '''machine_var: log_file_path
+
+        desc: Absolute path of the file log for the current running game.
+        '''
 
     def __getitem__(self, key):
         """Allow the user to access a machine variable with []. This would be used is machine.variables["var_name"]."""

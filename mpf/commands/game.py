@@ -160,10 +160,10 @@ class Command:
             if exception.errno != errno.EEXIST:
                 raise
 
-        full_logfile_path = os.path.join(machine_path, self.args.logfile)
+        self.args.full_logfile_path = os.path.join(machine_path, self.args.logfile)
 
         try:
-            os.remove(full_logfile_path)
+            os.remove(self.args.full_logfile_path)
         except OSError:
             pass
 
@@ -188,7 +188,7 @@ class Command:
         self.console_queue_listener.start()
 
         # initialize file log
-        file_log = logging.FileHandler(full_logfile_path)
+        file_log = logging.FileHandler(self.args.full_logfile_path)
         if self.args.jsonlogging:
             formatter = JSONFormatter()
         else:
