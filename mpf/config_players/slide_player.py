@@ -1,15 +1,17 @@
+"""Slide player for MPF to support GMC."""
 from functools import partial
 
 from mpf.config_players.plugin_player import PluginPlayer
-from mpf.core.utility_functions import Util
 
 
 class SlidePlayer(PluginPlayer):
+
     """Base class for part of the slide player which runs as part of MPF.
 
     Note: This class is loaded by MPF and everything in it is in the context of
     MPF, not the mc.
     """
+
     config_file_section = 'slide_player'
     show_section = 'slides'
 
@@ -19,12 +21,10 @@ class SlidePlayer(PluginPlayer):
         device_settings = self.machine.config_validator.validate_config(
             'slide_player', device_settings)
 
-
         return_dict = dict()
         return_dict[device] = device_settings
 
         return return_dict
-
 
     def _register_trigger(self, event, **kwargs):
         """Register trigger via BCP for MC."""

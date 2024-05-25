@@ -84,7 +84,7 @@ class PluginPlayer(DeviceConfigPlayer):
         # event may have come from BCP. Explicitly set _from_bcp=False so that
         # this play event won't be swallowed.
         if '_from_bcp' in kwargs:
-            del(kwargs['_from_bcp'])
+            del kwargs['_from_bcp']
         self.machine.bcp.interface.bcp_trigger(
             name='{}_play'.format(self.show_section),
             settings=settings, context=context, calling_context=calling_context,

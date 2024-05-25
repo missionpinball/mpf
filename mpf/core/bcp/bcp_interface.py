@@ -478,7 +478,6 @@ class BcpInterface(MpfController):
                 client, bcp_command='settings',
                 settings=Util.convert_to_simply_type(self.machine.settings.get_settings(s)))
 
-
     def _send_machine_vars(self, client):
         for var_name, settings in self.machine.variables.machine_vars.items():
             self.machine.bcp.transport.send_to_client(client, bcp_command='machine_variable',

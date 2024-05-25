@@ -1,3 +1,5 @@
+"""Widget player plugin for MPF to support GMC."""
+from functools import partial
 from mpf.config_players.plugin_player import PluginPlayer
 
 
@@ -11,19 +13,16 @@ class WidgetPlayer(PluginPlayer):
     config_file_section = 'widget_player'
     show_section = 'widgets'
 
-
     def _validate_config_item(self, device, device_settings):
         # device is slide name, device_settings is configuration
 
         device_settings = self.machine.config_validator.validate_config(
             'widget_player', device_settings)
 
-
         return_dict = dict()
         return_dict[device] = device_settings
 
         return return_dict
-
 
     def _register_trigger(self, event, **kwargs):
         """Register trigger via BCP for MC."""
