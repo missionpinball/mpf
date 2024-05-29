@@ -2,6 +2,7 @@
 from functools import partial
 from mpf.config_players.plugin_player import PluginPlayer
 
+from mpf.assets.sound import SoundAsset  # pylint: disable-msg=cyclic-import,unused-import
 
 class SoundPlayer(PluginPlayer):
 
@@ -17,6 +18,13 @@ class SoundPlayer(PluginPlayer):
 
     config_file_section = 'sound_player'
     show_section = 'sounds'
+
+
+    def __init__(self, machine):
+        """Initialize plugin player."""
+        super().__init__(machine)
+        # Find a better place to do this?
+        SoundAsset.initialize(machine)
 
     def _validate_config_item(self, device, device_settings):
         # device is slide name, device_settings is configuration
