@@ -150,7 +150,7 @@ class ConfigProcessor:
         if not isinstance(config, dict):
             raise ConfigFileError("Config should be a dict: {}".format(config), 1, self.log.name, filename)
 
-        deprecated_080 = ["playlists", "playlist_player", "slides", "sounds", "sound_pools", "sound_loop_player",
+        deprecated_080 = ["playlists", "playlist_player", "slides", "sound_loop_player",
                           "sound_loop_sets", "sound_system", "track_player", "widgets"]
         for k in config.keys():
             if k in config_spec:

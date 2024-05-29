@@ -37,6 +37,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.bcp.bcp import Bcp    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.text_ui import TextUi     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.assets.show import Show    # pylint: disable-msg=cyclic-import,unused-import
+    from mpf.assets.sound import SoundAsset  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.driver import Driver   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import

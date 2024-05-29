@@ -1700,6 +1700,11 @@ sound_player:
     events_when_looping: list|event_posted|None
     events_when_about_to_finish: list|event_posted|None
     key: single|str|None
+
+sound_pools:
+    __valid_in__: machine, mode                      # todo add to validator
+    __type__: config_dict
+    __allow_others__:
 sound_ducking:
     bus: single|str|None
     attack: single|secs|
