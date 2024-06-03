@@ -374,7 +374,8 @@ class SwitchController(MpfController):
 
         self._cancel_timed_handlers(obj)
 
-        self._call_handlers(obj, state)
+        if not obj.is_muted:
+            self._call_handlers(obj, state)
 
         for monitor in self.monitors:
             monitor(MonitoredSwitchChange(name=obj.name, label=obj.label, platform=obj.platform,

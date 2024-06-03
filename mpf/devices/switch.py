@@ -27,7 +27,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     class_label = 'switch'
 
     __slots__ = ["hw_switch", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
-                 "recycle_jitter_count", "_events_to_post", "last_change"]
+                 "recycle_jitter_count", "_events_to_post", "last_change", "is_muted"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize switch."""
@@ -44,6 +44,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         not consider whether a switch is NC or NO."""
 
         self.invert = 0
+        self.is_muted = False
 
         self.recycle_secs = 0
         self.recycle_clear_time = None
@@ -210,6 +211,10 @@ class Switch(SystemWideDevice, DevicePositionMixin):
                 self.config['events_when_deactivated']):
             self._create_activation_event(event, 0)
 
+        if self.config['ignore_during_ball_search']:
+            self.machine.events.add_handler("ball_search_started", self.mute)
+            self.machine.events.add_handler("ball_search_stopped", self.unmute)
+
     # pylint: disable-msg=too-many-arguments
     def add_handler(self, callback, state=1, ms=0, return_info=False,
                     callback_kwargs=None):
@@ -245,3 +250,13 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         """Remove switch handler for this switch."""
         return self.machine.switch_controller.remove_switch_handler_obj(
             self, callback, state, ms)
+
+    def mute(self, **kwargs):
+        """Mute this switch so that switch hits do not trigger handlers."""
+        del kwargs
+        self.is_muted = True
+
+    def unmute(self, **kwargs):
+        """Unmute this switch so that hits again trigger handlers."""
+        del kwargs
+        self.is_muted = False
