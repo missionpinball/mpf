@@ -70,10 +70,14 @@ class DropTarget(SystemWideDevice):
 
     def _ignore_switch_hits_for(self, ms, reset_attempt=None):
         """Ignore switch hits for ms."""
+        self.info_log("Ignoring switch hits for %sms", ms)
+        self.config['switch'].mute()
         self._ignore_switch_hits = True
         self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms, reset_attempt=reset_attempt)
 
     def _restore_switch_hits(self, reset_attempt=None):
+        self.info_log("Restoring switch hits")
+        self.config['switch'].unmute()
         self._ignore_switch_hits = False
         self._update_state_from_switch(reconcile=True)
 
@@ -88,12 +92,15 @@ class DropTarget(SystemWideDevice):
             self.debug_log("Reset confirmed!")
 
     def _ball_search_phase1(self):
+        self.info_log("Ball search phase 1: complete is %s", self.complete)
         if not self.complete and self.reset_coil:
+            self.info_log(" - not complete, firing reset coil")
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
             self.reset_coil.pulse()
             return True
         # if down. knock down again
-        if self.complete and self.knockdown_coil:
+        elif self.complete and self.knockdown_coil:
+            self.info_log(" - complete, firing knockdown coil")
             self.knockdown_coil.pulse()
             return True
         return False
@@ -214,7 +221,7 @@ class DropTarget(SystemWideDevice):
         is_complete = self.machine.switch_controller.is_active(
             self.config['switch'])
 
-        self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
+        self.info_log("Drop target %s switch %s has active value %s compared to drop complete %s",
                        self.name, self.config['switch'].name, is_complete, self.complete)
         if self._in_ball_search or self._ignore_switch_hits:
             self.debug_log("Ignoring state change in drop target %s due to being in ball search "
@@ -222,6 +229,7 @@ class DropTarget(SystemWideDevice):
             return
 
         if not reconcile:
+            self.info_log("Hit without reconciling, marking playfield as active")
             self.config['playfield'].mark_playfield_active_from_device_action()
 
         if is_complete != self.complete:
@@ -400,8 +408,9 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             if drop_target.reset_coil and drop_target.complete:
                 coils.add(drop_target.reset_coil)
 
-            # tell the drop target that we are going to reset it physically
-            drop_target.external_reset_from_bank()
+            # Mute all the bank's switches
+            if self.config['ignore_switch_ms']:
+                drop_target.config['switch'].mute()
 
         for coil in self.reset_coils:
             coils.add(coil)
@@ -417,6 +426,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             self.debug_log("Coil %s firing has a wait of %s!", coil, wait_ms)
             restore_delay_ms += wait_ms
 
+        # Set a delay to unmute all the switches after the combined reset time plus ignore
         if self.config['ignore_switch_ms']:
             restore_delay_ms += self.config['ignore_switch_ms']
             if self.config['max_reset_attempts'] and attempt is None:
@@ -428,6 +438,8 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
                            reset_attempt=attempt)
 
     def _restore_switch_hits(self, reset_attempt=None):
+        for target in self.drop_targets:
+            target.config['switch'].unmute()
         self._ignore_switch_hits = False
         self.member_target_change()
 
