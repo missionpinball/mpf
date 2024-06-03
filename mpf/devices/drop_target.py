@@ -277,8 +277,7 @@ class DropTarget(SystemWideDevice):
         device.
         Make sure we do not mark the playfield as active.
         """
-        if self.machine.switch_controller.is_active(self.config['switch']):
-            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
+        self._update_state_from_switch(reconcile=True)
 
     def remove_from_bank(self, bank):
         """Remove the DropTarget from a bank.
@@ -440,6 +439,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
     def _restore_switch_hits(self, reset_attempt=None):
         for target in self.drop_targets:
             target.config['switch'].unmute()
+            target.external_reset_from_bank()
         self._ignore_switch_hits = False
         self.member_target_change()
 
