@@ -261,19 +261,19 @@ class Playfield(SystemWideDevice):
             incoming_ball.ball_arrived()
             break
 
-    def _mark_playfield_active(self):
+    def _mark_playfield_active(self, source=None):
         self.ball_arrived()
-        self.machine.events.post_boolean(self.name + "_active")
+        self.machine.events.post_boolean(self.name + "_active", source=source)
         '''event: (name)_active
         desc: The playfield called (name) is now active, meaning there's
         at least one loose ball on it.
         '''
 
-    def mark_playfield_active_from_device_action(self):
+    def mark_playfield_active_from_device_action(self, device_name=None):
         """Mark playfield active because a device on the playfield detected activity."""
-        self._playfield_switch_hit()
+        self._playfield_switch_hit(source=device_name)
 
-    def _playfield_switch_hit(self, **kwargs):
+    def _playfield_switch_hit(self, source=None, **kwargs):
         """Playfield switch was hit.
 
         A switch tagged with '<this playfield name>_active' was just hit,
@@ -281,7 +281,7 @@ class Playfield(SystemWideDevice):
 
         """
         if self.balls <= 0 or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
-            self._mark_playfield_active()
+            self._mark_playfield_active(source)
 
             if not self.num_balls_requested:
                 self.debug_log("Playfield was activated with no balls expected.")

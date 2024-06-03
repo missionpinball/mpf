@@ -169,7 +169,7 @@ class AutofireCoil(SystemWideDevice):
         if not self._enabled:
             return
         if not self._ball_search_in_progress:
-            self.config['playfield'].mark_playfield_active_from_device_action()
+            self.config['playfield'].mark_playfield_active_from_device_action(self.name)
         if self._timeout_watch_time:
             current_time = self.machine.clock.get_time()
             self._timeout_hits = [t for t in self._timeout_hits if t > current_time - self._timeout_watch_time / 1000.0]

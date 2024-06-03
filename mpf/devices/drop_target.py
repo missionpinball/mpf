@@ -99,7 +99,7 @@ class DropTarget(SystemWideDevice):
             self.reset_coil.pulse()
             return True
         # if down. knock down again
-        elif self.complete and self.knockdown_coil:
+        if self.complete and self.knockdown_coil:
             self.info_log(" - complete, firing knockdown coil")
             self.knockdown_coil.pulse()
             return True
@@ -221,16 +221,16 @@ class DropTarget(SystemWideDevice):
         is_complete = self.machine.switch_controller.is_active(
             self.config['switch'])
 
-        self.info_log("Drop target %s switch %s has active value %s compared to drop complete %s",
-                       self.name, self.config['switch'].name, is_complete, self.complete)
+        self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
+                      self.name, self.config['switch'].name, is_complete, self.complete)
         if self._in_ball_search or self._ignore_switch_hits:
             self.debug_log("Ignoring state change in drop target %s due to being in ball search "
                            "or ignoring switch hits", self.name)
             return
 
         if not reconcile:
-            self.info_log("Hit without reconciling, marking playfield as active")
-            self.config['playfield'].mark_playfield_active_from_device_action()
+            self.debug_log("Hit without reconciling, marking playfield as active")
+            self.config['playfield'].mark_playfield_active_from_device_action(self.name)
 
         if is_complete != self.complete:
 

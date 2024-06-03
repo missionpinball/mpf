@@ -62,7 +62,7 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     def grab_ball(self):
         """Grab a ball."""
         # mark the playfield active no matter what
-        self.config['playfield'].mark_playfield_active_from_device_action()
+        self.config['playfield'].mark_playfield_active_from_device_action(self.name)
         # check if magnet is enabled or already active
         if not self.enabled or self._active or self._release_in_progress:
             return

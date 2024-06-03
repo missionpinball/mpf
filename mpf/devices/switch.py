@@ -264,4 +264,5 @@ class Switch(SystemWideDevice, DevicePositionMixin):
 
     @property
     def is_muted(self):
+        """True if this switch is currently muted."""
         return self._mutes > 0

@@ -102,7 +102,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         # mark playfield active
         if self.config['playfield']:
-            self.config['playfield'].mark_playfield_active_from_device_action()
+            self.config['playfield'].mark_playfield_active_from_device_action(self.name)
 
         self.debug_log("Sequence advance: %s", event_name)
 
