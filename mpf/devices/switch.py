@@ -27,7 +27,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     class_label = 'switch'
 
     __slots__ = ["hw_switch", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
-                 "recycle_jitter_count", "_events_to_post", "last_change", "is_muted"]
+                 "recycle_jitter_count",  "last_change", "_events_to_post", "_mutes"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize switch."""
@@ -44,7 +44,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         not consider whether a switch is NC or NO."""
 
         self.invert = 0
-        self.is_muted = False
+        self._mutes = 0
 
         self.recycle_secs = 0
         self.recycle_clear_time = None
@@ -254,9 +254,14 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     def mute(self, **kwargs):
         """Mute this switch so that switch hits do not trigger handlers."""
         del kwargs
-        self.is_muted = True
+        self._mutes += 1
 
     def unmute(self, **kwargs):
         """Unmute this switch so that hits again trigger handlers."""
         del kwargs
-        self.is_muted = False
+        self._mutes -= 1
+        assert self._mutes >= 0, "Switch %s has unmuted more times than muted." % self.name
+
+    @property
+    def is_muted(self):
+        return self._mutes > 0
