@@ -121,13 +121,16 @@ class BallSearch(MpfController):
             return
 
         del kwargs
-        if self.playfield.config['enable_ball_search'] is False or (
-            not self.playfield.config['enable_ball_search'] and
+        is_ball_search_enabled = self.playfield.config['enable_ball_search'].evaluate({}) if \
+            self.playfield.config['enable_ball_search'] else None
+        if is_ball_search_enabled is False or (
+            is_ball_search_enabled is None and
                 not self.machine.config['mpf']['default_ball_search']):
             return
 
         if not self.callbacks:
-            raise AssertionError("No callbacks registered")
+            raise AssertionError(f"Cannot run ball search on playfield '{self.playfield.name}', no callbacks "
+                                 "registered. Do you have any shots/devices defined in this playfield?")
 
         self.debug_log("Enabling Ball Search")
 
