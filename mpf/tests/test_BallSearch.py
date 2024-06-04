@@ -1,3 +1,4 @@
+from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from unittest.mock import MagicMock
 
@@ -16,7 +17,7 @@ class TestBallSearch(MpfGameTestCase):
         return 'smart_virtual'
 
     def test_ball_search_does_not_start_when_disabled(self):
-        self.machine.playfields["playfield"].config['enable_ball_search'] = False
+        self.machine.playfields["playfield"].config['enable_ball_search'] = NativeTypeTemplate(False, self.machine)
 
         self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -34,14 +35,14 @@ class TestBallSearch(MpfGameTestCase):
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.started)
 
-        self.machine.playfields["playfield"].config['enable_ball_search'] = None
+        self.machine.playfields["playfield"].config['enable_ball_search'] =  NativeTypeTemplate(None, self.machine)
         self.machine.config['mpf']['default_ball_search'] = True
         self.machine.ball_devices['playfield'].ball_search.enable()
         self.assertTrue(self.machine.ball_devices['playfield'].ball_search.enabled)
         self.machine.ball_devices['playfield'].ball_search.disable()
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
 
-        self.machine.playfields["playfield"].config['enable_ball_search'] = None
+        self.machine.playfields["playfield"].config['enable_ball_search'] =  NativeTypeTemplate(None, self.machine)
         self.machine.config['mpf']['default_ball_search'] = False
         self.machine.ball_devices['playfield'].ball_search.enable()
         self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
