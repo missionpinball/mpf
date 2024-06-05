@@ -30,7 +30,7 @@ class DropTarget(SystemWideDevice):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    __slots__ = ["reset_coil", "knockdown_coil", "banks", "_in_ball_search", "complete", "delay", "_ignore_switch_hits"]
+    __slots__ = ["reset_coil", "knockdown_coil", "banks", "complete", "delay"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialize drop target."""
@@ -39,11 +39,8 @@ class DropTarget(SystemWideDevice):
         self.banks = set()                  # type: Set[DropTargetBank]
         super().__init__(machine, name)
 
-        self._in_ball_search = False
         self.complete = False
         self.delay = DelayManager(machine)
-
-        self._ignore_switch_hits = False
 
     async def _initialize(self):
         await super()._initialize()
@@ -72,13 +69,11 @@ class DropTarget(SystemWideDevice):
         """Ignore switch hits for ms."""
         self.debug_log("Ignoring switch hits for %sms", ms)
         self.config['switch'].mute()
-        self._ignore_switch_hits = True
         self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms, reset_attempt=reset_attempt)
 
     def _restore_switch_hits(self, reset_attempt=None):
         self.debug_log("Restoring switch hits")
         self.config['switch'].unmute()
-        self._ignore_switch_hits = False
         self._update_state_from_switch(reconcile=True)
 
         if self.complete and reset_attempt:
@@ -93,24 +88,21 @@ class DropTarget(SystemWideDevice):
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
-            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-            self.reset_coil.pulse()
+            self._ball_search_reset()
             return True
         # if down. knock down again
         if self.complete and self.knockdown_coil:
-            self.knockdown_coil.pulse()
+            self._ball_search_knockdown()
             return True
         return False
 
     def _ball_search_phase2(self):
         if self.reset_coil and self.knockdown_coil:
-            self._in_ball_search = True
             if self.complete:
-                self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-                self.reset_coil.pulse()
+                self._ball_search_reset()
                 self.delay.add(100, self._ball_search_knockdown)
             else:
-                self.knockdown_coil.pulse()
+                self._ball_search_knockdown()
                 self.delay.add(100, self._ball_search_reset)
             return True
 
@@ -120,10 +112,8 @@ class DropTarget(SystemWideDevice):
     def _ball_search_phase3(self):
         if self.complete:
             if self.reset_coil:
-                self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-                self.reset_coil.pulse()
+                self._ball_search_reset()
                 if self.knockdown_coil:
-                    self._in_ball_search = True
                     self.delay.add(100, self._ball_search_knockdown)
                 return True
 
@@ -131,26 +121,21 @@ class DropTarget(SystemWideDevice):
             return self._ball_search_phase1()
 
         if self.knockdown_coil:
-            self.knockdown_coil.pulse()
+            self._ball_search_knockdown()
             if self.reset_coil:
-                self._in_ball_search = True
                 self.delay.add(100, self._ball_search_reset)
             return True
 
         # fall back to phase1
         return self._ball_search_phase1()
 
-    def _ball_search_iteration_finish(self):
-        self._in_ball_search = False
-
     def _ball_search_knockdown(self):
+        self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
         self.knockdown_coil.pulse()
-        self.delay.add(100, self._ball_search_iteration_finish)
 
     def _ball_search_reset(self):
         self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
         self.reset_coil.pulse()
-        self.delay.add(100, self._ball_search_iteration_finish)
 
     def _ball_search(self, phase, iteration):
         del iteration
@@ -220,10 +205,6 @@ class DropTarget(SystemWideDevice):
 
         self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
                        self.name, self.config['switch'].name, is_complete, self.complete)
-        if self._in_ball_search or self._ignore_switch_hits:
-            self.debug_log("Ignoring state change in drop target %s due to being in ball search "
-                           "or ignoring switch hits", self.name)
-            return
 
         if not reconcile:
             self.config['playfield'].mark_playfield_active_from_device_action(self.name)
@@ -340,7 +321,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.down = 0
         self.up = 0
         self.delay = DelayManager(machine)
-        self._ignore_switch_hits = False
 
     @property
     def can_exist_outside_of_game(self):
@@ -426,7 +406,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             restore_delay_ms += self.config['ignore_switch_ms']
             if self.config['max_reset_attempts'] and attempt is None:
                 attempt = 1
-            self._ignore_switch_hits = True
             self.delay.add(ms=restore_delay_ms,
                            callback=self._restore_switch_hits,
                            name='ignore_hits',
@@ -436,7 +415,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         for target in self.drop_targets:
             target.config['switch'].unmute()
             target.external_reset_from_bank()
-        self._ignore_switch_hits = False
         self.member_target_change()
 
         if self.down != 0 and reset_attempt is not None:
@@ -455,9 +433,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         This method causes this group to update its down and up counts and
         complete status.
         """
-        if self._ignore_switch_hits:
-            return
-
         self.down = 0
         self.up = 0
 
