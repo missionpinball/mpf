@@ -12,7 +12,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig, RepulseSettings,SegmentDisplayPlatform
+    SwitchConfig, DriverConfig, RepulseSettings, SegmentDisplayPlatform
 
 
 class VirtualPinballSwitch(SwitchPlatformInterface):
@@ -154,11 +154,13 @@ class VirtualPinballSegmentDisplay(SegmentDisplayPlatformInterface):
         """Return colors."""
         return self._text.get_colors()
 
+
 class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, SegmentDisplayPlatform):
 
     """VPX platform."""
 
-    __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", "_started", "rules", "_configured_segment_displays", "_last_segment_text"]
+    __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", 
+                 "_started", "rules", "_configured_segment_displays", "_last_segment_text"]
 
     def __init__(self, machine):
         """Initialize VPX platform."""
@@ -169,7 +171,7 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, Seg
         self._last_drivers = {}     # type: Dict[str, bool]
         self._last_lights = {}      # type: Dict[str, float]
         self._configured_segment_displays = []  # type: List[VirtualPinballSegmentDisplay]
-        self._last_segment_text = {}# type: Dict[str, str]
+        self._last_segment_text = {}  # type: Dict[str, str]
         self._started = asyncio.Event()
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")
