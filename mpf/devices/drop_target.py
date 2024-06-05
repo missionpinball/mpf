@@ -333,6 +333,12 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']
 
+        # If individual drop targets have reset coils, they will ball search themselves.
+        # The bank will only trigger in ball search if it has its own bank coils defined
+        if self.config['ball_search_order'] and (self.config['reset_coil'] or self.config['reset_coils']):
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self.reset, self.name)
+
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add targets."""
         self._add_targets_to_bank()
