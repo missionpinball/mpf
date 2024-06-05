@@ -216,7 +216,7 @@ class DropTarget(SystemWideDevice):
             else:
                 self._up()
 
-            self._update_banks()
+            self._update_banks(reconcile)
 
     def _down(self):
         self.complete = True
@@ -231,9 +231,9 @@ class DropTarget(SystemWideDevice):
         '''event: drop_target_(name)_up
         desc: The drop target (name) has just changed to the "up" state.'''
 
-    def _update_banks(self):
+    def _update_banks(self, reconcile=False):
         for bank in self.banks:
-            bank.member_target_change()
+            bank.member_target_change(reconcile)
 
     def add_to_bank(self, bank):
         """Add this drop target to a drop target bank.
@@ -337,7 +337,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         # The bank will only trigger in ball search if it has its own bank coils defined
         if self.config['ball_search_order'] and (self.config['reset_coil'] or self.config['reset_coils']):
             self.config['playfield'].ball_search.register(
-                self.config['ball_search_order'], self.reset, self.name)
+                self.config['ball_search_order'], self._ball_search, self.name)
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add targets."""
@@ -409,6 +409,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         # Set a delay to unmute all the switches after the combined reset time plus ignore
         if self.config['ignore_switch_ms']:
+            self.debug_log("Switches ignored, setting %sms timer to restore them.", self.config['ignore_switch_ms'])
             restore_delay_ms += self.config['ignore_switch_ms']
             if self.config['max_reset_attempts'] and attempt is None:
                 attempt = 1
@@ -418,6 +419,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
                            reset_attempt=attempt)
 
     def _restore_switch_hits(self, reset_attempt=None):
+        self.debug_log("Restoring switch hits")
         for target in self.drop_targets:
             target.config['switch'].unmute()
             target.external_reset_from_bank()
@@ -433,7 +435,11 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         else:
             self.debug_log("Reset confirmed!")
 
-    def member_target_change(self):
+    def _ball_search(self, phase, iteration):
+        attempt = (iteration - 1) * phase + iteration
+        self.reset(attempt)
+
+    def member_target_change(self, reconcile=False):
         """Handle that a member drop target has changed state.
 
         This method causes this group to update its down and up counts and
@@ -450,8 +456,13 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         self.debug_log(
             'Member drop target status change: Up: %s, Down: %s,'
-            ' Total: %s', self.up, self.down,
-            len(self.drop_targets))
+            ' Total: %s, Reconcile: %s', self.up, self.down,
+            len(self.drop_targets), reconcile)
+
+        # Don't change the internal state during reconciliation. After the reset
+        # is complete the bank will re-check and post the final state.
+        if reconcile:
+            return
 
         if self.down == len(self.drop_targets):
             self._bank_down()
@@ -483,6 +494,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.state = DropTargetBankState.UP
         self.complete = False
         self.debug_log('All targets are up')
+
         self.machine.events.post('drop_target_bank_' + self.name + '_up')
         '''event: drop_target_bank_(name)_up
         desc: Every drop target in the drop target bank called
@@ -493,6 +505,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         prev_state = self.state
         self.state = DropTargetBankState.MIXED
         self.complete = False
+
         self.machine.events.post('drop_target_bank_' + self.name + '_mixed',
                                  prev_value=prev_state,
                                  down=self.down)
