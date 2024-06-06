@@ -24,8 +24,8 @@ class Shot(EnableDisableMixin, ModeDevice):
     to track shots.
     """
 
-    __slots__ = ["delay", "active_sequences", "active_delays", "running_show", "_handlers",
-                 "_player_var_name"]
+    __slots__ = ["delay", "active_sequences", "active_delays", "playfield", "running_show",
+                 "_handlers", "_player_var_name"]
 
     def __init__(self, machine, name):
         """Initialize shot."""
@@ -40,22 +40,29 @@ class Shot(EnableDisableMixin, ModeDevice):
         """List of tuples: (id, current_position_index, next_switch)"""
         self.active_delays = set()
         self.running_show = None
+        self.playfield = None
         self._handlers = []
 
     async def _initialize(self) -> None:
         """Register playfield active handlers."""
         await super()._initialize()
 
-        for switch in self.config['switches'] + list(self.config['delay_switch'].keys()):
-            # mark the playfield active no matter what
-            switch.add_handler(self._mark_active)
         self._register_control_event_handlers()
 
-    def _mark_active(self, **kwargs):
+        # No need to mark active if not required
+        if not self.config['mark_playfield_active']:
+            return
+
+        for switch in self.config['switches'] + list(self.config['delay_switch'].keys()):
+            # mark the playfield active no matter what
+            switch.add_handler(self._mark_active,
+                               callback_kwargs={'playfield': switch.config['playfield']})
+
+    def _mark_active(self, playfield, **kwargs):
         """Mark playfield active."""
         del kwargs
-        if self.config['mark_playfield_active']:
-            self.config['playfield'].mark_playfield_active_from_device_action(self.name)
+        # Whatever playfield the triggering switch is on, mark *that* as active
+        playfield.mark_playfield_active_from_device_action(self.name)
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.

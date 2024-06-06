@@ -30,7 +30,7 @@ class DropTarget(SystemWideDevice):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    __slots__ = ["reset_coil", "knockdown_coil", "banks", "complete", "delay"]
+    __slots__ = ["reset_coil", "knockdown_coil", "banks", "complete", "delay", "playfield"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialize drop target."""
@@ -41,6 +41,7 @@ class DropTarget(SystemWideDevice):
 
         self.complete = False
         self.delay = DelayManager(machine)
+        self.playfield = None
 
     async def _initialize(self):
         await super()._initialize()
@@ -53,17 +54,20 @@ class DropTarget(SystemWideDevice):
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers, priority=1)
 
+        # If a playfield is not explicitly defined, defer to the switch's playfield
+        self.playfield = self.config['playfield'] or self.config['switch'].playfield
+
         if self.config['ball_search_order']:
-            self.config['playfield'].ball_search.register(
+            self.playfield.ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
-        if f"{self.config['playfield'].name}_active" in self.config['switch'].tags:
+        if f"{self.playfield.name}_active" in self.config['switch'].tags:
             self.raise_config_error(
                 "Drop target device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "
                 "redundant '{}_active' tag from that switch.".format(
-                    self.name, self.config['switch'].name, self.config['playfield'].name,
-                    self.config['playfield'].name), 1)
+                    self.name, self.config['switch'].name, self.playfield.name,
+                    self.playfield.name), 1)
 
     def _ignore_switch_hits_for(self, ms, reset_attempt=None):
         """Ignore switch hits for ms."""
@@ -207,7 +211,7 @@ class DropTarget(SystemWideDevice):
                        self.name, self.config['switch'].name, is_complete, self.complete)
 
         if not reconcile:
-            self.config['playfield'].mark_playfield_active_from_device_action(self.name)
+            self.playfield.mark_playfield_active_from_device_action(self.name)
 
         if is_complete != self.complete:
 
@@ -352,7 +356,10 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Add targets to bank."""
         for target in self.drop_targets:
             target.add_to_bank(self)
-
+            assert(self.config['playfield'] == target.playfield,
+                   "Drop target bank has a playfield %s but target %s has playfield %s. "
+                   "Banks do not support targets on multiple playfields.",
+                   self.config['playfield'], target.name, target.playfield)
         self.member_target_change()
 
         self.debug_log('Drop Targets: %s', self.drop_targets)

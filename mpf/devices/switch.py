@@ -266,3 +266,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     def is_muted(self):
         """True if this switch is currently muted."""
         return self._mutes > 0
+
+    @property
+    def playfield(self):
+        """Return the playfield this switch is assigned to."""
+        return self.config['playfield']

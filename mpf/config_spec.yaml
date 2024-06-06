@@ -115,7 +115,7 @@ autofire_coils:
     coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
-    playfield: single|machine(playfields)|playfield
+    playfield: single|machine(playfields)|None
     timeout_watch_time: single|ms|0
     timeout_max_hits: single|int|0
     timeout_disable_time: single|ms|0
@@ -493,7 +493,7 @@ drop_targets:
     reset_coil_max_wait_ms: single|ms|100ms
     knockdown_coil_max_wait_ms: single|ms|100ms
     ignore_switch_ms: single|ms|500ms
-    playfield: single|machine(playfields)|playfield
+    playfield: single|machine(playfields)|None
 drop_target_banks:
     __valid_in__: machine, mode
     __type__: device
@@ -1076,7 +1076,7 @@ magnets:
     release_time: single|ms|500ms
     fling_drop_time: single|ms|250ms
     fling_regrab_time: single|ms|50ms
-    playfield: single|machine(playfields)|playfield
+    playfield: single|machine(playfields)|None
     enable_events: event_handler|event_handler:ms|ball_started
     disable_events: event_handler|event_handler:ms|ball_will_end, service_mode_entered
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting
@@ -1986,7 +1986,7 @@ sequence_shots:
     delay_switch_list: dict|machine(switches):ms|None
     delay_event_list: event_handler|event_handler:ms|None
     sequence_timeout: single|ms|0
-    playfield: single|machine(playfields)|playfield
+    playfield: single|machine(playfields)|None
 switches:
     __valid_in__: machine
     __type__: device
@@ -1999,6 +1999,7 @@ switches:
     events_when_deactivated: list|event_posted|None
     platform: single|str|None
     platform_settings: single|dict|None
+    playfield: single|machine(playfields)|playfield
     x: single|float|None
     y: single|float|None
     z: single|float|None

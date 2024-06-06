@@ -367,10 +367,12 @@ class SwitchController(MpfController):
         obj.state = state
         obj.last_change = timestamp
 
+
+        muted_state = "(muted) " if obj.is_muted else ""
         if state:
-            self.info_log("<<<<<<< '%s' active >>>>>>>", obj.name)
+            self.info_log("<<<<<<< '%s' active %s>>>>>>>", obj.name, muted_state)
         else:
-            self.info_log("<<<<<<< '%s' inactive >>>>>>>", obj.name)
+            self.info_log("<<<<<<< '%s' inactive %s>>>>>>>", obj.name, muted_state)
 
         self._cancel_timed_handlers(obj)
 

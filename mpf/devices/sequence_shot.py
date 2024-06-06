@@ -100,7 +100,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         # switch is starting a new sequence or continuing an existing one
         del kwargs
 
-        # mark playfield active
+        # mark playfield active if a playfield is defined for this sequence
         if self.config['playfield']:
             self.config['playfield'].mark_playfield_active_from_device_action(self.name)
 
