@@ -375,7 +375,9 @@ class SwitchController(MpfController):
 
         self._cancel_timed_handlers(obj)
 
-        if not obj.is_muted:
+        # Don't call switch callbacks during initialization, or devices may try and
+        # flag playfields active and mess up the ball counts.
+        if self._initialized and not obj.is_muted:
             self._call_handlers(obj, state)
 
         for monitor in self.monitors:
