@@ -24,6 +24,7 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         """Initialize magnet."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine)
+        self.playfield = None
         self._active = False
         self._release_in_progress = False
 

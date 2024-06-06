@@ -367,7 +367,6 @@ class SwitchController(MpfController):
         obj.state = state
         obj.last_change = timestamp
 
-
         muted_state = "(muted) " if obj.is_muted else ""
         if state:
             self.info_log("<<<<<<< '%s' active %s>>>>>>>", obj.name, muted_state)
