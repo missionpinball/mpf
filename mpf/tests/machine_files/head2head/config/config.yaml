@@ -13,45 +13,65 @@ playfields:
 switches:
   s_trough1_front:
     number:
+    playfield: playfield_front
   s_trough2_front:
     number:
+    playfield: playfield_front
   s_trough3_front:
     number:
+    playfield: playfield_front
   s_trough4_front:
     number:
+    playfield: playfield_front
   s_trough1_back:
     number:
+    playfield: playfield_back
   s_trough2_back:
     number:
+    playfield: playfield_back
   s_trough3_back:
     number:
+    playfield: playfield_back
   s_trough4_back:
     number:
+    playfield: playfield_back
   s_launcher_lane_front:
     number:
+    playfield: playfield_front
   s_launcher_lane_back:
     number:
+    playfield: playfield_back
   s_middle_front1:
     number:
+    playfield: playfield_front
   s_middle_back1:
     number:
+    playfield: playfield_front
   s_feeder_front:
     number:
+    playfield: playfield_front
   s_feeder_back:
     number:
+    playfield: playfield_back
   s_launcher_diverter_front:
     number:
+    playfield: playfield_front
   s_launcher_diverter_back:
     number:
+    playfield: playfield_back
   s_transfer_front_back:
     number:
+    playfield: playfield_back
   s_transfer_back_front:
     number:
+    playfield: playfield_front
   s_playfield_front:
     number:
+    playfield: playfield_front
     tags: playfield_front_active
   s_playfield_back:
     number:
+    playfield: playfield_back
     tags: playfield_back_active
 
 coils:

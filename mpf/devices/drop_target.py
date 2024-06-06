@@ -356,10 +356,10 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         """Add targets to bank."""
         for target in self.drop_targets:
             target.add_to_bank(self)
-            assert(self.config['playfield'] == target.playfield,
-                   "Drop target bank has a playfield %s but target %s has playfield %s. "
-                   "Banks do not support targets on multiple playfields.",
-                   self.config['playfield'], target.name, target.playfield)
+            assert self.config['playfield'] == target.playfield, \
+                   f"Drop target bank has a playfield {self.config['playfield']} but target {target.name} " \
+                    "has playfield {target.playfield}. Banks do not support targets on multiple playfields."
+
         self.member_target_change()
 
         self.debug_log('Drop Targets: %s', self.drop_targets)
