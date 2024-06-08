@@ -80,6 +80,16 @@ class TestFastExp(TestFastBase):
         self.assertIn("88121", self.fast_exp_leds)
         self.assertIn("89200", self.fast_exp_leds)
 
+        # Make sure explicit offset declarations work
+        self.assertEqual(self.led4.hw_drivers['red'][0].number, '88120-0')
+        self.assertEqual(self.led4.hw_drivers['green'][0].number, '88120-1')
+        self.assertEqual(self.led4.hw_drivers['blue'][0].number, '88120-2')
+
+        self.assertEqual(self.led5.hw_drivers['red'][0].number, '88121-1')
+        self.assertEqual(self.led5.hw_drivers['green'][0].number, '88121-2')
+        self.assertEqual(self.led5.hw_drivers['blue'][0].number, '88122-0')
+
+
         # Make sure all the RGBW, channels, previous, and start_channels are working
         self.assertEqual(self.led22.hw_drivers['red'][0].number, '48002-0')
         self.assertEqual(self.led22.hw_drivers['green'][0].number, '48002-1')
