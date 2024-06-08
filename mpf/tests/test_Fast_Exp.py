@@ -84,15 +84,11 @@ class TestFastExp(TestFastBase):
         self.assertEqual(self.led4.hw_drivers['red'][0].number, '88120-0')
         self.assertEqual(self.led4.hw_drivers['green'][0].number, '88120-1')
         self.assertEqual(self.led4.hw_drivers['blue'][0].number, '88120-2')
-
         self.assertEqual(self.led5.hw_drivers['red'][0].number, '88121-1')
         self.assertEqual(self.led5.hw_drivers['green'][0].number, '88121-2')
         self.assertEqual(self.led5.hw_drivers['blue'][0].number, '88122-0')
-
-        # Intentionally-failing test to prove that third channel rollover has an issue
         self.assertEqual(self.led6.hw_drivers['red'][0].number, '89200-2')
         self.assertEqual(self.led6.hw_drivers['green'][0].number, '89201-0')
-        # Bug is generating as 202-0 instead of 201-1
         self.assertEqual(self.led6.hw_drivers['blue'][0].number, '89201-1')
 
 
