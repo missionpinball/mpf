@@ -63,11 +63,11 @@ lights:
   led3:
     number: brian-1-3
   led4:
-    number: brian-b1-2-1
+    number: brian-b1-2-1-0
   led5:
-    number: brian-b1-2-2
+    number: brian-b1-2-2-1
   led6:
-    number: aaron-b2-1-1
+    number: aaron-b2-1-1-2
   led7:
     number: aaron-1-1
   led8:

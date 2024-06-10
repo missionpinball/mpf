@@ -54,6 +54,7 @@ class OppRs232Intf:
     WING_SW_MATRIX_OUT_LOW_WING = b'\x0a'
     WING_LAMP_MATRIX_COL_WING = b'\x0b'
     WING_LAMP_MATRIX_ROW_WING = b'\x0c'
+    WING_SOL_8 = b'\x0d'
 
     NUM_G2_INP_PER_BRD = 32
     CFG_INP_STATE = b'\x00'

@@ -462,6 +462,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             if msg[2 + wing_index] == ord(OppRs232Intf.WING_SOL):
                 sol_mask |= (0x0f << (4 * wing_index))
                 inp_mask |= (0x0f << (8 * wing_index))
+            if msg[2 + wing_index] == ord(OppRs232Intf.WING_SOL_8):
+                sol_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INP):
                 inp_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INCAND):

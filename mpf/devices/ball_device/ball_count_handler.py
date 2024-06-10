@@ -94,11 +94,8 @@ class BallCountHandler(BallDeviceStateHandler):
         self._ball_count = await self.counter.count_balls()
         # on start try to reorder balls if count is unstable
         if self.counter.is_count_unreliable() or self.counter.is_jammed():
-            self.info_log("BCH: Count is unstable. Trying to reorder balls.")
-            await self.ball_device.ejector.reorder_balls()
-            self.info_log("BCH: Repulse done. Waiting for balls to settle.")
-            # recount
-            self._ball_count = await self.counter.count_balls()
+            # Platform watchdogs don't open until init phase 3/4, so wait before reordering
+            self.machine.events.add_async_handler("init_phase_5", self._reorder_balls)
 
         self.info_log("BCH: Initial count: %s", self._ball_count)
 
@@ -107,6 +104,17 @@ class BallCountHandler(BallDeviceStateHandler):
         self.ball_device.counted_balls = self._ball_count
         await super().initialize()
         self._count_valid.set()
+
+    async def _reorder_balls(self, **kwargs):
+        del kwargs
+        self.machine.events.remove_handler(self._reorder_balls)
+        self.info_log("BCH: Count is unstable. Trying to reorder balls.")
+        await self.ball_device.ejector.reorder_balls()
+        self.info_log("BCH: Repulse done. Waiting for balls to settle.")
+        # recount
+        self._ball_count = await self.counter.count_balls()
+
+        self.info_log("BCH: Reordered count: %s", self._ball_count)
 
     @property
     def has_ball(self) -> bool:
