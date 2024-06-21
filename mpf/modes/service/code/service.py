@@ -18,13 +18,27 @@ class Service(AsyncMode):
 
     """The service mode."""
 
-    __slots__ = ["_update_script", "_do_sort"]
+    __slots__ = ("_do_sort", "_is_displayed", "_menu_level", "_trigger",  "_update_script")
 
     def __init__(self, *args, **kwargs):
         """Initialize service mode."""
         super().__init__(*args, **kwargs)
         self._update_script = None
         self._do_sort = self.config.get('mode_settings', {}).get('sort_devices_by_number', True)
+        self._menu_level = -1
+        self._trigger = None
+        self._is_displayed = False
+
+
+
+    def mode_start(self, **kwargs):
+        """Create an event handler for the "reset" event triggered via keypress."""
+        del kwargs
+        self.add_mode_event_handler("reset", self._on_reset)
+
+        # Map MC-triggered events to methods in the parent class
+        self.add_mode_event_handler("service_trigger", self._on_service_trigger)
+
 
     @staticmethod
     def get_config_spec():
@@ -46,13 +60,42 @@ sort_devices_by_number: single|bool|True
     async def _service_mode_exit(self):
         await self.machine.service.stop_service()
 
-    def _get_key(self):
-        return Util.race({
-            self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events']): "ESC",
-            self.machine.events.wait_for_any_event(self.config['mode_settings']['enter_events']): "ENTER",
-            self.machine.events.wait_for_any_event(self.config['mode_settings']['up_events']): "UP",
-            self.machine.events.wait_for_any_event(self.config['mode_settings']['down_events']): "DOWN",
-        })
+    async def _get_key(self):
+        futures = {
+            self.machine.events.wait_for_any_event(
+                ["sw_service_down_active"]
+            ): "DOWN",
+            self.machine.events.wait_for_any_event(
+                ["sw_service_up_active"]
+            ): "UP",
+            self.machine.events.wait_for_any_event(
+                ["sw_service_toggle_active", "sw_service_toggle_inactive"]
+            ): "TOGGLE",
+            self.machine.events.wait_for_any_event(
+                ["sw_service_enter_active"]
+            ): "ENTER",
+            self.machine.events.wait_for_any_event(
+                ["sw_service_esc_active"]
+            ): "ESC",
+            self.machine.events.wait_for_any_event(
+                ["s_flipper_left_inactive"]
+            ): "PAGE_LEFT",
+            self.machine.events.wait_for_any_event(
+                ["s_flipper_right_inactive"]
+            ): "PAGE_RIGHT",
+            self.machine.events.wait_for_any_event(
+                ["s_credit_active"]
+            ): "START",
+            self.machine.events.wait_for_any_event(
+                ["service_trigger"]
+            ): "TRIGGER"
+        }
+
+        key = await Util.race(futures)
+        if key == "TRIGGER":
+            await self._service_trigger()
+            key = None
+        return key
 
     async def _run(self):
         while True:
@@ -110,247 +153,250 @@ sort_devices_by_number: single|bool|True
 
         await self._service_mode_exit()
 
-    def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
-        self.machine.events.post("service_menu_deselected")
-        self.machine.events.post("service_menu_show")
-        self.machine.events.post("service_menu_selected", label=items[position].label)
+    # def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
+    #     self.machine.events.post("service_menu_deselected")
+    #     self.machine.events.post("service_menu_show")
+    #     self.machine.events.post("service_menu_selected", label=items[position].label)
 
-    def _load_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the menu items with label and callback."""
-        # If you want to add menu entries overload the mode and this method.
-        entries = [
-            ServiceMenuEntry("Diagnostics Menu", self._diagnostics_menu),
-            ServiceMenuEntry("Audits Menu", self._audits_menu),
-            ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
-            ServiceMenuEntry("Utilities Menu", self._utilities_menu),
-            ServiceMenuEntry("Audio Menu", self._audio_menu)
+    # def _load_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the menu items with label and callback."""
+    #     # If you want to add menu entries overload the mode and this method.
+    #     entries = [
+    #         ServiceMenuEntry("Diagnostics Menu", self._diagnostics_menu),
+    #         ServiceMenuEntry("Audits Menu", self._audits_menu),
+    #         ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
+    #         ServiceMenuEntry("Utilities Menu", self._utilities_menu),
+    #         ServiceMenuEntry("Audio Menu", self._audio_menu)
 
-        ]
-        return entries
+    #     ]
+    #     return entries
+
 
     async def _service_mode_main_menu(self):
-        """Show main menu."""
-        await self._make_menu(self._load_menu_entries())
-        # hide slides on exit
-        self.machine.events.post("service_menu_hide")
+        self._is_displayed = True
+        while self._is_displayed:
+            key = await self._get_key()
+            if key:
+                self.machine.events.post("service_button", button=key)
 
-    # Diagnostics
-    def _load_diagnostic_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the diagnostics menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Switch Menu", self._diagnostics_switch_menu),
-            ServiceMenuEntry("Coil Menu", self._diagnostics_coil_menu),
-            ServiceMenuEntry("Light Menu", self._diagnostics_light_menu),
-        ]
 
-    async def _diagnostics_menu(self):
-        await self._make_menu(self._load_diagnostic_menu_entries())
+    # # Diagnostics
+    # def _load_diagnostic_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the diagnostics menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Switch Menu", self._diagnostics_switch_menu),
+    #         ServiceMenuEntry("Coil Menu", self._diagnostics_coil_menu),
+    #         ServiceMenuEntry("Light Menu", self._diagnostics_light_menu),
+    #     ]
 
-    def _load_diagnostic_switch_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the switch menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Switch Edge Test", self._switch_test_menu),
-        ]
+    # async def _diagnostics_menu(self):
+    #     await self._make_menu(self._load_diagnostic_menu_entries())
 
-    async def _diagnostics_switch_menu(self):
-        await self._make_menu(self._load_diagnostic_switch_menu_entries())
+    # def _load_diagnostic_switch_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the switch menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Switch Edge Test", self._switch_test_menu),
+    #     ]
 
-    def _load_diagnostic_coil_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the coil menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Single Coil Test", self._coil_test_menu),
-        ]
+    # async def _diagnostics_switch_menu(self):
+    #     await self._make_menu(self._load_diagnostic_switch_menu_entries())
 
-    async def _diagnostics_coil_menu(self):
-        await self._make_menu(self._load_diagnostic_coil_menu_entries())
+    # def _load_diagnostic_coil_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the coil menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Single Coil Test", self._coil_test_menu),
+    #     ]
 
-    def _load_diagnostic_light_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the light menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Single Light Test", self._light_test_menu),
-            ServiceMenuEntry("Light Chain Test", self._light_chain_menu)
-        ]
+    # async def _diagnostics_coil_menu(self):
+    #     await self._make_menu(self._load_diagnostic_coil_menu_entries())
 
-    async def _diagnostics_light_menu(self):
-        await self._make_menu(self._load_diagnostic_light_menu_entries())
+    # def _load_diagnostic_light_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the light menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Single Light Test", self._light_test_menu),
+    #         ServiceMenuEntry("Light Chain Test", self._light_chain_menu)
+    #     ]
 
-    # Adjustments
-    def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the adjustments menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Standard Adjustments", partial(self._settings_menu, "standard")),
-            ServiceMenuEntry("Feature Adjustments", partial(self._settings_menu, "feature")),
-            ServiceMenuEntry("Game Adjustments", partial(self._settings_menu, "game")),
-            ServiceMenuEntry("Coin Adjustments", partial(self._settings_menu, "coin")),
-        ]
+    # async def _diagnostics_light_menu(self):
+    #     await self._make_menu(self._load_diagnostic_light_menu_entries())
 
-    async def _adjustments_menu(self):
-        await self._make_menu(self._load_adjustments_menu_entries())
+    # # Adjustments
+    # def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the adjustments menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Standard Adjustments", partial(self._settings_menu, "standard")),
+    #         ServiceMenuEntry("Feature Adjustments", partial(self._settings_menu, "feature")),
+    #         ServiceMenuEntry("Game Adjustments", partial(self._settings_menu, "game")),
+    #         ServiceMenuEntry("Coin Adjustments", partial(self._settings_menu, "coin")),
+    #     ]
+
+    # async def _adjustments_menu(self):
+    #     await self._make_menu(self._load_adjustments_menu_entries())
 
     # Audio
-    def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the audio menu items with label and callback."""
-        items = [
-            ServiceMenuEntry("Software Levels", self._volume_menu)
-        ]
+    # def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the audio menu items with label and callback."""
+    #     items = [
+    #         ServiceMenuEntry("Software Levels", self._volume_menu)
+    #     ]
 
-        self.debug_log("Looking for platform volumes: %s", self.machine.hardware_platforms)
-        for p, platform in self.machine.hardware_platforms.items():
-            # TODO: Define an AudioInterface base class
-            if getattr(platform, "audio_interface", None):
-                self.debug_log("Found '%s' platform audio for volume: %s", p, platform)
-                # TODO: find a good way to get a name of a platform
-                name = p.title()
-                items.append(ServiceMenuEntry(f"{name} Levels", partial(self._volume_menu, platform)))
-            else:
-                self.debug_log("Platform '%s' has no audio to configure volume: %s", p, platform)
-        return items
+    #     self.debug_log("Looking for platform volumes: %s", self.machine.hardware_platforms)
+    #     for p, platform in self.machine.hardware_platforms.items():
+    #         # TODO: Define an AudioInterface base class
+    #         if getattr(platform, "audio_interface", None):
+    #             self.debug_log("Found '%s' platform audio for volume: %s", p, platform)
+    #             # TODO: find a good way to get a name of a platform
+    #             name = p.title()
+    #             items.append(ServiceMenuEntry(f"{name} Levels", partial(self._volume_menu, platform)))
+    #         else:
+    #             self.debug_log("Platform '%s' has no audio to configure volume: %s", p, platform)
+    #     return items
 
-    async def _audio_menu(self):
-        await self._make_menu(self._load_audio_menu_entries())
+    # async def _audio_menu(self):
+    #     await self._make_menu(self._load_audio_menu_entries())
 
-    # Utilities
-    def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the utilities menu items with label and callback."""
-        entries = [
-            ServiceMenuEntry("Reset Menu", self._utilities_reset_menu),
-        ]
+    # # Utilities
+    # def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the utilities menu items with label and callback."""
+    #     entries = [
+    #         ServiceMenuEntry("Reset Menu", self._utilities_reset_menu),
+    #     ]
 
-        if self.config['mode_settings']['software_update']:
-            update_file_path = self.config['mode_settings']['software_update_script']
-            if not update_file_path:
-                raise AssertionError("Please configure software_update_script to enable software_update in "
-                                     "service mode.")
+    #     if self.config['mode_settings']['software_update']:
+    #         update_file_path = self.config['mode_settings']['software_update_script']
+    #         if not update_file_path:
+    #             raise AssertionError("Please configure software_update_script to enable software_update in "
+    #                                  "service mode.")
 
-            if not os.path.isabs(update_file_path):
-                update_file_path = os.path.join(self.machine.machine_path, update_file_path)
+    #         if not os.path.isabs(update_file_path):
+    #             update_file_path = os.path.join(self.machine.machine_path, update_file_path)
 
-            if os.path.isfile(update_file_path):
-                self._update_script = update_file_path
-                entries.append(ServiceMenuEntry("Software Update", self._software_update))
+    #         if os.path.isfile(update_file_path):
+    #             self._update_script = update_file_path
+    #             entries.append(ServiceMenuEntry("Software Update", self._software_update))
 
-        return entries
+    #     return entries
 
-    async def _utilities_menu(self):
-        await self._make_menu(self._load_utilities_menu_entries())
+    # async def _utilities_menu(self):
+    #     await self._make_menu(self._load_utilities_menu_entries())
 
-    def _load_utilities_reset_menu_entries(self) -> List[ServiceMenuEntry]:
-        """Return the utilities reset menu items with label and callback."""
-        return [
-            ServiceMenuEntry("Reset Coin Audits", self._utilities_reset_coin_audits),
-            ServiceMenuEntry("Reset Game Audits", self._utilities_reset_game_audits),
-            ServiceMenuEntry("Reset High Scores", self._utilities_reset_high_scores),
-            ServiceMenuEntry("Reset Credits", self._utilities_reset_credits),
-            ServiceMenuEntry("Reset to Factory Settings", self._utilities_reset_to_factory_settings),
-        ]
+    # def _load_utilities_reset_menu_entries(self) -> List[ServiceMenuEntry]:
+    #     """Return the utilities reset menu items with label and callback."""
+    #     return [
+    #         ServiceMenuEntry("Reset Coin Audits", self._utilities_reset_coin_audits),
+    #         ServiceMenuEntry("Reset Game Audits", self._utilities_reset_game_audits),
+    #         ServiceMenuEntry("Reset High Scores", self._utilities_reset_high_scores),
+    #         ServiceMenuEntry("Reset Credits", self._utilities_reset_credits),
+    #         ServiceMenuEntry("Reset to Factory Settings", self._utilities_reset_to_factory_settings),
+    #     ]
 
-    async def _make_option_slide(self, title, question, options, warning):
-        """Show service_options_slide, provide options and return the selected option."""
-        position = 0
+    # async def _make_option_slide(self, title, question, options, warning):
+    #     """Show service_options_slide, provide options and return the selected option."""
+    #     position = 0
 
-        while True:
-            self.machine.events.post("service_options_slide_start", title=title, question=question,
-                                     option=options[position], warning=warning)
-            key = await self._get_key()
-            if key == 'ESC':
-                self.machine.events.post("service_options_slide_stop")
-                return None
-            if key == 'UP':
-                position += 1
-                if position >= len(options):
-                    position = 0
-            elif key == 'DOWN':
-                position -= 1
-                if position < 0:
-                    position = len(options) - 1
-            elif key == 'ENTER':
-                # select and return option
-                self.machine.events.post("service_options_slide_stop")
-                return options[position]
+    #     while True:
+    #         self.machine.events.post("service_options_slide_start", title=title, question=question,
+    #                                  option=options[position], warning=warning)
+    #         key = await self._get_key()
+    #         if key == 'ESC':
+    #             self.machine.events.post("service_options_slide_stop")
+    #             return None
+    #         if key == 'UP':
+    #             position += 1
+    #             if position >= len(options):
+    #                 position = 0
+    #         elif key == 'DOWN':
+    #             position -= 1
+    #             if position < 0:
+    #                 position = len(options) - 1
+    #         elif key == 'ENTER':
+    #             # select and return option
+    #             self.machine.events.post("service_options_slide_stop")
+    #             return options[position]
 
-    async def _utilities_reset_menu(self):
-        await self._make_menu(self._load_utilities_reset_menu_entries())
+    # async def _utilities_reset_menu(self):
+    #     await self._make_menu(self._load_utilities_reset_menu_entries())
 
-    async def _utilities_reset_coin_audits(self):
-        selection = await self._make_option_slide("Reset earning audits", "Perform coin reset?", ["no", "yes"],
-                                                  "THIS CANNOT BE UNDONE")
-        if selection == "yes":
-            self.machine.events.post("earnings_reset")
+    # async def _utilities_reset_coin_audits(self):
+    #     selection = await self._make_option_slide("Reset earning audits", "Perform coin reset?", ["no", "yes"],
+    #                                               "THIS CANNOT BE UNDONE")
+    #     if selection == "yes":
+    #         self.machine.events.post("earnings_reset")
 
-    async def _utilities_reset_game_audits(self):
-        selection = await self._make_option_slide("Auditor Reset", "Reset Game Audits?", ["no", "yes"],
-                                                  "THIS CANNOT BE UNDONE")
-        if selection == "yes":
-            self.machine.events.post("auditor_reset")
+    # async def _utilities_reset_game_audits(self):
+    #     selection = await self._make_option_slide("Auditor Reset", "Reset Game Audits?", ["no", "yes"],
+    #                                               "THIS CANNOT BE UNDONE")
+    #     if selection == "yes":
+    #         self.machine.events.post("auditor_reset")
 
-    async def _utilities_reset_high_scores(self):
-        selection = await self._make_option_slide("High Score Reset", "Remove Highscores?", ["no", "yes"],
-                                                  "THIS CANNOT BE UNDONE")
-        if selection == "yes":
-            self.machine.events.post("high_scores_reset")
+    # async def _utilities_reset_high_scores(self):
+    #     selection = await self._make_option_slide("High Score Reset", "Remove Highscores?", ["no", "yes"],
+    #                                               "THIS CANNOT BE UNDONE")
+    #     if selection == "yes":
+    #         self.machine.events.post("high_scores_reset")
 
-    async def _utilities_reset_credits(self):
-        selection = await self._make_option_slide("Reset credits", "Remove all credits?", ["no", "yes"],
-                                                  "THIS CANNOT BE UNDONE")
-        if selection == "yes":
-            self.machine.events.post("credits_reset")
+    # async def _utilities_reset_credits(self):
+    #     selection = await self._make_option_slide("Reset credits", "Remove all credits?", ["no", "yes"],
+    #                                               "THIS CANNOT BE UNDONE")
+    #     if selection == "yes":
+    #         self.machine.events.post("credits_reset")
 
-    async def _utilities_reset_to_factory_settings(self):
-        selection = await self._make_option_slide("Factory Reset", "Reset to factory setting?", ["no", "yes"],
-                                                  "THIS CANNOT BE UNDONE")
-        if selection == "yes":
-            self.machine.events.post("factory_reset")
+    # async def _utilities_reset_to_factory_settings(self):
+    #     selection = await self._make_option_slide("Factory Reset", "Reset to factory setting?", ["no", "yes"],
+    #                                               "THIS CANNOT BE UNDONE")
+    #     if selection == "yes":
+    #         self.machine.events.post("factory_reset")
 
-    async def _software_update(self):
-        run_update = False
-        self._update_software_update_slide(run_update)
+    # async def _software_update(self):
+    #     run_update = False
+    #     self._update_software_update_slide(run_update)
 
-        while True:
-            key = await self._get_key()
-            if key == 'ESC':
-                break
-            if key in ('UP', 'DOWN'):
-                run_update = not run_update
-                self._update_software_update_slide(run_update)
-            elif key == 'ENTER' and run_update:
-                # perform update
-                self.machine.events.post("service_software_update_start")
-                # pylint: disable-msg=consider-using-with
-                subprocess.Popen([self._update_script])
-                self.machine.stop("Software Update")
+    #     while True:
+    #         key = await self._get_key()
+    #         if key == 'ESC':
+    #             break
+    #         if key in ('UP', 'DOWN'):
+    #             run_update = not run_update
+    #             self._update_software_update_slide(run_update)
+    #         elif key == 'ENTER' and run_update:
+    #             # perform update
+    #             self.machine.events.post("service_software_update_start")
+    #             # pylint: disable-msg=consider-using-with
+    #             subprocess.Popen([self._update_script])
+    #             self.machine.stop("Software Update")
 
-        self.machine.events.post("service_software_update_stop")
+    #     self.machine.events.post("service_software_update_stop")
 
-    def _update_software_update_slide(self, run_update):
-        self.machine.events.post("service_software_update_choice", run_update="Yes" if run_update else "No")
+    # def _update_software_update_slide(self, run_update):
+    #     self.machine.events.post("service_software_update_choice", run_update="Yes" if run_update else "No")
 
-    async def _make_menu(self, items):
-        """Show a menu by controlling slides via events and executing callbacks."""
-        if not items:
-            # do not crash on empty menu
-            return
-        position = 0
-        self._update_main_menu(items, position)
+    # async def _make_menu(self, items):
+    #     """Show a menu by controlling slides via events and executing callbacks."""
+    #     if not items:
+    #         # do not crash on empty menu
+    #         return
+    #     position = 0
+    #     self._update_main_menu(items, position)
 
-        while True:
-            key = await self._get_key()
-            if key == 'ESC':
-                return
-            if key == 'UP':
-                position += 1
-                if position >= len(items):
-                    position = 0
-                self._update_main_menu(items, position)
-            elif key == 'DOWN':
-                position -= 1
-                if position < 0:
-                    position = len(items) - 1
-                self._update_main_menu(items, position)
-            elif key == 'ENTER':
-                # call submenu
-                self.machine.events.post("service_menu_deselected")
-                await items[position].callback()
-                self._update_main_menu(items, position)
+    #     while True:
+    #         key = await self._get_key()
+    #         if key == 'ESC':
+    #             return
+    #         if key == 'UP':
+    #             position += 1
+    #             if position >= len(items):
+    #                 position = 0
+    #             self._update_main_menu(items, position)
+    #         elif key == 'DOWN':
+    #             position -= 1
+    #             if position < 0:
+    #                 position = len(items) - 1
+    #             self._update_main_menu(items, position)
+    #         elif key == 'ENTER':
+    #             # call submenu
+    #             self.machine.events.post("service_menu_deselected")
+    #             await items[position].callback()
+    #             self._update_main_menu(items, position)
 
     def _switch_monitor(self, change: MonitoredSwitchChange):
         if change.state:
@@ -818,3 +864,56 @@ sort_devices_by_number: single|bool|True
                     value_position = len(values) - 1
                 self.machine.settings.set_setting_value(items[position].name, values[value_position])
                 self._update_settings_slide(items, position, is_change=True)
+
+## Added for MPF 0.80
+##-------------------
+
+    def _on_reset(self, **kwargs):
+        del kwargs
+        for mode in self.machine.modes.values():
+            if not mode.active or mode.name == "game":
+                continue
+            mode.stop()
+
+        # explicitly stop game last
+        if self.machine.modes["game"].active:
+            self.machine.modes["game"].stop()
+
+        self.machine.clock.loop.create_task(self.machine.reset())
+
+    def _on_service_trigger(self, **kwargs):
+        """Callback from an MC to handle a service menu action.
+
+        May have action 'setting' to save a machine setting value,
+        or any action defined in _service_trigger().
+        """
+        action = kwargs.get("action")
+        # For settings, write them directly
+        if action == "setting":
+            name = kwargs.get("variable")
+            # Key type is not stored in the SettingEntry, look it up from config
+            # Some are manually added, so default to int
+            setting_type = self.machine.settings.config[name]['key_type'] \
+                if name in self.machine.settings.config else "int"
+            value = kwargs.get("value")
+            value = float(value) if setting_type == "float" else int(value)
+            self.machine.settings.set_setting_value(name, value)
+        # Store this action for when the main loop comes around
+        else:
+            self._trigger = action
+
+    async def _service_trigger(self):
+        if self._trigger == "switch_test":
+            await self._switch_test_menu()
+        elif self._trigger == "coil_test":
+            await self._coil_test_menu()
+        elif self._trigger == "light_test":
+            await self._light_test_menu()
+        elif self._trigger == "light_chain_test":
+            await self._light_chain_menu()
+        elif self._trigger == "service_exit":
+            self._menu_level = -1
+            # Set display to false will end the main_menu loop and
+            # the native service menu will take care of the rest.
+            self._is_displayed = False
+        self._trigger = None
