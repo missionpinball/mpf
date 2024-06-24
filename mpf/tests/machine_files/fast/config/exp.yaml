@@ -120,7 +120,7 @@ lights:
     start_channel: brian-b2-2-3-0  #88222-0, 88222-1, 88222-2, 88223-0
     type: rgbw
   led29:
-    channels:  # testing out of order, non-contiquous channels
+    channels:  # testing out of order, non-contiguous channels
       red:
         number: neuron-1-10-0  # 48009-0
       green:
@@ -129,6 +129,13 @@ lights:
         number: neuron-1-10-1  # 48009-1
       white:
         number: neuron-1-11-2  # 4800A-2
+
+  led30:
+    number: dave-4-12
+    type: rgb
+  led31:
+    previous: led30
+    type: rgb
 
 servos:
     servo1:
