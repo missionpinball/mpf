@@ -25,6 +25,3 @@ event_player:
         - service_power_off
     sw_power_on_active:
         - service_power_on
-
-slide_player:
-    service_mode_entered: service
