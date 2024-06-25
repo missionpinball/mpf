@@ -28,6 +28,3 @@ event_player:
 
 slide_player:
     service_mode_entered: service
-    service_mode_exited:
-        service:
-            action: remove

@@ -84,9 +84,7 @@ sort_devices_by_number: single|bool|True
                 ["s_flipper_right_inactive"]
             ): "PAGE_RIGHT",
             self.machine.events.wait_for_any_event(
-                # Use the INACTIVE event to prevent attract from starting a game
-                # (which it does on inactive)
-                ["sw_start_inactive"]
+                ["s_credit_active"]
             ): "START",
             self.machine.events.wait_for_any_event(
                 ["service_trigger"]
