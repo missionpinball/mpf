@@ -488,7 +488,7 @@ class RunningShow:
 
     __slots__ = ["machine", "show", "show_steps", "show_config", "callback", "start_step", "start_running",
                  "start_callback", "_delay_handler", "next_step_index", "current_step_index", "next_step_time",
-                 "name", "loops", "id", "_ctrl", "_players", "debug", "_stopped", "_total_steps", "context"]
+                 "name", "loops", "id", "_players", "debug", "_stopped", "_total_steps", "context"]
 
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
@@ -509,7 +509,6 @@ class RunningShow:
         self.loops = self.show_config.loops
 
         self.id = self.machine.show_controller.get_next_show_id()
-        self._ctrl = self.machine.show_controller
         self.context = "show_{}".format(self.id)
         self._players = set()
 
@@ -522,7 +521,7 @@ class RunningShow:
     def _start_play(self):
         if self._stopped:
             return
-        self._ctrl.info_log("Starting show %s", self.show.name)
+        self.machine.show_controller.info_log("Starting show %s", self.show.name)
 
         self._total_steps = len(self.show_steps)
 
@@ -562,7 +561,7 @@ class RunningShow:
         """Stop show."""
         if self._stopped:
             return
-        self._ctrl.info_log("Stopping show %s", self.show.name)
+        self.machine.show_controller.info_log("Stopping show %s", self.show.name)
 
         self._stopped = True
 
@@ -592,14 +591,14 @@ class RunningShow:
 
     def pause(self):
         """Pause show."""
-        self._ctrl.info_log("Pausing show %s", self.show.name)
+        self.machine.show_controller.info_log("Pausing show %s", self.show.name)
         self._remove_delay_handler()
         if self.show_config.events_when_paused:
             self._post_events(self.show_config.events_when_paused)
 
     def resume(self):
         """Resume paused show."""
-        self._ctrl.info_log("Resuming show %s", self.show.name)
+        self.machine.show_controller.info_log("Resuming show %s", self.show.name)
         self.next_step_time = self.machine.clock.get_time()
         self._run_next_step(post_events=self.show_config.events_when_resumed)
 
