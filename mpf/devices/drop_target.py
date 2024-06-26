@@ -432,7 +432,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             target.external_reset_from_bank()
         self.member_target_change()
 
-        if self.down != 0 and reset_attempt is not None:
+        if self.down != 0 and reset_attempt is not None and self.config['max_reset_attempts'] is not None:
             if reset_attempt < self.config['max_reset_attempts']:
                 self.debug_log("Reset failed after attempt %s, trying again.", reset_attempt)
                 reset_attempt += 1
