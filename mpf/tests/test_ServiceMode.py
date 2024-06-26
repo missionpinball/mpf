@@ -295,27 +295,15 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertMachineVarEqual(0, "credit_units")
 
     def test_switch_test(self):
-        self.mock_event("service_menu_selected")
+        self.mock_event("service_main_menu")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
-
-        # enter diagnostics menu
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
-
-        # enter switch menu
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Switch Edge Test')
+        self.assertEventCalled("service_main_menu")
 
         # start edge test
-        self.hit_and_release_switch("s_service_enter")
+        self.machine.events.post("service_trigger", action="switch_test")
         self.advance_time_and_run()
 
         self.mock_event("service_switch_test_start")
@@ -331,42 +319,18 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled("service_switch_test_stop")
 
     def test_light_test(self):
-        self.mock_event("service_menu_selected")
+        self.mock_event("service_main_menu")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+        self.assertEventCalled("service_main_menu")
 
-        # enter diagnostics menu
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
-
-        # select coil menu
-        self.hit_and_release_switch("s_service_up")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Coil Menu')
-
-        # select light menu
-        self.hit_and_release_switch("s_service_up")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Light Menu')
-
-        # enter light menu
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Single Light Test')
-
+        # enter light_test
         self.mock_event("service_light_test_start")
         self.mock_event("service_light_test_stop")
 
-        # enter single light test
-        self.hit_and_release_switch("s_service_enter")
+        self.machine.events.post("service_trigger", action="light_test")
         self.advance_time_and_run()
 
         for color in ["white", "red", "green", "blue", "yellow", "white"]:
@@ -414,45 +378,28 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled("service_light_test_stop")
 
     def test_coil_test(self):
-        self.mock_event("service_menu_selected")
+        self.mock_event("service_main_menu")
         self.mock_event("service_coil_test_start")
         self.mock_event("service_coil_test_stop")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
 
-        self.assertEventCalledWith("service_menu_selected", label='Diagnostics Menu')
+        self.assertEventCalled("service_main_menu")
 
-        # enter diagnostics menu
-        self.hit_and_release_switch("s_service_enter")
+        # enter coil test
+        self.machine.events.post("service_trigger", action="coil_test")
         self.advance_time_and_run()
 
-        self.assertEventCalledWith("service_menu_selected", label='Switch Menu')
-
-        # select coil menu
-        self.hit_and_release_switch("s_service_up")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Coil Menu')
-
-        # enter coil menu
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        self.assertEventCalledWith("service_menu_selected", label='Single Coil Test')
-
-        # start edge test
-        self.hit_and_release_switch("s_service_enter")
-        self.advance_time_and_run()
-
-        # selects the first coil
-        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='First coil',
-                                   coil_name='c_test', coil_num='1')
+        self.assertEventCalledWith("service_coil_test_start",
+                                   board_name='Virtual', coil_label='First coil',
+                                   coil_name="c_test", coil_num='1')
 
         # select test2
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
-        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Second coil',
+        self.assertEventCalledWith("service_coil_test_start",
+                                   board_name='Virtual', coil_label='Second coil',
                                    coil_name='c_test2', coil_num='2')
 
         self.machine.coils["c_test2"].pulse = MagicMock()
