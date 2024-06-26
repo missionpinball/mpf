@@ -122,6 +122,13 @@ class TestFastExp(TestFastBase):
         self.assertEqual(self.led29.hw_drivers['green'][0].number, '48009-2')
         self.assertEqual(self.led29.hw_drivers['blue'][0].number, '48009-1')
         self.assertEqual(self.led29.hw_drivers['white'][0].number, '4800A-2')
+        self.assertEqual(self.led30.hw_drivers['red'][0].number, 'B406B-0')
+        self.assertEqual(self.led30.hw_drivers['green'][0].number, 'B406B-1')
+        self.assertEqual(self.led30.hw_drivers['blue'][0].number, 'B406B-2')
+        self.assertEqual(self.led31.hw_drivers['red'][0].number, 'B406C-0')
+        self.assertEqual(self.led31.hw_drivers['green'][0].number, 'B406C-1')
+        self.assertEqual(self.led31.hw_drivers['blue'][0].number, 'B406C-2')
+
 
     def _test_led_colors(self):
 
