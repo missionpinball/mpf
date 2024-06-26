@@ -512,6 +512,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         return switch
 
+    # pylint: disable-msg=too-many-locals
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
         del platform_settings
@@ -567,7 +568,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
             elif int(parts[0]) > 255:
                 # EXP LED in int form, which is how "previous:" values are calculated
-                this_led_number = hex(int(parts[0]))[2:]
+
+                raw_hex_string = hex(int(parts[0]))[2:]  # lowercase with 0x prefix stripped"
+                this_led_number = Util.normalize_hex_string(raw_hex_string, len(raw_hex_string))
+
                 exp_board = self.exp_boards_by_address[this_led_number[:2]]
 
                 if this_led_number not in self.fast_exp_leds:
@@ -676,13 +680,14 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                 if 0 <= channel <= 2:
                     result = []
                     for i in range(3):
+                        working_parts = parts.copy()
                         if i + channel > 2:
                             # Channel rolls over, increment the LED number
-                            parts[3] = str(int(parts[3]) + 1)
-                            parts[4] = '0'
+                            working_parts[3] = str(int(working_parts[3]) + 1)
+                            working_parts[4] = str((channel + i) % 3)
                         else:
-                            parts[4] = str(channel + i)
-                        result.append({'number': '-'.join(parts)})
+                            working_parts[4] = str(channel + i)
+                        result.append({'number': '-'.join(working_parts)})
                     return result
                 raise AssertionError(f"Invalid LED channel: {channel}")
             raise AssertionError(f"Invalid LED number: {number}")
