@@ -182,6 +182,9 @@ class MachineVariables(LogMixin):
         ----
             name: String name of the variable you're setting the value for.
             value: The value you're setting. This can be any Type.
+            persist: Whether to persist this machine var to disk. Only
+                applies to new/unconfigured vars; vars defined in the
+                machine_vars config will use their config setting.
         """
         if name not in self.machine_vars:
             self.configure_machine_var(name=name, persist=persist)
