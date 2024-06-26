@@ -472,7 +472,7 @@ class BcpInterface(MpfController):
             self.machine.machine_var_monitor = False
 
     def _send_machine_settings(self, client, setting_type=None):
-        settings = [setting_type] if setting_type else ["standard", "feature", "game", "coin"]
+        settings = [setting_type] if setting_type else ["standard", "feature", "game", "coin", "hw_volume"]
         for s in settings:
             self.machine.bcp.transport.send_to_client(
                 client, bcp_command='settings',

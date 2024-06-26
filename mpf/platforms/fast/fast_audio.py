@@ -2,6 +2,11 @@
 
 from math import ceil
 from mpf.core.logging import LogMixin
+from mpf.core.settings_controller import SettingEntry
+
+DEFAULT_VOLUME_VALUE = 0.3
+VARIABLE_NAME = "fast_audio_%s_volume"
+SETTING_TYPE = "hw_volume"
 
 
 class FASTAudioInterface(LogMixin):
@@ -17,9 +22,9 @@ class FASTAudioInterface(LogMixin):
         self.machine = platform.machine
         self.communicator = communicator
         self.amps = {
-            'main': {'name': 'fast_audio_main', 'label': "Speakers"},
-            'sub': {'name': 'fast_audio_sub', 'label': "Subwoofer"},
-            'headphones': {'name': 'fast_audio_headphones', 'label': "Headphones"}
+            'main': {'name': 'fast_audio_main', 'label': "Speakers", 'sort': 0},
+            'sub': {'name': 'fast_audio_sub', 'label': "Subwoofer", 'sort': 1},
+            'headphones': {'name': 'fast_audio_headphones', 'label': "Headphones", 'sort': 2}
         }
         self.control_pin_pulse_times = list()
 
@@ -35,23 +40,20 @@ class FASTAudioInterface(LogMixin):
         self._register_event_handlers()
 
     def _configure_machine_vars(self):
-        for amp_name in self.amps:
-            var_name = f'fast_audio_{amp_name}_volume'
+        for amp_name, settings in self.amps.items():
+            var_name = VARIABLE_NAME % amp_name
 
-            # Is there a race condition on first boot if the linked amp
-            # comes in the iteration before 'main' is written?
             if amp_name != 'main' and self.communicator.config[f'link_{amp_name}_to_main']:
-                self.machine.variables.set_machine_var(
-                    name=var_name,
-                    value=self.machine.variables.get_machine_var('fast_audio_main_volume'),
-                    persist=self.communicator.config['persist_volume_settings']
-                )
-            elif not self.machine.variables.is_machine_var(var_name):
-                self.machine.variables.set_machine_var(
-                    name=var_name,
-                    value=self.communicator.config[f'default_{amp_name}_volume'],
-                    persist=self.communicator.config['persist_volume_settings']
-                )
+                var_name = VARIABLE_NAME % "main"
+            self.machine.settings.add_setting(SettingEntry(
+                settings['name'],
+                settings['label'],
+                settings['sort'],
+                var_name,
+                DEFAULT_VOLUME_VALUE,
+                None,
+                SETTING_TYPE
+            ))
 
     def _init_amps(self):
         for amp_name, amp in self.amps.items():
