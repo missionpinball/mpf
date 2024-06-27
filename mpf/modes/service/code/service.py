@@ -155,25 +155,6 @@ sort_devices_by_number: single|bool|True
 
         await self._service_mode_exit()
 
-    # def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
-    #     self.machine.events.post("service_menu_deselected")
-    #     self.machine.events.post("service_menu_show")
-    #     self.machine.events.post("service_menu_selected", label=items[position].label)
-
-    # def _load_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the menu items with label and callback."""
-    #     # If you want to add menu entries overload the mode and this method.
-    #     entries = [
-    #         ServiceMenuEntry("Diagnostics Menu", self._diagnostics_menu),
-    #         ServiceMenuEntry("Audits Menu", self._audits_menu),
-    #         ServiceMenuEntry("Adjustments Menu", self._adjustments_menu),
-    #         ServiceMenuEntry("Utilities Menu", self._utilities_menu),
-    #         ServiceMenuEntry("Audio Menu", self._audio_menu)
-
-    #     ]
-    #     return entries
-
-
     async def _service_mode_main_menu(self):
         self._is_displayed = True
         while self._is_displayed:
@@ -181,81 +162,6 @@ sort_devices_by_number: single|bool|True
             if key:
                 self.machine.events.post("service_button", button=key)
 
-
-    # # Diagnostics
-    # def _load_diagnostic_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the diagnostics menu items with label and callback."""
-    #     return [
-    #         ServiceMenuEntry("Switch Menu", self._diagnostics_switch_menu),
-    #         ServiceMenuEntry("Coil Menu", self._diagnostics_coil_menu),
-    #         ServiceMenuEntry("Light Menu", self._diagnostics_light_menu),
-    #     ]
-
-    # async def _diagnostics_menu(self):
-    #     await self._make_menu(self._load_diagnostic_menu_entries())
-
-    # def _load_diagnostic_switch_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the switch menu items with label and callback."""
-    #     return [
-    #         ServiceMenuEntry("Switch Edge Test", self._switch_test_menu),
-    #     ]
-
-    # async def _diagnostics_switch_menu(self):
-    #     await self._make_menu(self._load_diagnostic_switch_menu_entries())
-
-    # def _load_diagnostic_coil_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the coil menu items with label and callback."""
-    #     return [
-    #         ServiceMenuEntry("Single Coil Test", self._coil_test_menu),
-    #     ]
-
-    # async def _diagnostics_coil_menu(self):
-    #     await self._make_menu(self._load_diagnostic_coil_menu_entries())
-
-    # def _load_diagnostic_light_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the light menu items with label and callback."""
-    #     return [
-    #         ServiceMenuEntry("Single Light Test", self._light_test_menu),
-    #         ServiceMenuEntry("Light Chain Test", self._light_chain_menu)
-    #     ]
-
-    # async def _diagnostics_light_menu(self):
-    #     await self._make_menu(self._load_diagnostic_light_menu_entries())
-
-    # # Adjustments
-    # def _load_adjustments_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the adjustments menu items with label and callback."""
-    #     return [
-    #         ServiceMenuEntry("Standard Adjustments", partial(self._settings_menu, "standard")),
-    #         ServiceMenuEntry("Feature Adjustments", partial(self._settings_menu, "feature")),
-    #         ServiceMenuEntry("Game Adjustments", partial(self._settings_menu, "game")),
-    #         ServiceMenuEntry("Coin Adjustments", partial(self._settings_menu, "coin")),
-    #     ]
-
-    # async def _adjustments_menu(self):
-    #     await self._make_menu(self._load_adjustments_menu_entries())
-
-    # Audio
-    # def _load_audio_menu_entries(self) -> List[ServiceMenuEntry]:
-    #     """Return the audio menu items with label and callback."""
-    #     items = [
-    #         ServiceMenuEntry("Software Levels", self._volume_menu)
-    #     ]
-
-    #     self.debug_log("Looking for platform volumes: %s", self.machine.hardware_platforms)
-    #     for p, platform in self.machine.hardware_platforms.items():
-    #         # TODO: Define an AudioInterface base class
-    #         if getattr(platform, "audio_interface", None):
-    #             self.debug_log("Found '%s' platform audio for volume: %s", p, platform)
-    #             # TODO: find a good way to get a name of a platform
-    #             name = p.title()
-    #             items.append(ServiceMenuEntry(f"{name} Levels", partial(self._volume_menu, platform)))
-    #         else:
-    #             self.debug_log("Platform '%s' has no audio to configure volume: %s", p, platform)
-    #     return items
-
-    # async def _audio_menu(self):
-    #     await self._make_menu(self._load_audio_menu_entries())
 
     # # Utilities
     # def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:
@@ -291,30 +197,6 @@ sort_devices_by_number: single|bool|True
     #         ServiceMenuEntry("Reset Credits", self._utilities_reset_credits),
     #         ServiceMenuEntry("Reset to Factory Settings", self._utilities_reset_to_factory_settings),
     #     ]
-
-    # async def _make_option_slide(self, title, question, options, warning):
-    #     """Show service_options_slide, provide options and return the selected option."""
-    #     position = 0
-
-    #     while True:
-    #         self.machine.events.post("service_options_slide_start", title=title, question=question,
-    #                                  option=options[position], warning=warning)
-    #         key = await self._get_key()
-    #         if key == 'ESC':
-    #             self.machine.events.post("service_options_slide_stop")
-    #             return None
-    #         if key == 'UP':
-    #             position += 1
-    #             if position >= len(options):
-    #                 position = 0
-    #         elif key == 'DOWN':
-    #             position -= 1
-    #             if position < 0:
-    #                 position = len(options) - 1
-    #         elif key == 'ENTER':
-    #             # select and return option
-    #             self.machine.events.post("service_options_slide_stop")
-    #             return options[position]
 
     # async def _utilities_reset_menu(self):
     #     await self._make_menu(self._load_utilities_reset_menu_entries())
@@ -371,34 +253,6 @@ sort_devices_by_number: single|bool|True
 
     # def _update_software_update_slide(self, run_update):
     #     self.machine.events.post("service_software_update_choice", run_update="Yes" if run_update else "No")
-
-    # async def _make_menu(self, items):
-    #     """Show a menu by controlling slides via events and executing callbacks."""
-    #     if not items:
-    #         # do not crash on empty menu
-    #         return
-    #     position = 0
-    #     self._update_main_menu(items, position)
-
-    #     while True:
-    #         key = await self._get_key()
-    #         if key == 'ESC':
-    #             return
-    #         if key == 'UP':
-    #             position += 1
-    #             if position >= len(items):
-    #                 position = 0
-    #             self._update_main_menu(items, position)
-    #         elif key == 'DOWN':
-    #             position -= 1
-    #             if position < 0:
-    #                 position = len(items) - 1
-    #             self._update_main_menu(items, position)
-    #         elif key == 'ENTER':
-    #             # call submenu
-    #             self.machine.events.post("service_menu_deselected")
-    #             await items[position].callback()
-    #             self._update_main_menu(items, position)
 
     def _switch_monitor(self, change: MonitoredSwitchChange):
         if change.state:
