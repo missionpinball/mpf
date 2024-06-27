@@ -22,6 +22,14 @@ fast:
     power_pulse_time: 98
     reset_pulse_time: 97
 
+machine_vars:
+  fast_audio_sub_volume:
+    initial_value: 9
+  fast_audio_main_volume:
+    initial_value: 8
+  fast_audio_headphones_volume:
+    initial_value: 10
+
 variable_player:
   increase_main_volume:
     fast_audio_main_volume:

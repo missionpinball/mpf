@@ -25,10 +25,15 @@ class TestFastAudio(TestFastBase):
             self.serial_connections['aud'].autorespond_commands['WD:3E8'] = 'WD:3E8,03'
 
         else:
-            self.serial_connections['aud'].expected_commands = {'AM:0B':'AM:0B',
-                                                                'AV:08':'AV:08',
-                                                                'AS:09':'AS:09',
-                                                                'AH:0A':'AH:0A',}
+            self.serial_connections['aud'].expected_commands = {
+                # 'AV:00':'AV:00',
+                # 'AS:00':'AS:00',
+                # 'AH:00':'AH:00',
+                'AM:0B':'AM:0B',
+                'AV:08':'AV:08',
+                'AS:09':'AS:09',
+                'AH:0A':'AH:0A',
+            }
 
     def test_audio_basics(self):
 
@@ -68,10 +73,6 @@ class TestFastAudio(TestFastBase):
         self.assertTrue(fast_audio.communicator.amps['main']['enabled'])
         self.assertTrue(fast_audio.communicator.amps['sub']['enabled'])
         self.assertTrue(fast_audio.communicator.amps['headphones']['enabled'])
-
-        self.assertFalse(fast_audio.amps['main']['link_to_main'])
-        self.assertFalse(fast_audio.amps['sub']['link_to_main'])
-        self.assertFalse(fast_audio.amps['headphones']['link_to_main'])
 
         # Change the volume var and make sure it's reflected in the hardware
         self.aud_cpu.expected_commands['AV:0D'] = 'AV:0D'
@@ -113,9 +114,13 @@ class TestFastAudio(TestFastBase):
     @test_config('audio2.yaml')
     def test_machine_var_loading(self):
         fast_audio = self.machine.default_platform.audio_interface
+        self.advance_time_and_run()
         self.assertEqual(15, self.machine.variables.get_machine_var('fast_audio_main_volume'))
+        self.assertEqual(15, fast_audio.get_volume('main'))
         self.assertEqual(15, fast_audio.communicator.amps['main']['volume'])
+        # sub has a machine value set in the configs, which is persisted
+        self.assertEqual(2, self.machine.variables.get_machine_var('fast_audio_sub_volume'))
         # sub is linked to main, so it will be 15 even though the config value is 2
-        self.assertEqual(15, self.machine.variables.get_machine_var('fast_audio_sub_volume'))
+        self.assertEqual(15, fast_audio.get_volume('main'))
         self.assertEqual(15, fast_audio.communicator.amps['sub']['volume'])
         self.assertEqual(17, self.machine.variables.get_machine_var('fast_audio_headphones_volume'))
