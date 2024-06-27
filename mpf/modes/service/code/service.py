@@ -1,6 +1,6 @@
 """Service mode for MPF."""
-import subprocess
-import os
+# import subprocess
+# import os
 from collections import namedtuple
 
 from typing import List
