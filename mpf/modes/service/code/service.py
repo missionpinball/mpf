@@ -2,7 +2,6 @@
 import subprocess
 import os
 from collections import namedtuple
-from functools import partial
 
 from typing import List
 
@@ -29,8 +28,6 @@ class Service(AsyncMode):
         self._trigger = None
         self._is_displayed = False
 
-
-
     def mode_start(self, **kwargs):
         """Create an event handler for the "reset" event triggered via keypress."""
         del kwargs
@@ -38,7 +35,6 @@ class Service(AsyncMode):
 
         # Map MC-triggered events to methods in the parent class
         self.add_mode_event_handler("service_trigger", self._on_service_trigger)
-
 
     @staticmethod
     def get_config_spec():
@@ -161,7 +157,6 @@ sort_devices_by_number: single|bool|True
             key = await self._get_key()
             if key:
                 self.machine.events.post("service_button", button=key)
-
 
     # # Utilities
     # def _load_utilities_menu_entries(self) -> List[ServiceMenuEntry]:

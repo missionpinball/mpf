@@ -42,7 +42,7 @@ class FASTAudioInterface(LogMixin):
         # See if main volume has been defined yet, otherwise use default
         main_volume = self.machine.variables.get_machine_var('fast_audio_main_volume')
         if main_volume is None:
-            main_volume = self.communicator.config[f'default_main_volume']
+            main_volume = self.communicator.config['default_main_volume']
 
         for amp_name, settings in self.amps.items():
 
@@ -54,7 +54,8 @@ class FASTAudioInterface(LogMixin):
 
                 # Create a machine variable if one doesn't exist
                 if not self.machine.variables.is_machine_var(machine_var_name):
-                    self.machine.variables.set_machine_var(machine_var_name, default_value, self.communicator.config['persist_volume_settings'])
+                    self.machine.variables.set_machine_var(machine_var_name, default_value,
+                                                           self.communicator.config['persist_volume_settings'])
 
             # Identify the machine var for this amp
             settings["machine_var"] = machine_var_name
@@ -85,7 +86,8 @@ class FASTAudioInterface(LogMixin):
                 # if we have a levels list in the config, make sure the steps num is right
                 amp['steps'] = len(amp['levels_list']) - 1
 
-            if self.communicator.config[f'link_{amp_name}_to_main'] and len(amp['levels_list']) != len(self.amps['main']['levels_list']):
+            if self.communicator.config[f'link_{amp_name}_to_main'] and \
+                    len(amp['levels_list']) != len(self.amps['main']['levels_list']):
                 raise AssertionError(f"Cannot link {amp_name} to main. The number of volume steps must be the same. "
                                      f"Main has {len(self.amps['main']['levels_list'])} steps, "
                                      f"but {amp_name} has {len(amp['levels_list'])} steps.")
