@@ -101,10 +101,10 @@ class BcpInterface(MpfController):
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
 
-    async def _bcp_receive_set_machine_var(self, client, name, value):
+    async def _bcp_receive_set_machine_var(self, client, name, value, persist=False):
         """Set machine var via bcp."""
         del client
-        self.machine.variables.set_machine_var(name, value)
+        self.machine.variables.set_machine_var(name, value, persist)
         # document variables injected by MC
         '''machine_var: mc_version
 
@@ -472,7 +472,7 @@ class BcpInterface(MpfController):
             self.machine.machine_var_monitor = False
 
     def _send_machine_settings(self, client, setting_type=None):
-        settings = [setting_type] if setting_type else ["standard", "feature", "game", "coin"]
+        settings = [setting_type] if setting_type else ["standard", "feature", "game", "coin", "hw_volume"]
         for s in settings:
             self.machine.bcp.transport.send_to_client(
                 client, bcp_command='settings',

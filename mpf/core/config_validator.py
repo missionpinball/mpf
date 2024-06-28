@@ -356,7 +356,7 @@ class ConfigValidator:
         # The inclusion of sound_pools causes a nested ducking subconfig that
         # fails due to missing required properties. Check for an empty dict
         # as subconfig and ignore it.
-        if item is None or (item is Dict and not len(item)):
+        if item is None or (item is Dict and len(item) == 0):
             return {}
         try:
             attribute, base_spec_str = param.split(",", 1)

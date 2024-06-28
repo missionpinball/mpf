@@ -176,7 +176,7 @@ def analyze_traceback(tb, inspection_level=None, limit=None):
 
 
 def _send_crash_report(report, reporting_url):
-    r = requests.post(reporting_url, json=report)
+    r = requests.post(reporting_url, json=report, timeout=60)
     if r.status_code != 200:
         print("Failed to send report. Got response code {}. Error: {}", r.status_code, r.content)
     else:

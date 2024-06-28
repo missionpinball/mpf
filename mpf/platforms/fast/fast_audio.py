@@ -2,6 +2,10 @@
 
 from math import ceil
 from mpf.core.logging import LogMixin
+from mpf.core.settings_controller import SettingEntry
+
+VARIABLE_NAME = "fast_audio_%s_volume"
+SETTING_TYPE = "hw_volume"
 
 
 class FASTAudioInterface(LogMixin):
@@ -17,9 +21,9 @@ class FASTAudioInterface(LogMixin):
         self.machine = platform.machine
         self.communicator = communicator
         self.amps = {
-            'main': {'name': 'fast_audio_main', 'label': "Speakers"},
-            'sub': {'name': 'fast_audio_sub', 'label': "Subwoofer"},
-            'headphones': {'name': 'fast_audio_headphones', 'label': "Headphones"}
+            'main': {'name': 'fast_audio_main', 'label': "Speakers", 'sort': 0},
+            'sub': {'name': 'fast_audio_sub', 'label': "Subwoofer", 'sort': 1},
+            'headphones': {'name': 'fast_audio_headphones', 'label': "Headphones", 'sort': 2}
         }
         self.control_pin_pulse_times = list()
 
@@ -35,30 +39,41 @@ class FASTAudioInterface(LogMixin):
         self._register_event_handlers()
 
     def _configure_machine_vars(self):
-        for amp_name in self.amps:
-            var_name = f'fast_audio_{amp_name}_volume'
+        # See if main volume has been defined yet, otherwise use default
+        main_volume = self.machine.variables.get_machine_var('fast_audio_main_volume')
+        if main_volume is None:
+            main_volume = self.communicator.config['default_main_volume']
 
-            # Is there a race condition on first boot if the linked amp
-            # comes in the iteration before 'main' is written?
-            if amp_name != 'main' and self.communicator.config[f'link_{amp_name}_to_main']:
-                self.machine.variables.set_machine_var(
-                    name=var_name,
-                    value=self.machine.variables.get_machine_var('fast_audio_main_volume'),
-                    persist=self.communicator.config['persist_volume_settings']
-                )
-            elif not self.machine.variables.is_machine_var(var_name):
-                self.machine.variables.set_machine_var(
-                    name=var_name,
-                    value=self.communicator.config[f'default_{amp_name}_volume'],
-                    persist=self.communicator.config['persist_volume_settings']
-                )
+        for amp_name, settings in self.amps.items():
+
+            default_value = self.communicator.config[f'default_{amp_name}_volume']
+            if self.communicator.config.get(f'link_{amp_name}_to_main', False):
+                machine_var_name = VARIABLE_NAME % "main"
+            else:
+                machine_var_name = VARIABLE_NAME % amp_name
+
+                # Create a machine variable if one doesn't exist
+                if not self.machine.variables.is_machine_var(machine_var_name):
+                    self.machine.variables.set_machine_var(machine_var_name, default_value,
+                                                           self.communicator.config['persist_volume_settings'])
+
+            # Identify the machine var for this amp
+            settings["machine_var"] = machine_var_name
+            self.machine.settings.add_setting(SettingEntry(
+                settings['name'],
+                settings['label'],
+                settings['sort'],
+                machine_var_name,
+                default_value,
+                None,
+                SETTING_TYPE
+            ))
 
     def _init_amps(self):
         for amp_name, amp in self.amps.items():
             amp['steps'] = self.communicator.config[f'{amp_name}_steps']
             amp['max_volume'] = self.communicator.config[f'max_hw_volume_{amp_name}']
             amp['levels_list'] = self.communicator.config[f'{amp_name}_levels_list']
-            amp['link_to_main'] = self.communicator.config[f'link_{amp_name}_to_main']
 
             # Just set everything here. The communicator will send the
             # config as part of its init process later
@@ -71,7 +86,8 @@ class FASTAudioInterface(LogMixin):
                 # if we have a levels list in the config, make sure the steps num is right
                 amp['steps'] = len(amp['levels_list']) - 1
 
-            if amp['link_to_main'] and len(amp['levels_list']) != len(self.amps['main']['levels_list']):
+            if self.communicator.config[f'link_{amp_name}_to_main'] and \
+                    len(amp['levels_list']) != len(self.amps['main']['levels_list']):
                 raise AssertionError(f"Cannot link {amp_name} to main. The number of volume steps must be the same. "
                                      f"Main has {len(self.amps['main']['levels_list'])} steps, "
                                      f"but {amp_name} has {len(amp['levels_list'])} steps.")
@@ -135,7 +151,6 @@ class FASTAudioInterface(LogMixin):
             for each_amp_name in self.amps:
                 self.send_volume_to_hw(each_amp_name, send_now)
             return
-
         self.communicator.set_volume(amp_name, self.get_volume(amp_name), send_now)
 
     def _set_volume(self, amp_name, value=0, **kwargs):
@@ -155,19 +170,13 @@ class FASTAudioInterface(LogMixin):
         #self.platform.debug_log("Writing FAST amp volume %s to %s (decimal)", amp_name, value)
         self.send_volume_to_hw(amp_name)
 
-        if amp_name == 'main':
-            for other_amp_name, other_amp in self.amps.items():
-                if other_amp_name != amp_name and other_amp['link_to_main']:
-                    # Update the machine var, which will be caught and handled
-                    self._set_machine_var_volume(other_amp_name, value)
-
     def get_volume(self, amp_name, **kwargs):
         """Return the current volume of the specified amp."""
         del kwargs
-        return self.machine.variables.get_machine_var(f'fast_audio_{amp_name}_volume')
+        return self.machine.variables.get_machine_var(self.amps[amp_name]["machine_var"]) or 0
 
     def _set_machine_var_volume(self, amp_name, value):
-        self.machine.variables.set_machine_var(f'fast_audio_{amp_name}_volume', value)
+        self.machine.variables.set_machine_var(self.amps[amp_name]["machine_var"], value)
 
     def temp_volume(self, amp_name, change=1, **kwargs):
         """Temporarily change the volume by the specified number of units, up or down.

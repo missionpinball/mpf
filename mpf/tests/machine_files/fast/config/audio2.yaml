@@ -27,6 +27,7 @@ fast:
       - 14
       - 15
     headphones_level: line
+    link_sub_to_main: true
 
 machine_vars:
   fast_audio_main_volume:

@@ -152,12 +152,12 @@ class ConfigProcessor:
 
         deprecated_080 = ["sound_pools"]
         invalid_080 = ["playlists", "playlist_player", "slides", "sounds", "sound_loop_player",
-                          "sound_loop_sets", "sound_system", "track_player", "widgets"]
+                       "sound_loop_sets", "sound_system", "track_player", "widgets"]
         for k in config.keys():
             if k in config_spec:
                 if k in deprecated_080:
-                    self.log.warning("Config section '%s' is deprecated in MPF 0.80 and will be unsupported in future versions. "
-                                     "Please migrate this config to GMC.", k)
+                    self.log.warning("Config section '%s' is deprecated in MPF 0.80 and will be unsupported "
+                                     "in future versions. Please migrate this config to GMC.", k)
                 if config_type not in config_spec[k]['__valid_in__']:
                     raise ConfigFileError('Found a "{}:" section in config file {}, '
                                           'but that section is not valid in {} config '
