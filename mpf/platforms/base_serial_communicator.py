@@ -22,7 +22,7 @@ class BaseSerialCommunicator:
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform, port: str, baud: int, xonxoff=False) -> None:
-        """initialize Serial Connection Hardware.
+        """Initialize Serial Connection Hardware.
 
         Args:
         ----
@@ -133,7 +133,7 @@ class BaseSerialCommunicator:
         return resp
 
     async def _identify_connection(self):
-        """initialize and identify connection."""
+        """Initialize and identify connection."""
         raise NotImplementedError("Implement!")
 
     def stop(self):

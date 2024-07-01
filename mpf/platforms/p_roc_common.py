@@ -54,7 +54,7 @@ class ProcProcess:
     """External pinproc process."""
 
     def __init__(self):
-        """initialize process."""
+        """Initialize process."""
         self.proc = None
         self.dmd = None
         self.loop = None
@@ -63,7 +63,7 @@ class ProcProcess:
         self.log = None
 
     def start_pinproc(self, machine_type, loop, trace, log):
-        """initialize libpinproc."""
+        """Initialize libpinproc."""
         self.loop = loop
         asyncio.set_event_loop(loop)
         self.stop_future = asyncio.Future()
@@ -73,17 +73,17 @@ class ProcProcess:
         while not self.proc:
             try:
                 self.proc = pinproc.PinPROC(machine_type)
-            except OSError as e:     # pragma: no cover
+            except OSError as er:     # pragma: no cover
                 self.log.warning("Failed to instantiate pinproc.PinPROC(%s): %s. Is your P/P3-Roc connected "
-                                 "and powered up?", machine_type, e)
+                                 "and powered up?", machine_type, er)
                 self.log.info("Will retry creating PinPROC in 1s.")
                 time.sleep(1)
                 continue
 
             try:
                 self.proc.reset(1)
-            except OSError as e:  # pragma: no cover
-                self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", e)
+            except OSError as er:  # pragma: no cover
+                self.log.warning("Failed to reset P/P3-Roc: %s. Is your P/P3-Roc connected and powered up?", er)
                 self.log.info("Will retry creating PinPROC and resetting it in 1s.")
                 time.sleep(1)
                 continue
@@ -168,7 +168,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
         machine: The MachineController instance.
     """
 
-    __slots__ = ["pdbconfig", "pinproc", "proc", "log", "hw_switch_rules", "version", "revision", "hardware_version",
+    __slots__ = ["pdbconfig", "pinproc", "proc", "hw_switch_rules", "version", "revision", "hardware_version",
                  "dipswitches", "machine_type", "event_task", "_late_init_futures",
                  "proc_thread", "proc_process", "proc_process_instance", "_commands_running", "config", "_light_system"]
 

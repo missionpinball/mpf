@@ -29,7 +29,7 @@ class BallRouting(EnableDisableMixin, ModeDevice):
     __slots__ = ["_routing_queue", "_balls_at_target", "_handler"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize device."""
+        """Initialize device."""
         super().__init__(machine, name)
         self._routing_queue = defaultdict(int)      # type: Dict[BallDevice, int]
         self._balls_at_target = 0

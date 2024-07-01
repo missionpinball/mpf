@@ -1,0 +1,25 @@
+name: Lint all Python files
+
+on: [push, pull_request]
+
+jobs:
+  prospector:
+    name: Run Prospector on all Python files
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install MPF
+        run: |
+          pip install --upgrade pip setuptools wheel build prospector
+          pip install -e .
+
+      - name: Run Prospector
+        run: prospector

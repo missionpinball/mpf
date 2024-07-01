@@ -57,7 +57,6 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
         return validated_config
 
-    # pylint: disable-msg=no-self-use
     def get_string_config(self, string):
         """Parse string config."""
         return {string: dict()}

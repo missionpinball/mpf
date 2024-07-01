@@ -1,9 +1,6 @@
 """Score reel controller."""
 import logging
 
-import asyncio
-from functools import partial
-
 
 class ScoreReelController:
 
@@ -30,7 +27,7 @@ class ScoreReelController:
     config_name = "score_reel_controller"
 
     def __init__(self, machine):
-        """initialize score reel controller."""
+        """Initialize score reel controller."""
         self.machine = machine
         self.log = logging.getLogger("ScoreReelController")
         self.log.debug("Loading the ScoreReelController")
@@ -154,7 +151,6 @@ class ScoreReelController:
         for score_reel_group in self.machine.score_reel_groups.values():
             score_reel_group.set_value(0)
             await score_reel_group.wait_for_ready()
-
 
     def _game_ending(self, **kwargs):
         """Reset controller."""

@@ -17,11 +17,11 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
 
     """A simple led (single emitter/color) on a PKONE Extension board. Simple leds are either on or off."""
 
-    __slots__ = ["log", "number", "send", "platform"]
+    __slots__ = ["log", "send", "platform"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, number: PKONESimpleLEDNumber, sender, platform: "PKONEHardwarePlatform") -> None:
-        """initialize light."""
+        """Initialize light."""
         super().__init__(number, platform.machine.clock.loop, 0)
         self.log = logging.getLogger('PKONESimpleLED')
         self.send = sender
@@ -71,7 +71,7 @@ class PKONELEDChannel(PlatformBatchLight):
     # pylint: disable-msg=too-many-arguments
     def __init__(self, board_address_id, group, index,
                  config: LightConfig, light_system: PlatformBatchLightSystem) -> None:
-        """initialize LED."""
+        """Initialize LED."""
         super().__init__("{}-{}-{}".format(board_address_id, group, index), light_system)
         self.board_address_id = int(board_address_id)
         self.group = int(group)

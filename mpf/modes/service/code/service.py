@@ -13,6 +13,7 @@ from mpf.core.utility_functions import Util
 ServiceMenuEntry = namedtuple("ServiceMenuEntry", ["label", "callback"])
 LightChainMap = namedtuple("LightMap", ["board", "chain", "light"])
 
+
 class Service(AsyncMode):
 
     """The service mode."""
@@ -314,6 +315,7 @@ sort_devices_by_number: single|bool|True
             elif key == 'ENTER' and run_update:
                 # perform update
                 self.machine.events.post("service_software_update_start")
+                # pylint: disable-msg=consider-using-with
                 subprocess.Popen([self._update_script])
                 self.machine.stop("Software Update")
 
@@ -422,7 +424,7 @@ sort_devices_by_number: single|bool|True
                                  test_color=color)
 
     def _update_light_chain_slide(self, items, position, color):
-        board, chain, lights = items[position]
+        board, chain, _ = items[position]  # Unused variable "lights"
         self.machine.events.post("service_light_test_start",
                                  board_name=board,
                                  light_name=" ",
@@ -470,73 +472,15 @@ sort_devices_by_number: single|bool|True
         position = 0
         color_position = 0
         colors = ["white", "red", "green", "blue", "yellow"]
-        items = self.machine.service.get_light_map(do_sort=self._do_sort)
-
-        # Categorize by platform and address
-        chain_lookup = {}
-        for board, l in items:
-            numbers = l.get_hw_numbers()
-            chain_2 = None
-            # Just choose the first one as representative?
-            number = numbers[0]
-            if "-" in number:
-                bits = number.split("-")  # e.g. led-7-4-r
-                if len(bits) == 2:
-                    # FAST lights are single addresses in blocks of 64
-                    if board.startswith("FAST"):
-                        addr = int(bits[0], 16)
-                        chain = addr // 64
-                    else:
-                        chain, addr = bits
-                elif len(bits) == 3:
-                    chain, addr, color = bits
-                elif len(bits) == 4:
-                    _, chain, addr, color = bits
-                else:
-                    self.warning_log("Unknown bits in parsing light address: %s", bits)
-                    continue
-                chain = f"Chain {chain}"
-            elif l.config['subtype'] == "matrix":
-                # Matrix lights get two chains: one for the row, one for the column
-                number = int(number, 16)
-                chain = f"Row {(number // 8) + 1}"
-                addr = number % 8
-                chain_2 = f"Column {(number % 8) + 1}"
-                addr_2 = number // 8
-            else:
-                chain = "XX"
-                addr = number
-
-            for platform in l.platforms:
-                platform_name = type(platform).__name__
-                if platform_name not in chain_lookup:
-                    chain_lookup[platform_name] = {}
-                if not chain in chain_lookup[platform_name]:
-                    chain_lookup[platform_name][chain] = []
-                chain_lookup[platform_name][chain].append((addr, l))
-                # This is ugly, but is iteration overkill?
-                if chain_2:
-                    if not chain_2 in chain_lookup[platform_name]:
-                        chain_lookup[platform_name][chain_2] = []
-                    chain_lookup[platform_name][chain_2].append((addr_2, l))
-
-        items = []
-        for platform_name, chains in chain_lookup.items():
-            for chain_name, chain in chains.items():
-                items.append(LightChainMap(platform_name, chain_name, chain))
-        # do not crash if no lights are configured
-        if not items:   # pragma: no cover
-            return
-
-        items.sort(key=lambda x: x.chain )
+        items = self._generate_light_chains()
 
         while True:
             self._update_light_chain_slide(items, position, colors[color_position])
-            for addr, l in items[position].light:
+            for _, l in items[position].light:  # Unused variable "addr"
                 l.color(colors[color_position], key="service", priority=1000000)
 
             key = await self._get_key()
-            for addr, l in items[position].light:
+            for _, l in items[position].light:  # Unused variable "addr"
                 l.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
@@ -556,6 +500,67 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_light_test_stop")
 
+    def _generate_light_chains(self):  # pylint: disable=too-many-locals
+        items = self.machine.service.get_light_map(do_sort=self._do_sort)
+
+        # Categorize by platform and address
+        chain_lookup = {}
+        for board, l in items:
+            numbers = l.get_hw_numbers()
+            chain_2 = None
+            # Just choose the first one as representative?
+            number = numbers[0]
+            if "-" in number:
+                bits = number.split("-")  # e.g. led-7-4-r
+                if len(bits) == 2:
+                    # FAST lights are single addresses in blocks of 64
+                    if board.startswith("FAST"):
+                        addr = int(bits[0], 16)
+                        chain = addr // 64
+                    else:
+                        chain, addr = bits
+                elif len(bits) == 3:
+                    chain, addr, _ = bits  # Unused variable "color"
+                elif len(bits) == 4:
+                    _, chain, addr, _ = bits
+                else:
+                    self.warning_log("Unknown bits in parsing light address: %s", bits)
+                    continue
+                chain = f"Chain {chain}"
+            elif l.config['subtype'] == "matrix":
+                # Matrix lights get two chains: one for the row, one for the column
+                number = int(number, 16)
+                chain = f"Row {(number // 8) + 1}"
+                addr = number % 8
+                chain_2 = f"Column {(number % 8) + 1}"
+                addr_2 = number // 8
+            else:
+                chain = "XX"
+                addr = number
+
+            for platform in l.platforms:
+                platform_name = type(platform).__name__
+                if platform_name not in chain_lookup:
+                    chain_lookup[platform_name] = {}
+                if chain not in chain_lookup[platform_name]:
+                    chain_lookup[platform_name][chain] = []
+                chain_lookup[platform_name][chain].append((addr, l))
+                # This is ugly, but is iteration overkill?
+                if chain_2:
+                    if chain_2 not in chain_lookup[platform_name]:
+                        chain_lookup[platform_name][chain_2] = []
+                    chain_lookup[platform_name][chain_2].append((addr_2, l))
+
+        items = []
+        for platform_name, chains in chain_lookup.items():
+            for chain_name, chain in chains.items():
+                items.append(LightChainMap(platform_name, chain_name, chain))
+        # do not crash if no lights are configured
+        if not items:   # pragma: no cover
+            return
+
+        items.sort(key=lambda x: x.chain)
+
     async def _volume_menu(self, platform=None):
         position = 0
         if platform:
@@ -563,13 +568,14 @@ sort_devices_by_number: single|bool|True
         else:
             item_configs = self.machine.config["sound_system"]["tracks"]
         items = [{
-                    **config,
-                    "name": config.get("name", track),
-                    "label": config.get("label", track),
-                    "is_platform": bool(platform),
-                    # TODO: Give each software track a 'name' property
-                    "value": self.machine.variables.get_machine_var(f"{config['name'] if platform else track}_volume") or config['volume']
-                 } for track, config in item_configs.items()]
+            # TODO: Give each software track a 'name' property
+            **config,
+            "name": config.get("name", track),
+            "label": config.get("label", track),
+            "is_platform": bool(platform),
+            "value": self.machine.variables.get_machine_var(
+                f"{config['name'] if platform else track}_volume") or config['volume']
+        } for track, config in item_configs.items()]
 
         # do not crash if no items
         if not items:   # pragma: no cover
@@ -612,7 +618,6 @@ sort_devices_by_number: single|bool|True
 
         self.machine.events.post("service_volume_stop")
 
-
     def _update_volume_slide(self, items, position, is_change=False, focus_change=None):
         config = items[position]
         event = "service_volume_{}".format("edit" if is_change else "start")
@@ -631,7 +636,7 @@ sort_devices_by_number: single|bool|True
             values = items[position]["levels_list"]
         else:
             # Use ints for values to avoid floating-point comparisons
-            values = [int((0.05 * i) * 100) for i in range(0,21)]
+            values = [int((0.05 * i) * 100) for i in range(0, 21)]
         value_position = values.index(items[position]["value"])
         self._update_volume_slide(items, position, is_change=True)
 

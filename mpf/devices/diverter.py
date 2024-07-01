@@ -23,7 +23,7 @@ class Diverter(SystemWideDevice):
     class_label = 'diverter'
 
     def __init__(self, machine, name):
-        """initialize diverter."""
+        """Initialize diverter."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine)

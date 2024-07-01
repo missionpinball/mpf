@@ -14,7 +14,7 @@ class VirtualSegmentDisplayConnector(MpfPlugin):
 
     """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
 
-    __slots__ = ["log", "machine", "bcp_client", "config"]
+    __slots__ = ["bcp_client"]
 
     config_section = 'virtual_segment_display_connector'
 
@@ -28,9 +28,11 @@ class VirtualSegmentDisplayConnector(MpfPlugin):
 
     @property
     def is_plugin_enabled(self):
+        """Return true if this plugin is enabled."""
         return self.config_section in self.machine.config and self.machine.bcp.enabled
 
     def initialize(self):
+        """Initialize the virtual segment display connector."""
         self.configure_logging(self.name)
         self.config = self.machine.config_validator.validate_config(
             "virtual_segment_display_connector", self.machine.config['virtual_segment_display_connector'])

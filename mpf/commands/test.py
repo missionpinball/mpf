@@ -1,27 +1,29 @@
+"""Base module for running tests."""
 import os
 
 import argparse
+import logging
 import re
 import unittest
 import sys
 
-# some hacks to unbreak logging afte loading the kivy logger
-import logging
+from kivy.logger import Logger  # pylint: disable=import-error
+from mpf.commands import MpfCommandLineParser
+from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
+from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
+
+# some hacks to unbreak logging after loading the kivy logger
 root = logging.root
 os.environ['KIVY_NO_FILELOG'] = '1'
 os.environ['KIVY_NO_CONSOLELOG'] = '1'
 os.environ["KIVY_NO_ARGS"] = "1"
 
-from kivy.logger import Logger
+# pylint: disable-msg=import-error,wrong-import-position
 for handler in Logger.handlers:
     Logger.removeHandler(handler)
 sys.stdout = sys.__stdout__
 logging.root = root
 # end of anti kivy hacks
-
-from mpf.commands import MpfCommandLineParser
-from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
-from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
 
 SUBCOMMAND = True
 
@@ -30,7 +32,7 @@ class Command(MpfCommandLineParser):
 
     """Run a text unit test from cli."""
 
-    def __init__(self, args, path):
+    def __init__(self, args, path):  # pylint: disable=too-many-locals
         """Parse args."""
         super().__init__(args, path)
         test_file = self.argv.pop(1)
@@ -44,7 +46,7 @@ class Command(MpfCommandLineParser):
 
         args = parser.parse_args(self.argv[1:])
 
-        with open(test_file) as f:
+        with open(test_file, encoding="utf-8") as f:
             test_string = f.read()
 
         base_dir = os.path.dirname(os.path.abspath(test_file))

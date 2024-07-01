@@ -41,7 +41,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
         return '<Platform.OpenPixel>'
 
     async def initialize(self):
-        """initialize openpixel platform."""
+        """Initialize openpixel platform."""
         self.machine.config_validator.validate_config("open_pixel_control", self.machine.config['open_pixel_control'])
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
@@ -102,7 +102,7 @@ class OpenPixelLED(LightPlatformInterface):
     __slots__ = ["log", "opc_client", "debug", "opc_channel", "channel_number"]
 
     def __init__(self, number, opc_client, debug):
-        """initialize Openpixel LED obeject."""
+        """Initialize Openpixel LED obeject."""
         super().__init__(number)
         self.log = logging.getLogger('OpenPixelLED')
         channel, channel_number = number.split("-")
@@ -153,7 +153,7 @@ class OpenPixelClient:
                  "msg", "openpixel_config", "_update_task"]
 
     def __init__(self, machine, config):
-        """initialize openpixel client."""
+        """Initialize openpixel client."""
         self.log = logging.getLogger('OpenPixelClient')
 
         self.machine = machine
@@ -310,9 +310,9 @@ class OpenPixelClient:
 
     def blank_all(self):
         """Blank all channels."""
-        for channel_index in range(len(self.channels)):
-            self.channels[channel_index] = [0] * len(self.channels[channel_index])
-            self.send(bytes(self._build_message(channel_index)))
+        for index, channel in enumerate(self.channels):
+            self.channels[index] = [0] * len(channel)
+            self.send(bytes(self._build_message(index)))
 
     def send(self, message):
         """Send a message to the socket.

@@ -33,7 +33,7 @@ class DropTarget(SystemWideDevice):
     __slots__ = ["reset_coil", "knockdown_coil", "banks", "_in_ball_search", "complete", "delay", "_ignore_switch_hits"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize drop target."""
+        """Initialize drop target."""
         self.reset_coil = None              # type: Optional[Driver]
         self.knockdown_coil = None          # type: Optional[Driver]
         self.banks = set()                  # type: Set[DropTargetBank]
@@ -217,7 +217,8 @@ class DropTarget(SystemWideDevice):
         self.debug_log("Drop target %s switch %s has active value %s compared to drop complete %s",
                        self.name, self.config['switch'].name, is_complete, self.complete)
         if self._in_ball_search or self._ignore_switch_hits:
-            self.debug_log("Ignoring state change in drop target %s due to being in ball search or ignoring switch hits", self.name)
+            self.debug_log("Ignoring state change in drop target %s due to being in ball search "
+                           "or ignoring switch hits", self.name)
             return
 
         if not reconcile:
@@ -325,7 +326,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
     class_label = 'drop_target_bank'
 
     def __init__(self, machine: "MachineController", name: str) -> None:
-        """initialize drop target bank."""
+        """Initialize drop target bank."""
         super().__init__(machine, name)
 
         self.drop_targets = list()          # type: List[DropTarget]

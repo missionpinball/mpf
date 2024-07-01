@@ -1,14 +1,18 @@
 """VPX platform."""
 import asyncio
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import logging
+
+
+from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface, FlashingType
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.core.platform import LightsPlatform, SwitchPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    SwitchConfig, DriverConfig, RepulseSettings
+    SwitchConfig, DriverConfig, RepulseSettings, SegmentDisplayPlatform
 
 
 class VirtualPinballSwitch(SwitchPlatformInterface):
@@ -18,7 +22,7 @@ class VirtualPinballSwitch(SwitchPlatformInterface):
     __slots__ = ["state"]
 
     def __init__(self, config, number, platform):
-        """initialize switch."""
+        """Initialize switch."""
         super().__init__(config, number, platform)
         self.state = self.config.invert
 
@@ -34,7 +38,7 @@ class VirtualPinballLight(LightPlatformInterface):
     __slots__ = ["_current_fade", "subtype", "hw_number", "machine"]
 
     def __init__(self, number, subtype, hw_number, machine):
-        """initialize LED."""
+        """Initialize LED."""
         super().__init__(number)
         self._current_fade = (0, -1, 0, -1)
         self.subtype = subtype
@@ -62,12 +66,15 @@ class VirtualPinballLight(LightPlatformInterface):
         return "VPX"
 
     def is_successor_of(self, other):
-        """Not implemented."""
-        raise AssertionError("Not implemented. Let us know if you need it.")
+        """Return true if the other light has the same number string plus the suffix '+1'."""
+        return self.number == other.number + "+1"
 
     def get_successor_number(self):
-        """Not implemented."""
-        raise AssertionError("Not implemented. Let us know if you need it.")
+        """Return the number with the suffix '+1'.
+
+        As there is not real number format for virtual is this is all we can do here.
+        """
+        return self.number + "+1"
 
     def __lt__(self, other):
         """Not implemented."""
@@ -81,7 +88,7 @@ class VirtualPinballDriver(DriverPlatformInterface):
     __slots__ = ["clock", "_state"]
 
     def __init__(self, config, number, clock):
-        """initialize virtual driver to disabled."""
+        """Initialize virtual driver to disabled."""
         super().__init__(config, number)
         self.clock = clock
         self._state = False
@@ -117,27 +124,61 @@ class VirtualPinballDriver(DriverPlatformInterface):
             return bool(self.clock.get_time() < self._state)
 
 
-class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class VirtualPinballSegmentDisplay(SegmentDisplayPlatformInterface):
+
+    """Virtual segment display."""
+
+    __slots__ = ["_text", "flashing", "flash_mask", "machine"]
+
+    def __init__(self, number, machine) -> None:
+        """Initialise virtual segment display."""
+        super().__init__(number)
+        self.machine = machine
+        self._text = None
+        self.flashing = FlashingType.NO_FLASH
+        self.flash_mask = ""
+
+    def set_text(self, text: ColoredSegmentDisplayText, flashing: FlashingType, flash_mask: str) -> None:
+        """Set text."""
+        self._text = text
+        self.flashing = flashing
+        self.flash_mask = flash_mask
+
+    @property
+    def text(self):
+        """Return text."""
+        return self._text.convert_to_str()
+
+    @property
+    def colors(self):
+        """Return colors."""
+        return self._text.get_colors()
+
+
+class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform, SegmentDisplayPlatform):
 
     """VPX platform."""
 
-    __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", "_started", "rules"]
+    __slots__ = ["_lights", "_switches", "_drivers", "_last_drivers", "_last_lights", 
+                 "_started", "rules", "_configured_segment_displays", "_last_segment_text"]
 
     def __init__(self, machine):
-        """initialize VPX platform."""
+        """Initialize VPX platform."""
         super().__init__(machine)
         self._lights = {}           # type: Dict[str, VirtualPinballLight]
         self._switches = {}         # type: Dict[str, VirtualPinballSwitch]
         self._drivers = {}          # type: Dict[str, VirtualPinballDriver]
         self._last_drivers = {}     # type: Dict[str, bool]
         self._last_lights = {}      # type: Dict[str, float]
+        self._configured_segment_displays = []  # type: List[VirtualPinballSegmentDisplay]
+        self._last_segment_text = {}  # type: Dict[str, str]
         self._started = asyncio.Event()
         self.log = logging.getLogger("VPX Platform")
         self.log.debug("Configuring VPX hardware interface.")
         self.rules = {}
 
     async def initialize(self):
-        """initialize platform."""
+        """Initialize platform."""
         self.machine.bcp.interface.register_command_callback("vpcom_bridge", self._dispatch)
         self.machine.events.add_async_handler("init_phase_5", self._wait_for_connect)
 
@@ -214,7 +255,11 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         return changed_drivers
 
     def _get_changed_lights_by_subtype(self, subtype):
-        """Return changed lights since last call. Returns bool for each light state but floating point brightness is stored in _last_lights to support other methods returning float."""
+        """Return changed lights since last call.
+
+        Returns bool for each light state but floating point brightness
+        is stored in _last_lights to support other methods returning float.
+        """
         changed_lamps = []
         for number, light in self._lights.items():
             if light.subtype != subtype:
@@ -239,6 +284,18 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 self._last_lights[number] = brightness
 
         return changed_lamps
+
+    def _get_changed_segment_text(self):
+        """Return changed configured segment text since last call."""
+        changed_segments = []
+        for segment_display in self._configured_segment_displays:
+            text = segment_display.text
+            number = segment_display.number
+            if text != self._last_segment_text[number]:
+                changed_segments.append((number, text))
+                self._last_segment_text[number] = text
+
+        return changed_segments
 
     def vpx_changed_lamps(self):
         """Return changed lamps since last call."""
@@ -275,6 +332,10 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.log.warning("Command \"set_mech\" unimplemented: %s %s", number, value)
         return True
 
+    def vpx_changed_segment_text(self):
+        """Return changed segment text since last call."""
+        return self._get_changed_segment_text()
+
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Configure VPX switch."""
         number = str(number)
@@ -289,6 +350,11 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self._drivers[number] = driver
         self._last_drivers[number] = False
         return driver
+
+    def validate_segment_display_section(self, segment_display, config):
+        """Validate segment display sections."""
+        del segment_display
+        return config
 
     def vpx_get_hardwarerules(self):
         """Return hardware rules."""
@@ -380,3 +446,13 @@ class VirtualPinballPlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             ]
         else:
             raise AssertionError("Unknown subtype {}".format(subtype))
+
+    async def configure_segment_display(self, number: str, display_size: int,
+                                        platform_settings) -> SegmentDisplayPlatformInterface:
+        """Configure segment display."""
+        del platform_settings
+        del display_size
+        segment_display = VirtualPinballSegmentDisplay(number, self.machine)
+        self._configured_segment_displays.append(segment_display)
+        self._last_segment_text[number] = None
+        return segment_display

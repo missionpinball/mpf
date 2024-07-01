@@ -13,7 +13,7 @@ class Speedometer(SystemWideDevice):
     __slots__ = ["time_start"]
 
     def __init__(self, machine, name):
-        """initialize speedometer."""
+        """Initialize speedometer."""
         super().__init__(machine, name)
         self.time_start = None
 
@@ -37,5 +37,5 @@ class Speedometer(SystemWideDevice):
             delta = self.config['stop_switch'].last_change - self.time_start
             self.time_start = None
             print(delta)
-            self.machine.events.post("{}_hit".format(self.name), delta = delta)
+            self.machine.events.post("{}_hit".format(self.name), delta=delta)
             # TODO: post event

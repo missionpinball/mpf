@@ -15,7 +15,7 @@ class LightSegmentDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["_lights", "_key", "_segment_map", "_current_text"]
 
     def __init__(self, number, lights, segment_type):
-        """initialize segment display."""
+        """Initialize segment display."""
         super().__init__(number)
         self._lights = lights
         if segment_type == "7segment":
@@ -60,10 +60,10 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
 
     """Platform which drives segment displays on lights of another platform."""
 
-    __slots__ = ["log", "config"]
+    __slots__ = ["config"]
 
     def __init__(self, machine):
-        """initialize platform."""
+        """Initialize platform."""
         super().__init__(machine)
         self.log = logging.getLogger('Light Segment Displays')
         self.log.debug("Configuring Light Segment Displays")
@@ -83,7 +83,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
             _lights = platform_settings['lights']
         else:
             #currently supporting 14segment displays
-            segments = ['a','b','c','d','e','f','g1','g2','h','j','k','l','m','n','dp']
+            segments = ['a', 'b', 'c', 'd', 'e', 'f', 'g1', 'g2', 'h', 'j', 'k', 'l', 'm', 'n', 'dp']
             digit_len = len(segments)
 
             #get single list of all lights
@@ -96,7 +96,7 @@ class LightSegmentDisplaysPlatform(SegmentDisplaySoftwareFlashPlatform):
 
             #split list into dicts of digits
             _lights = [_lights[i:i + digit_len] for i in range(0, len(_lights), digit_len)]
-            _lights = [dict(zip(segments,digit_lights)) for digit_lights in _lights]
+            _lights = [dict(zip(segments, digit_lights)) for digit_lights in _lights]
 
         display = LightSegmentDisplay(number,
                                       lights=_lights,

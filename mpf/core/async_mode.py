@@ -18,7 +18,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
     __slots__ = ["_task"]
 
     def __init__(self, machine: "MachineController", *args, **kwargs) -> None:
-        """initialize async mode."""
+        """Initialize async mode."""
         super().__init__(machine, *args, **kwargs)
 
         self._task = None   # type: Optional[asyncio.Task]

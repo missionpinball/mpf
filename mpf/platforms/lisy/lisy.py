@@ -1,8 +1,7 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from packaging import version
-
 from typing import Dict, Optional, List
+from packaging import version
 
 from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, TextToSegmentMapper, \
     ASCII_SEGMENTS
@@ -33,7 +32,7 @@ class LisySwitch(SwitchPlatformInterface):
     __slots__ = ["index"]  # type: List[str]
 
     def __init__(self, config, number, platform):
-        """initialize switch."""
+        """Initialize switch."""
         super().__init__(config, number, platform)
         self.index = int(number)
 
@@ -49,7 +48,7 @@ class LisyDriver(DriverPlatformInterface):
     __slots__ = ["platform", "_pulse_ms", "_recycle_time", "index", "has_rule"]     # type: List[str]
 
     def __init__(self, config, number, platform):
-        """initialize driver."""
+        """Initialize driver."""
         super().__init__(config, number)
         self.platform = platform
         self._pulse_ms = -1
@@ -113,7 +112,7 @@ class LisySimpleLamp(LightPlatformSoftwareFade):
     __slots__ = ["platform", "_state"]
 
     def __init__(self, number, platform):
-        """initialize Lisy Light."""
+        """Initialize Lisy Light."""
         super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
         self._state = None
@@ -151,7 +150,7 @@ class LisyModernLight(PlatformBatchLight):
     __slots__ = ["platform"]
 
     def __init__(self, number, platform, light_system):
-        """initialize Lisy Light."""
+        """Initialize Lisy Light."""
         super().__init__(number, light_system)
         self.platform = platform
 
@@ -183,7 +182,7 @@ class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["platform", "_type_of_display", "_length_of_display"]
 
     def __init__(self, number: int, platform: "LisyHardwarePlatform", display_size) -> None:
-        """initialize segment display."""
+        """Initialize segment display."""
         super().__init__(number)
         self.platform = platform
         self._type_of_display = None
@@ -251,7 +250,7 @@ class LisySound(HardwareSoundPlatformInterface):
     __slots__ = ["platform"]
 
     def __init__(self, platform):
-        """initialize hardware sound."""
+        """Initialize hardware sound."""
         self.platform = platform        # type: LisyHardwarePlatform
 
     def play_sound(self, number: int, track: int = 1):
@@ -317,7 +316,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                  "_light_system", "_send_length_of_command", "_lisy_version", "_hardware_name"]  # type: List[str]
 
     def __init__(self, machine) -> None:
-        """initialize platform."""
+        """Initialize platform."""
         super().__init__(machine)
         self._writer = None                 # type: Optional[asyncio.StreamWriter]
         self._reader = None                 # type: Optional[asyncio.StreamReader]
@@ -352,11 +351,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         except ImportError:
             self.warning_log("Could not import terminos (this is ok on windows).")
             return
-        serial_port = open(self.config['port'])
-        attrs = termios.tcgetattr(serial_port)
-        attrs[2] = attrs[2] & ~termios.HUPCL
-        termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
-        serial_port.close()
+        # Disabling linter on encoding until understanding what encoding LISY uses on serial
+        # pylint: disable-msg=unspecified-encoding
+        with open(self.config['port']) as serial_port:
+            attrs = termios.tcgetattr(serial_port)
+            attrs[2] = attrs[2] & ~termios.HUPCL
+            termios.tcsetattr(serial_port, termios.TCSAFLUSH, attrs)
+            serial_port.close()
 
     async def _clear_read_buffer(self):
         """Clear read buffer."""
@@ -375,7 +376,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
     # pylint: disable-msg=too-many-statements
     # pylint: disable-msg=too-many-branches
     async def initialize(self):
-        """initialize platform."""
+        """Initialize platform."""
         async with self._bus_lock:
 
             await super().initialize()

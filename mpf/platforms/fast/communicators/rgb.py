@@ -1,26 +1,32 @@
+"""RGB Board Serial Communicator."""
 # mpf/platforms/fast/communicators/rgb.py
 
 from packaging import version
 
-from mpf.core.utility_functions import Util
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
-MIN_FW = version.parse('0.87') # override in subclass
+MIN_FW = version.parse('0.87')  # override in subclass
+
 
 class FastRgbCommunicator(FastSerialCommunicator):
 
-    """Handles the serial communication for legacy FAST RGB processors including
-    the Nano Controller and FP-EXP-0800 LED controller."""
+    """Handles the serial communication for legacy FAST RGB processors.
+
+    Includes the Nano Controller and FP-EXP-0800 LED controller.
+    """
 
     IGNORED_MESSAGES = ['RX:P']
 
     def __init__(self, platform, processor, config):
+        """Initialize the RGB platform and process boot message."""
         super().__init__(platform, processor, config)
 
         self.message_processors['!B:'] = self._process_boot_msg
 
     async def init(self):
-        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)  # Loop here until we get a response
+        """Initialize the RGB processor and await an ID response."""
+        # Loop here until we get a response
+        await self.send_and_wait_for_response_processed('ID:', 'ID:', max_retries=-1)
 
     def _process_boot_msg(self, msg):
         """Process bootloader message."""
@@ -69,4 +75,5 @@ class FastRgbCommunicator(FastSerialCommunicator):
         # self.send_and_forget(f"RF:{Util.int_to_hex_string(self.config['led_fade_time'])}")
 
     def stopping(self):
+        """Stop the RGB processor and reset it."""
         self.reset()

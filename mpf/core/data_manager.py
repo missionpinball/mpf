@@ -20,7 +20,7 @@ class DataManager(MpfController):
     __slots__ = ["name", "min_wait_secs", "filename", "data", "_dirty"]
 
     def __init__(self, machine, name, min_wait_secs=1):
-        """initialize data manger.
+        """Initialize data manger.
 
         The DataManager is responsible for reading and writing data to/from a
         file on disk.
@@ -129,7 +129,7 @@ class DataManager(MpfController):
             # save data
             try:
                 FileManager.save(self.filename, data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
                 self.info_log("ERROR writing file %s: %s", self.filename, e)

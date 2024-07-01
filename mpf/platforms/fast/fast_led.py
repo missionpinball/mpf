@@ -4,9 +4,8 @@ import logging
 from typing import Optional
 from typing import List
 
-from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
+
 
 class FASTRGBLED:
 
@@ -49,23 +48,25 @@ class FASTRGBLED:
 
         return result
 
+
 class FASTExpLED(FASTRGBLED):
 
     """FAST RGB LED on an expansion board."""
 
-    __slots__ = ["board_address", "platform", "breakout_board", "port", "dirty", "machine", "platform", "hardware_fade_ms",
-                 "log", "channels", "breakout", "index", "address", "exp_board"]
+    __slots__ = ["board_address", "breakout_board", "port",
+                 "breakout", "index", "address", "exp_board"]
 
     def __repr__(self):
+        """Return representation of this LED."""
         return f'<FASTExpLED: {self.number}>'
 
+    # pylint: disable-msg=super-init-not-called
     def __init__(self, number: str, hardware_fade_ms: int, platform) -> None:
         """Initialize FAST LED."""
-
         self.number = number  # 5 char hex string, board address, breakout
         self.number_int = int(number, 16)
         self.platform = platform
-        self.address = f'{number[0:3]}' # '880'
+        self.address = f'{number[0:3]}'  # '880'
         self.exp_board = platform.exp_boards_by_address[self.address[0:2]]
         self.breakout_board = platform.exp_breakout_boards[self.address]
 
@@ -87,10 +88,11 @@ class FASTLEDChannel(LightPlatformInterface):
     __slots__ = ["led", "channel", "_current_fade", "_last_brightness"]
 
     def __repr__(self):
+        """Return representation of this LED."""
         return f'<FASTLEDChannel: {self.led.number}-{self.channel}>'
 
     def __init__(self, led: FASTRGBLED, channel) -> None:
-        """initialize LED."""
+        """Initialize LED."""
         super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)
@@ -123,8 +125,12 @@ class FASTLEDChannel(LightPlatformInterface):
             self._last_brightness = brightness
             done = True
 
+        # There is a bug that can sometimes cause the start_time to be ahead of the current_time,
+        # resulting in a negative brightness value. This may be a floating-point rounding error,
+        # or maybe something else. I can't figure it out, so just floor the value to be non-negative.
         if brightness < 0:
-            self.led.log.warning("Calculated a negative brightness (%s) for led %s channel %s. current_time: %s"+\
+            brightness = 0
+            self.led.log.warning("Calculated a negative brightness (%s) for led %s channel %s. current_time: %s "
                                  "start_brightness: %s, start_time: %s, target_brightness: %s, target_time: %s",
                                  brightness, self.led, self.channel, current_time, start_brightness, start_time,
                                  target_brightness, target_time)
@@ -140,7 +146,7 @@ class FASTLEDChannel(LightPlatformInterface):
         return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
 
     def get_successor_number(self):
-        """Return next number. We want this in the config format"""
+        """Return next number. We want this in the config format."""
         # if self.channel == 2:
         #     hex_int = int(self.number, 16) + 1  # number is hex string so we need to launder it through an int
         #     return f"{hex_int:X}-0"

@@ -16,7 +16,7 @@ class HighScore(AsyncMode):
     __slots__ = ["data_manager", "high_scores", "high_score_config", "pending_award", "vars"]
 
     def __init__(self, *args, **kwargs):
-        """initialize high score mode."""
+        """Initialize high score mode."""
         self.data_manager = None
         self.high_scores = None
         self.high_score_config = None
@@ -25,7 +25,7 @@ class HighScore(AsyncMode):
         super().__init__(*args, **kwargs)
 
     def mode_init(self):
-        """initialize high score mode."""
+        """Initialize high score mode."""
         self.data_manager = self.machine.create_data_manager('high_scores')
         self.high_scores = self.data_manager.get_data()
 
@@ -56,7 +56,7 @@ class HighScore(AsyncMode):
                             self.config['high_score']['defaults'].items()}
 
     def _load_vars(self):
-        """Load var values from the config file"""
+        """Load var values from the config file."""
         self.vars = {k: [[next(iter(a.keys())), next(iter(a.values()))] for a in v] for (k, v) in
                      self.config['high_score']['vars'].items()}
 
@@ -184,7 +184,7 @@ class HighScore(AsyncMode):
                     new_list.append([player, player[category_name]])
 
             # sort if from highest to lowest
-            new_list.sort(key=lambda x: x[1], reverse=(category_name not in self.high_score_config['reverse_sort']))
+            new_list.sort(key=lambda x: x[1], reverse=category_name not in self.high_score_config['reverse_sort'])
 
             # scan through and see if any of our players are in this list
             i = 0

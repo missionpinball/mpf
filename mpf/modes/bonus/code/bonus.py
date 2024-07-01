@@ -104,6 +104,7 @@ class Bonus(Mode):
             self._bonus_next_item()
             return
 
+        # pylint: disable=superfluous-parens
         if self.settings["rounding_value"] and (r := (score % self.settings["rounding_value"])):
             self.debug_log("rounding bonus score %s remainder of %s", score, r)
             if self.settings["rounding_direction"] == "down":

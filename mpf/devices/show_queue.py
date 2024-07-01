@@ -20,7 +20,7 @@ class ShowQueue(SystemWideDevice):
     __slots__ = ["shows_queue", "_current_show"]
 
     def __init__(self, machine, name):
-        """initialize show queue."""
+        """Initialize show queue."""
         super().__init__(machine, name)
 
         self.shows_queue = deque()  # type: Deque[Tuple[ShowConfig, int]]

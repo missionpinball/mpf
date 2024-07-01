@@ -58,7 +58,7 @@ class SegmentDisplay(SystemWideDevice):
     class_label = 'segment_display'
 
     def __init__(self, machine, name: str) -> None:
-        """initialize segment display device."""
+        """Initialize segment display device."""
         super().__init__(machine, name)
         self.hw_display = None                      # type: Optional[SegmentDisplayPlatformInterface]
         self.platform = None                        # type: Optional[SegmentDisplayPlatform]
@@ -75,7 +75,7 @@ class SegmentDisplay(SystemWideDevice):
         self._current_state = None                  # type: Optional[SegmentDisplayState]
 
     async def _initialize(self):
-        """initialize display."""
+        """Initialize display."""
         await super()._initialize()
         # load platform
         self.platform = self.machine.get_platform_sections('segment_displays', self.config['platform'])
@@ -127,18 +127,39 @@ class SegmentDisplay(SystemWideDevice):
         platform.assert_has_feature("segment_displays")
         config['platform_settings'] = platform.validate_segment_display_section(self,
                                                                                 config.get('platform_settings', None))
+
+        # For backwards compatibility, an undefined update_method config will be mapped
+        # to "stack". However the default in a future version will be "replace", so inform
+        # the user that they should explicitly define "stack" to avoid a breaking change.
+        if config['update_method'] is None:
+            self.warning_log("Segment display update_method will default to 'replace' in a future MPF release. "
+                             "You have no config value specified and are currently getting 'stack' for backwards "
+                             "compatibility. To avoid a breaking change, please set 'update_method: \"stack\"' "
+                             "in your segment display config.")
+            config['update_method'] = "stack"
         return config
 
     # pylint: disable-msg=too-many-arguments
     def add_text_entry(self, text, color, flashing, flash_mask, transition, transition_out, priority, key):
-        """Add text to display stack.
+        """Add text to display stack, or send it directly to the display.
 
         This will replace texts with the same key.
         """
-        # remove old text in case it has the same key
-        self._text_stack[key] = TextStackEntry(
-            text, color, flashing, flash_mask, transition, transition_out, priority, key)
-        self._update_stack()
+        if self.config['update_method'] == "stack":
+            self._text_stack[key] = TextStackEntry(
+                text, color, flashing, flash_mask, transition, transition_out, priority, key)
+            self._update_stack()
+            return
+
+        if self.config['update_method'] != "replace":
+            raise ValueError(f"Unknown update_method '{self.config['update_method']}' for segment display {self.name}")
+
+        # For the replace-text update method, skip the stack and write straight to the display
+        new_text = TextTemplate(self.machine, text).evaluate({})
+        text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
+                                           self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                           color)
+        self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.
@@ -149,6 +170,10 @@ class SegmentDisplay(SystemWideDevice):
 
     def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
+        if self.config['update_method'] != "stack":
+            self.info_log("Segment display 'remove' action is TBD.")
+            return
+
         if key in self._text_stack:
             del self._text_stack[key]
             self._update_stack()

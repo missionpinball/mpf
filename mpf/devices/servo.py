@@ -20,7 +20,7 @@ class Servo(SystemWideDevice):
     class_label = 'servo'
 
     def __init__(self, machine, name):
-        """initialize servo."""
+        """Initialize servo."""
         self.hw_servo = None
         self.platform = None        # type: ServoPlatform
         self._position = None

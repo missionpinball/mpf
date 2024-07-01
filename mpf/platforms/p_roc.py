@@ -12,7 +12,7 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-from typing import Dict, List
+from typing import Dict
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
@@ -40,7 +40,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplaySoftware
                  "_use_first_eight_direct_inputs"]
 
     def __init__(self, machine):
-        """initialize P-ROC."""
+        """Initialize P-ROC."""
         super().__init__(machine)
         # validate config for p_roc
         self.config = self.machine.config_validator.validate_config("p_roc", self.machine.config.get('p_roc', {}))
@@ -280,7 +280,7 @@ class AuxPort:
     __slots__ = ["platform", "_commands"]
 
     def __init__(self, platform):
-        """initialize aux port."""
+        """Initialize aux port."""
         self.platform = platform
         self._commands = []
 
@@ -323,7 +323,7 @@ class PRocAlphanumericDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
     __slots__ = ["display"]
 
     def __init__(self, display, index):
-        """initialize alpha numeric display."""
+        """Initialize alpha numeric display."""
         super().__init__(index)
         self.display = display
 
@@ -443,7 +443,7 @@ class AuxAlphanumericDisplay:
     __slots__ = ["platform", "aux_controller", "aux_index", "texts"]
 
     def __init__(self, platform, aux_controller):
-        """initialize the alphanumeric display."""
+        """Initialize the alphanumeric display."""
         self.platform = platform
         self.aux_controller = aux_controller
         self.aux_index = aux_controller.reserve_index()

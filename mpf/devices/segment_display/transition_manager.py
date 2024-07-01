@@ -25,8 +25,8 @@ class TransitionManager:
         if transition_config:
             config = transition_config.copy()
             config.pop('type')
-            return TRANSITIONS[transition_config['type']](output_length, collapse_dots, collapse_commas, 
-                               use_dots_for_commas, config)
+            return TRANSITIONS[transition_config['type']](output_length, collapse_dots, collapse_commas,
+                                                          use_dots_for_commas, config)
 
         return None
 

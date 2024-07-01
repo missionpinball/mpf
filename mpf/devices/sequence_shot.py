@@ -24,7 +24,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events", "_start_time"]
 
     def __init__(self, machine, name):
-        """initialize sequence shot."""
+        """Initialize sequence shot."""
         super().__init__(machine, name)
 
         self.delay = mpf.core.delays.DelayManager(self.machine)
@@ -180,7 +180,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             elapsed = 0
 
         """Post sequence complete event including its elapsed time to complete."""
-        self.machine.events.post("{}_hit".format(self.name),elapsed=elapsed)
+        self.machine.events.post("{}_hit".format(self.name), elapsed=elapsed)
         '''event: (name)_hit
         desc: The sequence_shot called (name) was just completed.
         '''

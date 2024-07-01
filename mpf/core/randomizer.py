@@ -8,7 +8,7 @@ class Randomizer:
     """Generic list randomizer."""
 
     def __init__(self, items, machine=None, template_type=None):
-        """initialize Randomizer."""
+        """Initialize Randomizer."""
         self.fallback_value = None
         self.force_different = True
         self.force_all = False
@@ -123,7 +123,7 @@ class Randomizer:
 
     @staticmethod
     def _init_data(data_dict):
-        """initialize dict."""
+        """Initialize dict."""
         data_dict['current_item'] = None
         data_dict['items_sent'] = set()
         data_dict['current_item_index'] = 0  # only used with disable random
@@ -133,11 +133,11 @@ class Randomizer:
         if self.data['current_item']:
             return self.data['current_item']
 
-        return self.__next__()
+        return next(self)
 
     def get_next(self, conditional_args=None):
         """Return next item."""
-        return self.__next__(conditional_args)
+        return next(self, conditional_args)
 
     def _get_items(self, conditional_args):
         if self._template_type:

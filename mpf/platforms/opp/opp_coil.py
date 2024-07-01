@@ -22,7 +22,7 @@ class OPPSolenoid(DriverPlatformInterface):
     __slots__ = ["sol_card", "log", "switch_rule", "_switches", "_config_state", "platform_settings", "switches"]
 
     def __init__(self, sol_card, number):
-        """initialize OPP solenoid driver."""
+        """Initialize OPP solenoid driver."""
         super().__init__({}, number)
         self.sol_card = sol_card        # type: OPPSolenoidCard
         self.log = sol_card.log
@@ -214,6 +214,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.sol_card.platform.send_to_processor(self.sol_card.chain_serial, final_cmd)
 
     def reconfigure_pulse_pwm(self, pulse_settings: PulseSettings):
+        """Send a new configuration for pulse PWM on this coil."""
         pwm_val = int((pulse_settings.power * 32) - 1)
         if pwm_val < 0:
             pwm_val = 0
@@ -243,7 +244,7 @@ class OPPSolenoidCard:
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
-        """initialize OPP solenoid card."""
+        """Initialize OPP solenoid card."""
         self.log = logging.getLogger('OPPSolenoid {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr

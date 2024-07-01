@@ -400,7 +400,7 @@ def add_devices_with_board_numbers(devices: Dict[Any, T], s: FastSystem, constru
         if board_no > max_board:
             max_board = board_no
         device_no = int(parts[1])
-        if board_no not in device_dict.keys():
+        if board_no not in device_dict:
             device_dict[board_no] = dict()
         device_dict[board_no][device_no] = sw
     return (device_dict, max_board)
@@ -473,22 +473,22 @@ def wire_specified_boards(machine: MachineController, s: FastSystem):
 
     # Wire up switches and drivers to board
     for board in range(max_board + 1):
-        if board in fast_boards_switches.keys():
+        if board in fast_boards_switches:
             for (pin, switch) in fast_boards_switches[board].items():
                 s.connect(fast_boards[board].get_switch_pin(pin), switch[""][1])
 
-        if board in fast_boards_drivers.keys():
+        if board in fast_boards_drivers:
             for (pin, driver) in fast_boards_drivers[board].items():
                 s.connect(fast_boards[board].get_driver_pin(pin), driver[""][1])
 
     # Daisy chain switch and driver power
     for board in range(max_board + 1):
-        if board in fast_boards_switches.keys():
+        if board in fast_boards_switches:
             switches_on_board = list(fast_boards_switches[board].values())
             s.daisy_chain_list(switches_on_board, lambda w: w[""][0], lambda w: w[""][0])
             s.connect(s.pfb["J4"][4 + (board % 2)], switches_on_board[0][""][0])
 
-        if board in fast_boards_drivers.keys():
+        if board in fast_boards_drivers:
             drivers_on_board = list(fast_boards_drivers[board].values())
             s.daisy_chain_list(drivers_on_board, lambda d: d[""][0], lambda d: d[""][0])
             s.connect(s.pfb["J4"][0 + (board % 2)], drivers_on_board[0][""][0])
@@ -504,20 +504,22 @@ def wire(machine: MachineController):
     switches_specify_boards = None
     for switch in machine.switches.values():
         num_spec = switch.config["number"]
+        has_dash = "-" in num_spec
         if switches_specify_boards is None:
-            switches_specify_boards = ("-" in num_spec)
+            switches_specify_boards = has_dash
         else:
-            if ("-" in num_spec) != switches_specify_boards:
+            if switches_specify_boards != has_dash:
                 print(inconsistent_err)
                 return None
 
     drivers_specify_boards = None
     for coil in machine.coils.values():
         num_spec = coil.config["number"]
+        has_dash = "-" in num_spec
         if drivers_specify_boards is None:
-            drivers_specify_boards = ("-" in num_spec)
+            drivers_specify_boards = has_dash
         else:
-            if ("-" in num_spec) != drivers_specify_boards:
+            if drivers_specify_boards != has_dash:
                 print(inconsistent_err)
                 return None
 

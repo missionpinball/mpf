@@ -20,7 +20,7 @@ class OutgoingBall:
     __slots__ = ["max_tries", "eject_timeout", "target", "player_controlled", "already_left"]
 
     def __init__(self, target: "BallDevice") -> None:
-        """initialize outgoing ball."""
+        """Initialize outgoing ball."""
         self.max_tries = 0                  # type: int
         self.eject_timeout = 0              # type: int
         self.target = target                # type: BallDevice
@@ -36,7 +36,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                  "_no_incoming_ball_which_may_skip", "_incoming_ball_which_may_skip_obj", "_eject_future"]
 
     def __init__(self, ball_device: "BallDevice") -> None:
-        """initialize outgoing balls handler."""
+        """Initialize outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue()     # type: asyncio.Queue
         self._current_target = None     # type: Optional[BallDevice]
@@ -442,7 +442,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                             self._eject_queue.get_nowait()
                             self._eject_queue.task_done()
                     self.info_log("Necessary queue requests are cancelled. Updating ball count to %s." % new_balls)
-                    self.ball_device.ball_count_handler._set_ball_count(new_balls)
+                    self.ball_device.ball_count_handler._set_ball_count(new_balls)  # pylint: disable=protected-access
 
             return result
         except asyncio.CancelledError:
@@ -473,15 +473,15 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.info_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
             return await self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                               incoming_ball_at_target, eject_try)
-        else:
-            if not confirm_future.done():
-                raise AssertionError("Future not done")
-            if confirm_future.cancelled():
-                raise AssertionError("Eject failed but should not")
-            # eject successful
-            self.info_log("Got eject confirm")
-            await self._handle_eject_success(eject_request)
-            return True
+
+        if not confirm_future.done():
+            raise AssertionError("Future not done")
+        if confirm_future.cancelled():
+            raise AssertionError("Eject failed but should not")
+        # eject successful
+        self.info_log("Got eject confirm")
+        await self._handle_eject_success(eject_request)
+        return True
 
     # pylint: disable-msg=too-many-arguments
     async def _handle_playfield_timeout_confirm(self, eject_request, ball_return_future, unknown_balls_future,

@@ -19,7 +19,7 @@ class SettingsController(MpfController):
     config_name = 'settings_controller'
 
     def __init__(self, machine):
-        """initialize settings controller."""
+        """Initialize settings controller."""
         super().__init__(machine)
         # start with default settings
         self._settings = {}     # type: Dict[str, SettingEntry]

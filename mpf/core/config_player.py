@@ -28,7 +28,7 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
     __slots__ = ["device_collection", "machine", "mode_event_keys", "instances", "_global_keys"]
 
     def __init__(self, machine):
-        """initialize config player."""
+        """Initialize config player."""
         super().__init__()
         self.device_collection = None
 
@@ -269,7 +269,6 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
             partial(self._update_subscription, template, subscription_list, settings, priority, context, key))
         self.handle_subscription_change(value, settings, priority, context, key)
 
-    # pylint: disable-msg=no-self-use
     # pylint: disable-msg=too-many-arguments
     def handle_subscription_change(self, value, settings, priority, context, key):
         """Handle the change of a subscription."""

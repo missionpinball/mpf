@@ -13,10 +13,16 @@ class TwitchBot(MpfPlugin):
 
     """Adds Twitch chat room events."""
 
+    __slots__ = ["client"]
     config_section = 'twitch_client'
 
+    def __init__(self, *args, **kwargs):
+        """Initialize class variables."""
+        super().__init__(*args, **kwargs)
+        self.client = None
+
     def initialize(self):
-        """initialize Twitch client."""
+        """Initialize Twitch client."""
         self.configure_logging(self.name)
         self.config = self.machine.config_validator.validate_config(
             "twitch_client", self.machine.config['twitch_client'])

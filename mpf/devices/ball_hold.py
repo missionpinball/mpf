@@ -22,7 +22,7 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
                  "hold_queue"]
 
     def __init__(self, machine, name):
-        """initialize ball hold."""
+        """Initialize ball hold."""
         self.hold_devices = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -244,13 +244,14 @@ class BallHold(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     def _lost_ball(self, device, balls, **kwargs):
         """Handle the ball hold devices losing a ball."""
+        del kwargs
         if self.balls_held:
             self.balls_held -= balls
             self.info_log("Ball device %s lost %s balls, hold now has %s balls held", device, balls, self.balls_held)
         else:
             self.info_log("Ball device %s lost %s balls but hold is not holding. Doing nothing.", device, balls)
         # Do not claim this ball
-        return { 'balls': balls }
+        return {'balls': balls}
 
     def _hold_ball(self, device, new_balls, unclaimed_balls, **kwargs):
         """Handle result of _ball_enter event of hold_devices."""

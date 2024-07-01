@@ -21,7 +21,7 @@ class Blinkenlight(SystemWideDevice):
     class_label = 'blinkenlight'
 
     def __init__(self, machine, name):
-        """initialize blinkenlight."""
+        """Initialize blinkenlight."""
         super().__init__(machine, name)
 
         self._colors = []

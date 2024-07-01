@@ -2,7 +2,7 @@
 
 import uuid
 from functools import partial
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
@@ -30,7 +30,7 @@ class DelayManager(MpfController):
     config_name = "delay_manager"
 
     def __init__(self, machine: "MachineController") -> None:
-        """initialize delay manager."""
+        """Initialize delay manager."""
         self.delays = {}        # type: Dict[str, Tuple[Any, Callable]]
         super().__init__(machine)
 

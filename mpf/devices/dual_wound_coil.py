@@ -12,7 +12,7 @@ class DualWoundCoil(SystemWideDevice):
     class_label = "dual_wound_coil"  # String of the friendly name of the device class
 
     def __init__(self, machine, name):
-        """initialize a dual wound coil."""
+        """Initialize a dual wound coil."""
         super().__init__(machine, name)
         # Add this device to the coil section
         self.machine.coils[name] = self

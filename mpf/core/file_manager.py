@@ -24,7 +24,7 @@ class FileManager:
 
     @classmethod
     def init(cls):
-        """initialize file interfaces."""
+        """Initialize file interfaces."""
         cls.file_interfaces[".yaml"] = YamlInterface()
         cls.file_interfaces[".bin"] = PickleInterface()
 

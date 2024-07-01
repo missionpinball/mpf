@@ -12,7 +12,7 @@ class IncomingBall:
     """One incoming ball."""
 
     def __init__(self, source, target):
-        """initialize incoming ball."""
+        """Initialize incoming ball."""
         self._timeout_future = asyncio.Future()
         self._confirm_future = asyncio.Future()
         self._can_skip_future = asyncio.Future()
@@ -123,7 +123,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
     __slots__ = ["_incoming_balls", "_has_no_incoming_balls", "_has_incoming_balls", "_is_timeouting"]
 
     def __init__(self, ball_device):
-        """initialize incoming balls handler."""
+        """Initialize incoming balls handler."""
         super().__init__(ball_device)
         # list of incoming balls sorted by their expiring time
         self._incoming_balls = []

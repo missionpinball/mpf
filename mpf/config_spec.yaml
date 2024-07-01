@@ -1479,6 +1479,7 @@ segment_displays:
     default_transition_update_hz: single|float_or_token|30
     platform_settings: single|dict|None
     platform: single|str|None
+    update_method: single|str|None
 light_segment_displays_device:
     lights: list|dict(str:machine(lights))|None
     light_groups: list|machine(neoseg_displays)|None
@@ -1927,6 +1928,7 @@ spinners:
     labels: list|str|None
     active_ms: single|ms|1000ms
     idle_ms: single|ms|None
+    max_events_per_second: single|int|-1
     playfield: single|machine(playfields)|playfield
     reset_when_inactive: single|bool|true
     enable_events: event_handler|event_handler:ms|None

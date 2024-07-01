@@ -64,7 +64,9 @@ class Command(MpfCommandLineParser):
             if self.args.dest_path:
                 mc_config.set_machine_path(self.args.dest_path)
 
-        pickle.dump(mpf_config, open(ProductionConfigLoader.get_mpf_bundle_path(self.machine_path), "wb"))
+        with open(ProductionConfigLoader.get_mpf_bundle_path(self.machine_path), "wb") as mpf_file:
+            pickle.dump(mpf_config, mpf_file)
         if self.args.mc:
-            pickle.dump(mc_config, open(ProductionConfigLoader.get_mpf_mc_bundle_path(self.machine_path), "wb"))
+            with open(ProductionConfigLoader.get_mpf_mc_bundle_path(self.machine_path), "wb") as mc_file:
+                pickle.dump(mc_config, mc_file)
         print("Success.")

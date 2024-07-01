@@ -37,7 +37,7 @@ class RpiDriver(DriverPlatformInterface):
     """An output on a Rasoberry Pi."""
 
     def __init__(self, number, config, platform):
-        """initialize output."""
+        """Initialize output."""
         super().__init__(config, number)
         self.platform = platform            # type: RaspberryPiHardwarePlatform
         self.gpio = int(self.number)
@@ -84,7 +84,7 @@ class RpiServo(ServoPlatformInterface):
     """A servo connected to a RPI."""
 
     def __init__(self, number, platform):
-        """initialize servo."""
+        """Initialize servo."""
         self.gpio = int(number)
         self.platform = platform    # type: RaspberryPiHardwarePlatform
 
@@ -110,7 +110,7 @@ class RpiI2cDevice(I2cPlatformInterface):
     """A I2c device on a Rpi."""
 
     def __init__(self, number: str, loop, platform) -> None:
-        """initialize i2c device on rpi."""
+        """Initialize i2c device on rpi."""
         super().__init__(number)
         self.loop = loop
         self.pi = platform.pi
@@ -160,7 +160,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
     """
 
     def __init__(self, machine):
-        """initialize Raspberry Pi platform."""
+        """Initialize Raspberry Pi platform."""
         super().__init__(machine)
 
         if not apigpio:
@@ -177,7 +177,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._configure_device_logging_and_debug("Raspberry Pi", self.config)
 
     async def initialize(self):
-        """initialize platform."""
+        """Initialize platform."""
         # create pi object and connect
         self.pi = apigpio.Pi(self.machine.clock.loop)
         await self.pi.connect((self.config['ip'], self.config['port']))

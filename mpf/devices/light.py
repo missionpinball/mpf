@@ -60,7 +60,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                  "_off_color", "_drivers_loaded", "_last_fade_target", "_rbgw_style"]
 
     def __init__(self, machine, name):
-        """initialize light."""
+        """Initialize light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
@@ -133,7 +133,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))
                     if key in check_set:
-                        raise ConfigFileError(f"Duplicate light number {type(driver)} {driver.number} for light {light}", 10, "light", key, "light")
+                        raise ConfigFileError(f"Duplicate number {type(driver)} {driver.number} for light {light}",
+                                              10, "light", key, "light")
 
                     check_set.add(key)
 
@@ -343,7 +344,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 self.default_fade_ms = (self.machine.config['light_settings']
                                         ['default_fade_ms'])
 
-            if len(self.hw_drivers) == 4 and all(channel in self.hw_drivers for channel in ['red', 'green', 'blue', 'white']):
+            if len(self.hw_drivers) == 4 and all(channel in self.hw_drivers
+                                                 for channel in ['red', 'green', 'blue', 'white']):
                 self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
 
             self.debug_log("Initializing Light. CC Profile: %s, "

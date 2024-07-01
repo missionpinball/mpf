@@ -51,7 +51,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
                  "matrix_light_cards"]
 
     def __init__(self, machine) -> None:
-        """initialize OPP platform."""
+        """Initialize OPP platform."""
         super().__init__(machine)
         self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
         self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
@@ -103,7 +103,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         }
 
     async def initialize(self):
-        """initialize connections to OPP hardware."""
+        """Initialize connections to OPP hardware."""
         await self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
@@ -166,9 +166,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             send_cmd = bytes(msg)
 
             if self.debug:
+                # pylint: disable-msg=undefined-loop-variable
                 self.debug_log("Ensure incands are OFF on %s:%s", chain_serial,
-                            "".join(HEX_FORMAT % b for b in send_cmd))
+                               "".join(HEX_FORMAT % b for b in send_cmd))
 
+            # Disabling linting on this until understood what 'chain_serial' means here,
+            # because we are no longer in the for-loop that defines chain_serial
+            # pylint: disable-msg=undefined-loop-variable
             self.send_to_processor(chain_serial, send_cmd)
 
         self._light_system.start()
@@ -458,6 +462,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             if msg[2 + wing_index] == ord(OppRs232Intf.WING_SOL):
                 sol_mask |= (0x0f << (4 * wing_index))
                 inp_mask |= (0x0f << (8 * wing_index))
+            if msg[2 + wing_index] == ord(OppRs232Intf.WING_SOL_8):
+                sol_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INP):
                 inp_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INCAND):
@@ -1139,8 +1145,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             coil.hw_driver.remove_switch_rule()
 
     async def configure_servo(self, number, config: dict) -> OPPServo:
+        """Generate an OPPServo class with the given number."""
         del config
-        chain_serial, card, pin_number = number.split('-')
+        chain_serial, _, pin_number = number.split('-')  # Unused value is 'card'
 
         if self.min_version[chain_serial] < 0x02020002:
             self.raise_config_error("Servos not supported on this OPP FW version: {}.".format(

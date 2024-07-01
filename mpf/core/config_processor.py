@@ -25,7 +25,7 @@ class ConfigProcessor:
     __slots__ = ["log", "_load_cache", "_store_cache"]
 
     def __init__(self, load_cache, store_cache):
-        """initialize config processor."""
+        """Initialize config processor."""
         self.log = logging.getLogger("ConfigProcessor")
         self._load_cache = load_cache
         self._store_cache = store_cache

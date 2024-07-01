@@ -16,10 +16,16 @@ class InfoLights(MpfPlugin):
 
     """
 
+    __slots__ = ["game_over_show"]
     config_section = 'info_lights'
 
+    def __init__(self, *args, **kwargs):
+        """Initialize class variables."""
+        super().__init__(*args, **kwargs)
+        self.game_over_show = None
+
     def initialize(self):
-        """initialize info lights plugin."""
+        """Initialize info lights plugin."""
         self.configure_logging(self.name)
         self.config = self.machine.config['info_lights']
         self.game_over_show = None

@@ -21,7 +21,7 @@ class LogicBlockState:
     __slots__ = ["enabled", "completed", "value"]
 
     def __init__(self):
-        """initialize state."""
+        """Initialize state."""
         self.enabled = False
         self.completed = False
         self.value = None
@@ -90,7 +90,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         raise NotImplementedError("implement")
 
     async def device_added_system_wide(self):
-        """initialize internal state."""
+        """Initialize internal state."""
         self._state = LogicBlockState()
         self.value = self.get_start_value()
         await super().device_added_system_wide()
@@ -345,10 +345,10 @@ class Counter(LogicBlock):
     collection = 'counters'
     class_label = 'counter'
 
-    __slots__ = ["delay", "ignore_hits", "hit_value"]
+    __slots__ = ["ignore_hits", "hit_value"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
-        """initialize counter."""
+        """Initialize counter."""
         super().__init__(machine, name)
 
         self.ignore_hits = False
@@ -631,7 +631,7 @@ class Sequence(LogicBlock):
         return "sequence"
 
     async def _initialize(self):
-        """initialize sequence."""
+        """Initialize sequence."""
         await super()._initialize()
         self.debug_log("Creating Sequence LogicBlock")
         self.setup_event_handlers()

@@ -29,7 +29,7 @@ class ModeController(MpfController):
                  "loader_methods", "start_methods"]
 
     def __init__(self, machine: MachineController) -> None:
-        """initialize mode controller.
+        """Initialize mode controller.
 
         Args:
         ----
@@ -86,7 +86,7 @@ class ModeController(MpfController):
             await mode.load_mode_devices()
 
     def initialize_modes(self, **kwargs):
-        """initialize modes."""
+        """Initialize modes."""
         del kwargs
         # initialize modes after loading all of them to prevent races
         for item in self.loader_methods:

@@ -65,11 +65,11 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
 
     def assert_has_feature(self, feature_name):
         """Assert that this platform has a certain feature or raise an exception otherwise."""
-        if not self.features.get("has_{}".format(feature_name), False):
-            self.raise_config_error("Platform {} does not support to configure {feature_name}. "
+        if not self.features.get(f"has_{feature_name}", False):
+            self.raise_config_error(f"Platform {self.__class__} does not support to configure {feature_name}. "
                                     "Please make sure the platform "
-                                    "you configured for {feature_name} actually supports that type "
-                                    "of devices.".format(self.__class__, feature_name=feature_name), 99)
+                                    f"you configured for {feature_name} actually supports that type "
+                                    "of devices.", 99)
 
     def _configure_device_logging_and_debug(self, logger_name, config, url_base=None):
         """Configure logging for platform."""
@@ -88,17 +88,15 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         """Return config spec for this platform."""
         return False
 
-    # pylint: disable-msg=no-self-use
     def get_info_string(self) -> str:
         """Return information string about this platform."""
         return "Not implemented"
 
-    # pylint: disable-msg=no-self-use
     def update_firmware(self) -> str:
         """Perform a firmware update."""
 
     async def initialize(self):
-        """initialize the platform.
+        """Initialize the platform.
 
         This is called after all platforms have been created and core modules have been loaded.
         """
@@ -236,7 +234,7 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     """SegmentDisplayPlatform with software flash support."""
 
     def __init__(self, machine):
-        """initialize software flash support."""
+        """Initialize software flash support."""
         super().__init__(machine)
         self._displays = set()
         self._display_flash_task = None
@@ -302,7 +300,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
     __slots__ = []  # type: List[str]
 
     def __init__(self, machine):
-        """initialize I2C platform and set feature."""
+        """Initialize I2C platform and set feature."""
         super().__init__(machine)
         self.features['has_i2c'] = True
 
@@ -323,7 +321,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    async def configure_servo(self, number: str, config: dict, platform_config: dict) -> "ServoPlatformInterface":
+    async def configure_servo(self, number: str, config: dict) -> "ServoPlatformInterface":
         """Configure a servo device in platform.
 
         Args:
@@ -529,19 +527,30 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 @dataclass
 class SwitchSettings:
+
+    """Base class for a switch configuration setting."""
+
     hw_switch: Any
     invert: Any
     debounce: Any
 
+
 @dataclass
 class DriverSettings:
+
+    """Base class for a driver configuration setting."""
+
     hw_driver: Any
     pulse_settings: Any
     hold_settings: Any
     recycle: Any
 
+
 @dataclass
 class DriverConfig:
+
+    """Base class for a driver platform configuration."""
+
     name: str
     default_pulse_ms: int
     default_pulse_power: float
@@ -552,11 +561,14 @@ class DriverConfig:
     max_pulse_power: float
     max_hold_power: float
 
+
 @dataclass
 class RepulseSettings:
+
+    """Base class for a driver repulse setting."""
+
     enable_repulse: bool
     debounce_ms: int
-
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -623,7 +635,6 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    # pylint: disable-msg=no-self-use
     def set_delayed_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings, delay_ms: int):
         """Set pulse on hit and release rule to driver.
 

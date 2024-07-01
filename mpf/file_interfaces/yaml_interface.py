@@ -1,6 +1,6 @@
 """Contains the YamlInterface class for reading & writing YAML files."""
 import copy
-from typing import Any, Iterable, List, Dict
+from typing import Any, Iterable, Dict
 
 from ruamel import yaml
 from ruamel.yaml.error import MarkedYAMLError
@@ -9,6 +9,7 @@ from mpf.core.file_interface import FileInterface
 
 _yaml = yaml.YAML(typ='safe')
 _yaml.default_flow_style = False
+
 
 class YamlInterface(FileInterface):
 
@@ -75,10 +76,9 @@ class YamlInterface(FileInterface):
         """Recursively convert CommentedMap and CommentedSeq to Python dict and list respectively."""
         if isinstance(data, dict):
             return {key: YamlInterface.to_plain_dict(value) for key, value in data.items()}
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return [YamlInterface.to_plain_dict(item) for item in data]
-        else:
-            return data
+        return data
 
     @staticmethod
     def process(data_string: Iterable[str]) -> dict:

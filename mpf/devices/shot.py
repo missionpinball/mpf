@@ -28,11 +28,11 @@ class Shot(EnableDisableMixin, ModeDevice):
                  "_player_var_name"]
 
     def __init__(self, machine, name):
-        """initialize shot."""
+        """Initialize shot."""
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
         self._player_var_name = "shot_{}".format(name)
-        super(Shot, self).__init__(machine, name)
+        super().__init__(machine, name)
 
         self.delay = mpf.core.delays.DelayManager(self.machine)
 

@@ -16,7 +16,9 @@ class TransitionBase(metaclass=abc.ABCMeta):
 
     __slots__ = ["output_length", "config", "collapse_dots", "collapse_commas", "use_dots_for_commas"]
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, config: dict) -> None:
+    # pylint: disable=too-many-arguments
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool,
+                 use_dots_for_commas: bool, config: dict) -> None:
         """Initialize the transition."""
         self.output_length = output_length
         self.config = config
@@ -102,67 +104,7 @@ class PushTransition(TransitionBase):
 
     """Segment display push transition effect."""
 
-    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool, 
-                 config: dict) -> None:
-        """Class initializer."""
-        self.direction = 'right'
-        self.text = None
-        self.text_color = None
-        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
-
-        if self.text is None:
-            self.text = ''
-
-    def get_step_count(self):
-        """Return the total number of steps required for the transition."""
-        return self.output_length + len(self.text)
-
     # pylint: disable=too-many-arguments
-    def get_transition_step(self, step: int, current_text: str, new_text: str,
-                            current_colors: Optional[List[RGBColor]] = None,
-                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
-        """Calculate all the steps in the transition."""
-        if step < 0 or step >= self.get_step_count():
-            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
-
-        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
-                                                           current_colors)
-        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
-                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
-
-        if self.text:
-            if new_colors and not self.text_color:
-                text_color = [new_colors[0]]
-            else:
-                text_color = self.text_color
-            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
-                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
-        else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
-                                                          self.use_dots_for_commas)
-
-        if self.direction == 'right':
-            temp_list = new_display_text
-            temp_list.extend(transition_text)
-            temp_list.extend(current_display_text)
-            return temp_list[
-                self.output_length + len(self.text) - (step + 1):2 * self.output_length + len(
-                    self.text) - (step + 1)]
-
-        if self.direction == 'left':
-            temp_list = current_display_text
-            temp_list.extend(transition_text)
-            temp_list.extend(new_display_text)
-            return temp_list[step + 1:step + 1 + self.output_length]
-
-        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
-
-
-class CoverTransition(TransitionBase):
-
-    """Segment display cover transition effect."""
-
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -187,7 +129,7 @@ class CoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           self.collapse_commas, self.use_dots_for_commas,
                                                            current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
                                                        self.collapse_commas, self.use_dots_for_commas, new_colors)
@@ -200,7 +142,69 @@ class CoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
+                                                          self.use_dots_for_commas)
+
+        if self.direction == 'right':
+            temp_list = new_display_text
+            temp_list.extend(transition_text)
+            temp_list.extend(current_display_text)
+            return temp_list[
+                self.output_length + len(self.text) - (step + 1):2 * self.output_length + len(
+                    self.text) - (step + 1)]
+
+        if self.direction == 'left':
+            temp_list = current_display_text
+            temp_list.extend(transition_text)
+            temp_list.extend(new_display_text)
+            return temp_list[step + 1:step + 1 + self.output_length]
+
+        raise AssertionError(TRANSITION_DIRECTION_UNKNOWN_ERROR)
+
+
+class CoverTransition(TransitionBase):
+
+    """Segment display cover transition effect."""
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
+                 config: dict) -> None:
+        """Class initializer."""
+        self.direction = 'right'
+        self.text = None
+        self.text_color = None
+        super().__init__(output_length, collapse_dots, collapse_commas, use_dots_for_commas, config)
+
+        if self.text is None:
+            self.text = ''
+
+    def get_step_count(self):
+        """Return the total number of steps required for the transition."""
+        return self.output_length + len(self.text)
+
+    # pylint: disable=too-many-arguments
+    def get_transition_step(self, step: int, current_text: str, new_text: str,
+                            current_colors: Optional[List[RGBColor]] = None,
+                            new_colors: Optional[List[RGBColor]] = None) -> SegmentDisplayText:
+        """Calculate all the steps in the transition."""
+        if step < 0 or step >= self.get_step_count():
+            raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
+
+        current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
+                                                           self.collapse_commas, self.use_dots_for_commas,
+                                                           current_colors)
+        new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
+                                                       self.collapse_commas, self.use_dots_for_commas, new_colors)
+
+        if self.text:
+            if new_colors and not self.text_color:
+                text_color = [new_colors[0]]
+            else:
+                text_color = self.text_color
+            transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
+                                                          self.collapse_commas, self.use_dots_for_commas, text_color)
+        else:
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas,)
 
         if self.direction == 'right':
@@ -234,6 +238,7 @@ class UncoverTransition(TransitionBase):
 
     """Segment display uncover transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -258,7 +263,7 @@ class UncoverTransition(TransitionBase):
             raise AssertionError(STEP_OUT_OF_RANGE_ERROR)
 
         current_display_text = SegmentDisplayText.from_str(current_text, self.output_length, self.collapse_dots,
-                                                           self.collapse_commas, self.use_dots_for_commas, 
+                                                           self.collapse_commas, self.use_dots_for_commas,
                                                            current_colors)
         new_display_text = SegmentDisplayText.from_str(new_text, self.output_length, self.collapse_dots,
                                                        self.collapse_commas, self.use_dots_for_commas, new_colors)
@@ -271,7 +276,7 @@ class UncoverTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas)
 
         if self.direction == 'right':
@@ -305,6 +310,7 @@ class WipeTransition(TransitionBase):
 
     """Segment display wipe transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""
@@ -342,7 +348,7 @@ class WipeTransition(TransitionBase):
             transition_text = SegmentDisplayText.from_str(self.text, len(self.text), self.collapse_dots,
                                                           self.collapse_commas, self.use_dots_for_commas, text_color)
         else:
-            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas, 
+            transition_text = UncoloredSegmentDisplayText([], self.collapse_dots, self.collapse_commas,
                                                           self.use_dots_for_commas)
 
         if self.direction == 'right':
@@ -380,6 +386,7 @@ class SplitTransition(TransitionBase):
 
     """Segment display split transition effect."""
 
+    # pylint: disable=too-many-arguments
     def __init__(self, output_length: int, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool,
                  config: dict) -> None:
         """Class initializer."""

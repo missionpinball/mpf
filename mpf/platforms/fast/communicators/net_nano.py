@@ -1,3 +1,4 @@
+"""FAST Nano Serial Interface."""
 # mpf/platforms/fast/communicators/net_nano.py
 
 from packaging import version
@@ -6,6 +7,8 @@ from mpf.platforms.fast.communicators.net_neuron import FastNetNeuronCommunicato
 
 
 class FastNetNanoCommunicator(FastNetNeuronCommunicator):
+
+    """Serial communicator for FAST Nano board."""
 
     MIN_FW = version.parse('1.05')
     IO_MIN_FW = version.parse('1.05')
@@ -18,7 +21,7 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
     SWITCH_CMD = 'SN'
 
     async def configure_hardware(self):
-        pass # Not used on a Nano
+        """Configure the hardware with CH. Not used on a Nano."""
 
     def _process_sa(self, msg):
         # Nano has slightly different variation of this value, get it into a format the base can process
@@ -30,6 +33,6 @@ class FastNetNanoCommunicator(FastNetNeuronCommunicator):
             self.machine.stop("FAST NET Nano rebooted")
 
         if msg == '02':  # reboot done
-            self._process_reboot_done()
+            self._process_reboot_done(msg)
             # TODO what else? Mark all configs as dirty? Log and warn if this was unexpected?
             # TODO add ignore_reboot option to config

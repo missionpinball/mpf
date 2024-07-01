@@ -2,7 +2,6 @@
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-import logging
 
 MYPY = False
 if MYPY:  # pragma: no cover
@@ -10,12 +9,13 @@ if MYPY:  # pragma: no cover
 
 
 class OPPServo(ServoPlatformInterface):
+
     """A servo in the OPP platform."""
 
     __slots__ = ["number", "chain_serial", "platform", "speed", "current_position"]
 
     def __init__(self, chain_serial, servo_num, platform: "OppHardwarePlatform"):
-        """initialize servo."""
+        """Initialize servo."""
         self.number = servo_num
         self.platform = platform
         self.chain_serial = chain_serial
@@ -24,6 +24,7 @@ class OPPServo(ServoPlatformInterface):
 
     def stop(self):
         """Disable servo.
+
         Set position to 0 to disable servo.
         """
         self.go_to_position(0)
@@ -36,11 +37,9 @@ class OPPServo(ServoPlatformInterface):
         and 150 is 1.5ms. A position_numeric of 0 disables the servo. Use caution with extreme
         position values as it could cause a servo to drive to a position it cannot reach.
         """
-
         # convert from [0,1] to [0, 255]
         position_numeric = int(position * 255)
         servo_offset = 0x3000 + self.number
-
 
         if position_numeric == 0 or self.current_position == 0 or self.speed <= 0:
             fade_ms = 0
@@ -54,8 +53,8 @@ class OPPServo(ServoPlatformInterface):
         msg.append(OppRs232Intf.SERIAL_LED_CMD_FADE)
         msg.append(int(servo_offset / 256))
         msg.append(int(servo_offset % 256))
-        msg.append(int(0))  #number of servos (high)
-        msg.append(int(1))  #number of servos (low)...only commanding one at a time.
+        msg.append(int(0))  # number of servos (high)
+        msg.append(int(1))  # number of servos (low)...only commanding one at a time.
         msg.append(int(fade_ms / 256))
         msg.append(int(fade_ms % 256))
         msg.append(position_numeric)
@@ -68,9 +67,8 @@ class OPPServo(ServoPlatformInterface):
 
         self.current_position = position_numeric
 
-
     def set_speed_limit(self, speed_limit):
-        """Set the speed of this servo
+        """Set the speed of this servo.
 
         For the standard 1ms pulse width change to move a servo between
         extremes, a speed of 1 will take 1 minute, and a speed of 60 would take

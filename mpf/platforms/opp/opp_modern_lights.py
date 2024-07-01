@@ -13,7 +13,7 @@ class OPPNeopixelCard:
     __slots__ = ["log", "chain_serial", "platform", "addr", "card_num"]
 
     def __init__(self, chain_serial, addr, platform):
-        """initialize OPP Neopixel/WS2812 card."""
+        """Initialize OPP Neopixel/WS2812 card."""
         self.log = logging.getLogger('OPPNeopixel {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
@@ -35,7 +35,7 @@ class OPPModernMatrixLightsCard:
     __slots__ = ["log", "chain_serial", "platform", "addr", "card_num"]
 
     def __init__(self, chain_serial, addr, platform):
-        """initialize OPP Incand card."""
+        """Initialize OPP Incand card."""
         self.log = logging.getLogger('OPPMatrixLights {} on {}'.format(addr, chain_serial))
         self.chain_serial = chain_serial
         self.addr = addr
@@ -58,7 +58,7 @@ class OPPModernLightChannel(PlatformBatchLight):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, pixel_num, light_system):
-        """initialize led channel."""
+        """Initialize led channel."""
         super().__init__("{}-{}-{}".format(chain_serial, addr, pixel_num), light_system)
         self.pixel_num = pixel_num
         self.addr = addr

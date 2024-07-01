@@ -28,7 +28,7 @@ class SpikeSwitch(SwitchPlatformInterface):
     __slots__ = ["node", "index", "platform_config", "_last_debounce"]
 
     def __init__(self, config, number, platform, platform_config):
-        """initialize switch."""
+        """Initialize switch."""
         super().__init__(config, number, platform)
         self.node, self.index = self.number.split("-")
         self.node = int(self.node)
@@ -93,7 +93,7 @@ class SpikeBacklight(LightPlatformSoftwareFade):
     __slots__ = ["platform"]
 
     def __init__(self, number, platform, loop, fade_interval_ms):
-        """initialize backlight."""
+        """Initialize backlight."""
         super().__init__(number, loop, fade_interval_ms)
         self.platform = platform        # type: SpikePlatform
 
@@ -129,7 +129,7 @@ class SpikeLight(PlatformBatchLight):
     __slots__ = ["node", "index", "platform", "_max_fade"]
 
     def __init__(self, number, platform, light_system):
-        """initialize light."""
+        """Initialize light."""
         super().__init__(number, light_system)
         node, index = number.split("-")
         self.node = int(node)
@@ -170,7 +170,7 @@ class SpikeDMD(DmdPlatformInterface):
     __slots__ = ["platform", "data", "new_frame_event", "dmd_task"]
 
     def __init__(self, platform):
-        """initialize DMD."""
+        """Initialize DMD."""
         self.platform = platform
         self.data = None
         self.new_frame_event = asyncio.Event()
@@ -244,7 +244,7 @@ class SpikeDriver(DriverPlatformInterface):
     __slots__ = ["platform", "node", "index", "_enable_task"]
 
     def __init__(self, config, number, platform):
-        """initialize driver on Stern Spike."""
+        """Initialize driver on Stern Spike."""
         super().__init__(config, number)
         self.platform = platform
         self.node, self.index = number.split("-")
@@ -329,7 +329,7 @@ class SpikeStepper(StepperPlatformInterface):
     __slots__ = ["number", "node", "stepper_id", "config", "platform", "_position", "light_index"]
 
     def __init__(self, number, config, platform):
-        """initialize stepper."""
+        """Initialize stepper."""
         self.number = number
         node, index = number.split("-", 2)
         self.node = int(node)
@@ -449,7 +449,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                  "node_firmware_version", "_query_nodes_task"]
 
     def __init__(self, machine):
-        """initialize spike hardware platform."""
+        """Initialize spike hardware platform."""
         super().__init__(machine)
         self._writer = None
         self._reader = None
@@ -867,7 +867,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         return hw_states
 
     async def initialize(self):
-        """initialize platform."""
+        """Initialize platform."""
         port = self.config['port']
         baud = self.config['baud']
         flow_control = self.config['flow_control']

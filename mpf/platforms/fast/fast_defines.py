@@ -79,9 +79,11 @@ BREAKOUT_FEATURES = {
         'min_fw': '0.0',
         'flasher_ports': 16,
     },
+    # TODO temp module until this code is written
     'FP-PWR-0007': {
         'min_fw': '0.0',
-        'device_class': 'mpf.platforms.fast.fast_exp_board',},  # TODO temp module until this code is written
+        'device_class': 'mpf.platforms.fast.fast_exp_board',
+    },
 }
 
 RETRO_SWITCH_MAP = {

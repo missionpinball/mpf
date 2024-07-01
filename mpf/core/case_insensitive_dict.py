@@ -15,7 +15,7 @@ class CaseInsensitiveDict(dict):
         return key.lower() if isinstance(key, str) else key
 
     def __init__(self, *args, **kwargs):
-        """initialize case insensitve dict."""
+        """Initialize case insensitve dict."""
         super().__init__(*args, **kwargs)
         self._convert_keys()
 
@@ -55,4 +55,4 @@ class CaseInsensitiveDict(dict):
     def _convert_keys(self):
         for k in list(self.keys()):
             v = super().pop(k)
-            self.__setitem__(k, v)
+            self[k] = v

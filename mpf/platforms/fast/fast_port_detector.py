@@ -1,3 +1,4 @@
+"""Scan serial connections and request ID: to identify FAST hardware."""
 import asyncio
 
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE, SerialException
@@ -8,8 +9,10 @@ from mpf.platforms.fast.fast_defines import USB_IDS
 
 class FastPortDetector:
 
-    def __init__(self, platform, autodetect_processors, hardcoded_ports):
+    """Class for detecting FAST platform hardware on connected serial ports."""
 
+    def __init__(self, platform, autodetect_processors, hardcoded_ports):
+        """Initialize the port detector."""
         self.platform = platform
         self.machine = platform.machine
         self.autodetect_processors = autodetect_processors
@@ -35,10 +38,12 @@ class FastPortDetector:
                         self.detected_fast_ports.append((port.device, baud))
                         self.platform.log.debug("Port %s is connected to a %s.", port.device, desc)
                     else:
-                        self.platform.log.debug("Skipping auto-detect of %s on %s since it's in the config file elsewhere.",
-                                                proc, port.device)
+                        self.platform.log.debug(
+                            "Skipping auto-detect of %s on %s since it's in the config file elsewhere.",
+                            proc, port.device)
 
     async def detect_ports(self):
+        """Query the available serial ports for an ID: response."""
         self.tasks = [asyncio.create_task(self._connect_task(port, baud)) for port, baud in self.detected_fast_ports]
         for task, (_, _) in zip(self.tasks, self.detected_fast_ports):
             task.add_done_callback(self._cleanup_writer)

@@ -44,7 +44,7 @@ class ConfigValidator:
     __slots__ = ["machine", "config_spec", "log", "validator_list"]
 
     def __init__(self, machine, config_spec):
-        """initialize validator."""
+        """Initialize validator."""
         self.machine = machine      # type: MachineController
         self.log = logging.getLogger('ConfigValidator')
         self.config_spec = config_spec
@@ -179,9 +179,8 @@ class ConfigValidator:
         processed_config = source
 
         if not isinstance(source, dict):
-            self.validation_error(source, validation_failure_info, "Config attribute should be dict but is {}".format(
-                source.__class__
-            ))
+            raise self.validation_error(source, validation_failure_info,
+                                        "Config attribute should be dict but is {}".format(source.__class__))
 
         for k in list(this_spec.keys()):
             if this_spec[k] == 'ignore' or k[0] == '_':
@@ -234,11 +233,11 @@ class ConfigValidator:
         if item == 'item not in config!@#':
             if default == 'default required!@#':
                 section = self._build_error_path(validation_failure_info.parent)
-                self.validation_error("None", validation_failure_info,
-                                      'Required setting "{}:" is missing from section "{}:" in your config.'.format(
-                                          validation_failure_info.item, section), 9)
-            else:
-                item = default
+                raise self.validation_error(
+                    "None", validation_failure_info,
+                    f'Required setting "{validation_failure_info.item}:" is missing '
+                    f'from section "{section}:" in your config.', 9)
+            item = default
 
         if item_type == 'single':
             return self.validate_item(item, validation, validation_failure_info)
@@ -253,7 +252,7 @@ class ConfigValidator:
 
             for i in item_list:
                 if i in ("", " "):
-                    self.validation_error(item, validation_failure_info, "List contains an empty element.", 15)
+                    raise self.validation_error(item, validation_failure_info, "List contains an empty element.", 15)
                 new_list.append(self.validate_item(i, validation, validation_failure_info))
 
             return new_list
@@ -279,7 +278,7 @@ class ConfigValidator:
 
     def _validate_dict(self, item_type, validation, validation_failure_info, item):
         if ':' not in validation:
-            self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
+            raise self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
 
         validators = validation.split(':')
 
@@ -288,14 +287,14 @@ class ConfigValidator:
             if item == "None" or item is None:
                 item = {}
             if not isinstance(item, dict):
-                self.validation_error(item, validation_failure_info, "Item is not a dict.", 12)
+                raise self.validation_error(item, validation_failure_info, "Item is not a dict.", 12)
         elif item_type == "event_handler":
             # item could be str, list, or list of dicts
             item_dict = dict()
             try:
                 item = Util.event_config_to_dict(item)
             except TypeError:
-                self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
+                raise self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
         else:
             raise AssertionError("Invalid type {}".format(item_type))
 
@@ -375,9 +374,9 @@ class ConfigValidator:
         if item is True and 'yes' in enum_values:
             return 'yes'
 
-        return self.validation_error(item, validation_failure_info,
-                                     "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
-                                         item, str(param)))
+        raise self.validation_error(
+            item, validation_failure_info,
+            f'Entry "{item}" is not valid for enum. Valid values are: {str(param)}')
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
@@ -386,21 +385,21 @@ class ConfigValidator:
         section = getattr(self.machine, param, [])
 
         if not isinstance(item, str):
-            return self.validation_error(item, validation_failure_info,
-                                         'Expected "{}" in "{}" to be string'.format(item, param),
-                                         10)
+            raise self.validation_error(item, validation_failure_info,
+                                        'Expected "{}" in "{}" to be string'.format(item, param),
+                                        10)
 
         if not item:
-            return self.validation_error(item, validation_failure_info,
-                                         'Setting "{}" is empty'.format(param),
-                                         14)
+            raise self.validation_error(item, validation_failure_info,
+                                        'Setting "{}" is empty'.format(param),
+                                        14)
 
         if item in section:
             return section[item]
 
-        return self.validation_error(item, validation_failure_info,
-                                     'Device "{}" not found in "{}:" section in your config.'.format(item, param),
-                                     6)
+        raise self.validation_error(item, validation_failure_info,
+                                    'Device "{}" not found in "{}:" section in your config.'.format(item, param),
+                                    6)
 
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):
@@ -411,7 +410,7 @@ class ConfigValidator:
         try:
             return Util.hex_string_to_int(item)
         except ValueError:
-            self.validation_error(item, validation_failure_info, "Could hex convert to int")
+            raise self.validation_error(item, validation_failure_info, "Could hex convert to int")
 
     @classmethod
     def _validate_type_gain(cls, item, validation_failure_info):
@@ -422,7 +421,7 @@ class ConfigValidator:
 
     def _validate_type_str(self, item, validation_failure_info):
         if isinstance(item, (list, dict)):
-            self.validation_error(item, validation_failure_info, "List or dict are not string")
+            raise self.validation_error(item, validation_failure_info, "List or dict are not string")
 
         if item is not None:
             return str(item)
@@ -449,17 +448,18 @@ class ConfigValidator:
         return self.machine.placeholder_manager.build_quoted_string_template(item)
 
     def _validate_type_template_float(self, item, validation_failure_info, param=None):
+        del param
         if item is None:
             return None
         if not isinstance(item, (str, float, int)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/int/float.")
+            raise self.validation_error(item, validation_failure_info, "Template has to be string/int/float.")
 
         return self.machine.placeholder_manager.build_float_template(item)
 
     def _assert_int_float_template(self, item, validation_failure_info):
         """Assert that templates are sting or int."""
         if not isinstance(item, (str, int)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+            raise self.validation_error(item, validation_failure_info, "Template has to be string/int.")
 
     def _validate_type_template_secs(self, item, validation_failure_info):
         if item is None:
@@ -498,7 +498,7 @@ class ConfigValidator:
         if item is None:
             return None
         if not isinstance(item, (str, bool)):
-            self.validation_error(item, validation_failure_info, "Template has to be string/bool.")
+            raise self.validation_error(item, validation_failure_info, "Template has to be string/bool.")
 
         return self.machine.placeholder_manager.build_bool_template(item)
 
@@ -507,9 +507,11 @@ class ConfigValidator:
         if param:
             param = param.split(",")
             if param[0] != "NONE" and value < float(param[0]):
-                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(value, param[0]))
-            elif param[1] != "NONE" and value > float(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(value, param[1]))
+                raise self.validation_error(item, validation_failure_info,
+                                            "{} is smaller then {}".format(value, param[0]))
+            if param[1] != "NONE" and value > float(param[1]):
+                raise self.validation_error(item, validation_failure_info,
+                                            "{} is larger then {}".format(value, param[1]))
 
     def _validate_type_float(self, item, validation_failure_info, param=None):
         if item is None:
@@ -517,7 +519,7 @@ class ConfigValidator:
         try:
             value = float(item)
         except (TypeError, ValueError):
-            self.validation_error(item, validation_failure_info, "Could not convert to float")
+            raise self.validation_error(item, validation_failure_info, "Could not convert to float")
 
         self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
@@ -530,7 +532,7 @@ class ConfigValidator:
         try:
             value = int(item)
         except (TypeError, ValueError):
-            return self.validation_error(item, validation_failure_info, "Could not convert {} to int".format(item))
+            raise self.validation_error(item, validation_failure_info, "Could not convert {} to int".format(item))
 
         self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
@@ -550,7 +552,7 @@ class ConfigValidator:
                 else:
                     value = int(item)
             except (TypeError, ValueError):
-                return self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
+                raise self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
 
         self._validate_range_min_smaller_max(item, value, param, validation_failure_info)
 
@@ -568,7 +570,7 @@ class ConfigValidator:
             if item.lower() in ['true', 't', 'yes', 'enable', 'on']:
                 return True
 
-        return self.validation_error(item, validation_failure_info, "Cannot convert value to boolean.", 13)
+        raise self.validation_error(item, validation_failure_info, "Cannot convert value to boolean.", 13)
 
     def _validate_type_ms(self, item, validation_failure_info, param=None):
         assert not param
@@ -576,7 +578,7 @@ class ConfigValidator:
             try:
                 return Util.string_to_ms(item)
             except ValueError:
-                self.validation_error(item, validation_failure_info, "Cannot convert value to ms.", 11)
+                raise self.validation_error(item, validation_failure_info, "Cannot convert value to ms.", 11)
 
         return None
 
@@ -586,7 +588,7 @@ class ConfigValidator:
             try:
                 return Util.string_to_secs(item)
             except ValueError:
-                self.validation_error(item, validation_failure_info, "Cannot convert value to secs.", 11)
+                raise self.validation_error(item, validation_failure_info, "Cannot convert value to secs.", 11)
 
         return None
 
@@ -594,7 +596,7 @@ class ConfigValidator:
         if not item:
             return {}
         if not isinstance(item, dict):
-            self.validation_error(item, validation_failure_info, "Item is not a dict.")
+            raise self.validation_error(item, validation_failure_info, "Item is not a dict.")
 
         if param:
             return self._validate_dict("dict", param, validation_failure_info, item)
@@ -626,7 +628,8 @@ class ConfigValidator:
             try:
                 color[i] = int(x) / 255
             except ValueError:
-                self.validation_error(item, validation_failure_info, "Color could not be converted to int for kivy.")
+                raise self.validation_error(item, validation_failure_info,
+                                            "Color could not be converted to int for kivy.")
 
         if len(color) == 3:
             color.append(1)
@@ -638,7 +641,7 @@ class ConfigValidator:
 
         if isinstance(item, tuple):
             if len(item) != 3:
-                self.validation_error(item, validation_failure_info, "Color needs three components")
+                raise self.validation_error(item, validation_failure_info, "Color needs three components")
             return item
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
@@ -654,7 +657,7 @@ class ConfigValidator:
         try:
             return int(color[0]), int(color[1]), int(color[2])
         except (IndexError, ValueError) as e:
-            self.validation_error(item, validation_failure_info, "Could not parse color: {}".format(e))
+            raise self.validation_error(item, validation_failure_info, "Could not parse color: {}".format(e))
 
     def _validate_type_bool_int(self, item, validation_failure_info):
         if self._validate_type_bool(item, validation_failure_info):
@@ -665,7 +668,7 @@ class ConfigValidator:
         if item is None:
             return None
         if not Util.is_power2(item):
-            return self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
+            raise self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
         return item
 
     def validate_item(self, item, validator, validation_failure_info):
@@ -697,6 +700,6 @@ class ConfigValidator:
 
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
-        raise ConfigFileError("Config validation error: Entry {} = \"{}\" is not valid. {}".format(
+        return ConfigFileError("Config validation error: Entry {} = \"{}\" is not valid. {}".format(
             self._build_error_path(validation_failure_info),
             item, msg), 5 if code is None else code, self.log.name)
