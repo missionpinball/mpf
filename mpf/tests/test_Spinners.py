@@ -66,21 +66,21 @@ class TestSpinners(MpfTestCase):
         self.hit_and_release_switch("switch1")
         self.assertEventCalled("spinner_spin1_active")
         self.assertEventCalled("spinner_spin1_hit")
-        self.assertEqual({"hits": 1, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
+        self.assertEqual({"hits": 1, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
 
         self.hit_and_release_switch("switch1")
         self.advance_time_and_run(0.5)
-        self.assertEqual({"hits": 2, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
+        self.assertEqual({"hits": 2, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
         self.assertEventNotCalled("spinner_spin1_inactive")
 
         self.hit_and_release_switch("switch1")
         self.advance_time_and_run(0.5)
-        self.assertEqual({"hits": 3, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
+        self.assertEqual({"hits": 3, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
         self.assertEventNotCalled("spinner_spin1_inactive")
 
         self.hit_and_release_switch("switch1")
         self.advance_time_and_run(0.5)
-        self.assertEqual({"hits": 4, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
+        self.assertEqual({"hits": 4, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin1_hit'])
         self.assertEventNotCalled("spinner_spin1_inactive")
 
         self.advance_time_and_run(0.5)
@@ -101,25 +101,25 @@ class TestSpinners(MpfTestCase):
         self.assertEventCalled("spinner_spin2_active")
         self.assertEventCalled("spinner_spin2_hit")
         self.assertEventCalled("spinner_spin2_foo_hit")
-        self.assertEqual({"hits": 1, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
+        self.assertEqual({"hits": 1, "change": 1, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
         self.assertEqual(1, self._events["spinner_spin2_foo_hit"])
         self.assertEqual(0, self._events["spinner_spin2_bar_hit"])
 
         self.hit_and_release_switch("switch3")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 2, "label": "bar"}, self._last_event_kwargs['spinner_spin2_hit'])
+        self.assertEqual({"hits": 2, "change": 1, "label": "bar"}, self._last_event_kwargs['spinner_spin2_hit'])
         self.assertEqual(1, self._events["spinner_spin2_foo_hit"])
         self.assertEqual(1, self._events["spinner_spin2_bar_hit"])
 
         self.hit_and_release_switch("switch3")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 3, "label": "bar"}, self._last_event_kwargs['spinner_spin2_hit'])
+        self.assertEqual({"hits": 3, "change": 1, "label": "bar"}, self._last_event_kwargs['spinner_spin2_hit'])
         self.assertEqual(1, self._events["spinner_spin2_foo_hit"])
         self.assertEqual(2, self._events["spinner_spin2_bar_hit"])
 
         self.hit_and_release_switch("switch2")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 4, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
+        self.assertEqual({"hits": 4, "change": 1, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
         self.assertEqual(2, self._events["spinner_spin2_foo_hit"])
         self.assertEqual(2, self._events["spinner_spin2_bar_hit"])
         self.assertEventNotCalled("spinner_spin2_inactive")
@@ -131,7 +131,7 @@ class TestSpinners(MpfTestCase):
         # Re-activate the spinner before it goes idle
         self.hit_and_release_switch("switch2")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 1, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
+        self.assertEqual({"hits": 1, "change": 1, "label": "foo"}, self._last_event_kwargs['spinner_spin2_hit'])
         self.assertEqual(3, self._events["spinner_spin2_foo_hit"])
         self.assertEqual(2, self._events["spinner_spin2_bar_hit"])
         # Active should be called again
@@ -159,17 +159,17 @@ class TestSpinners(MpfTestCase):
         self.hit_and_release_switch("switch4")
         self.assertEventCalled("spinner_spin3_active")
         self.assertEventCalled("spinner_spin3_hit")
-        self.assertEqual({"hits": 1, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
+        self.assertEqual({"hits": 1, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
         self.assertEventNotCalled("spinner_spin3_inactive")
 
         self.hit_and_release_switch("switch4")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 2, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
+        self.assertEqual({"hits": 2, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
         self.assertEventNotCalled("spinner_spin3_inactive")
 
         self.hit_and_release_switch("switch4")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 3, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
+        self.assertEqual({"hits": 3, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
         self.assertEventNotCalled("spinner_spin3_inactive")
 
         self.advance_time_and_run(0.3)
@@ -179,7 +179,7 @@ class TestSpinners(MpfTestCase):
         # Re-activate the spinner before it goes idle
         self.hit_and_release_switch("switch4")
         self.advance_time_and_run(0.3)
-        self.assertEqual({"hits": 4, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
+        self.assertEqual({"hits": 4, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin3_hit'])
         # Active should be called again
         self.assertEqual(2, self._events["spinner_spin3_active"])
         self.assertEqual(1, self._events["spinner_spin3_inactive"])

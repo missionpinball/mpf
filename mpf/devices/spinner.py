@@ -88,7 +88,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         self.hits += 1
 
         if not self._event_buffer_ms or not self.delay.check("event_buffer"):
-            self._post_hit_event(label=label)
+            self._post_hit_event(label=label, last_hits=self.hits - 1)
 
     def _post_hit_event(self, **kwargs):
         last_hits = kwargs.get("last_hits", 0)
