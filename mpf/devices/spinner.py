@@ -91,7 +91,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             self._post_hit_event(label=label)
 
     def _post_hit_event(self, **kwargs):
-        last_hits = kwargs.get("last_hits")
+        last_hits = kwargs.get("last_hits", 0)
         self.log.debug("Buffer check has %s previous hits, current is %s", last_hits, self.hits)
         if last_hits and last_hits == self.hits:
             self.delay.remove("event_buffer")
@@ -99,7 +99,8 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
         label = kwargs.get("label")
 
-        self.machine.events.post("spinner_{}_hit".format(self.name), hits=self.hits, label=label)
+        self.machine.events.post("spinner_{}_hit".format(self.name), hits=self.hits,
+                                 change=self.hits - last_hits, label=label)
         '''event: spinner_(name)_hit
         desc: The spinner (name) was just hit.
 
@@ -110,7 +111,8 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         label: The label of the switch that was hit
         '''
         if label:
-            self.machine.events.post("spinner_{}_{}_hit".format(self.name, label))
+            self.machine.events.post("spinner_{}_{}_hit".format(self.name, label),
+                                     hits=self.hits, change=self.hits - last_hits)
             '''event: spinner_(name)_(label)_hit
             desc: The spinner (name) was just hit on the switch labelled (label).
 
