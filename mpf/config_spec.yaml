@@ -1767,6 +1767,7 @@ spinners:
     labels: list|str|None
     active_ms: single|ms|1000ms
     idle_ms: single|ms|None
+    max_events_per_second: single|int|-1
     playfield: single|machine(playfields)|playfield
     reset_when_inactive: single|bool|true
     enable_events: event_handler|event_handler:ms|None

@@ -9,6 +9,8 @@ switches:
     number:
   switch4:
     number:
+  switch5:
+    number:
 
 spinners:
   spin1:
@@ -25,3 +27,6 @@ spinners:
     active_ms: 400
     idle_ms: 800
     reset_when_inactive: false
+  spin_with_buffer:
+    switches: switch5
+    max_events_per_second: 2
