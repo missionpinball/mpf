@@ -150,6 +150,35 @@ class TestSpinners(MpfTestCase):
         self.advance_time_and_run(0.3)
         self.assertEventCalled("spinner_spin2_idle")
 
+    def test_event_buffer(self):
+        self.mock_event("spinner_spin_with_buffer_active")
+        self.mock_event("spinner_spin_with_buffer_hit")
+
+        self.hit_and_release_switch("switch5")
+        self.assertEventCalled("spinner_spin_with_buffer_active")
+        self.assertEventCalled("spinner_spin_with_buffer_hit")
+        self.assertEqual({"hits": 1, "change": 1, "label": None}, self._last_event_kwargs['spinner_spin_with_buffer_hit'])
+
+
+        self.mock_event("spinner_spin_with_buffer_hit")
+        self.hit_and_release_switch("switch5")
+        self.hit_and_release_switch("switch5")
+        self.hit_and_release_switch("switch5")
+        self.assertEventNotCalled("spinner_spin_with_buffer_hit")
+
+        self.advance_time_and_run(0.6)
+        self.assertEventCalled("spinner_spin_with_buffer_active")
+        self.assertEqual({"hits": 4, "change": 3, "label": None}, self._last_event_kwargs['spinner_spin_with_buffer_hit'])
+
+        self.mock_event("spinner_spin_with_buffer_hit")
+        self.hit_and_release_switch("switch5")
+        self.hit_and_release_switch("switch5")
+        self.assertEventNotCalled("spinner_spin_with_buffer_hit")
+
+        self.advance_time_and_run(0.5)
+        self.assertEventCalled("spinner_spin_with_buffer_active")
+        self.assertEqual({"hits": 6, "change": 2, "label": None}, self._last_event_kwargs['spinner_spin_with_buffer_hit'])
+
     def test_reset_when_inactive_false(self):
         self.mock_event("spinner_spin3_active")
         self.mock_event("spinner_spin3_hit")
