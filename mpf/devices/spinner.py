@@ -43,7 +43,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         # Cache this value because it's used a lot in rapid succession
         self._active_ms = self.config['active_ms']
         if self.config['max_events_per_second'] > 0:
-            self._event_buffer_ms =  (1 / self.config['max_events_per_second']) * 1000
+            self._event_buffer_ms = (1 / self.config['max_events_per_second']) * 1000
             self.log.debug("Configured event buffer for %s", self._event_buffer_ms)
         # Can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
