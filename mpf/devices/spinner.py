@@ -22,7 +22,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
     collection = 'spinners'
     class_label = 'spinner'
 
-    __slots__ = ["hits", "_active_ms", "_active", "_idle", "delay"]
+    __slots__ = ["hits", "_active_ms", "_active", "_idle", "_event_buffer_ms", "delay"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialize spinner device."""
@@ -30,15 +30,21 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         self._active = False
         self._idle = True
         self._active_ms = None
+        self._event_buffer_ms = None
         self.hits = None
         self.delay = DelayManager(machine)
         self.enabled = True  # Default to enabled
+
+        self.configure_logging(f'Spinner.{name}')
 
     async def _initialize(self):
         await super()._initialize()
         self.hits = 0
         # Cache this value because it's used a lot in rapid succession
         self._active_ms = self.config['active_ms']
+        if self.config['max_events_per_second'] > 0:
+            self._event_buffer_ms =  (1 / self.config['max_events_per_second']) * 1000
+            self.log.debug("Configured event buffer for %s", self._event_buffer_ms)
         # Can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers, priority=1)
@@ -80,6 +86,19 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             self._active = True
             self._idle = False
         self.hits += 1
+
+        if not self._event_buffer_ms or not self.delay.check("event_buffer"):
+            self._post_hit_event(label=label)
+
+    def _post_hit_event(self, **kwargs):
+        last_hits = kwargs.get("last_hits")
+        self.log.debug("Buffer check has %s previous hits, current is %s", last_hits, self.hits)
+        if last_hits and last_hits == self.hits:
+            self.delay.remove("event_buffer")
+            return
+
+        label = kwargs.get("label")
+
         self.machine.events.post("spinner_{}_hit".format(self.name), hits=self.hits, label=label)
         '''event: spinner_(name)_hit
         desc: The spinner (name) was just hit.
@@ -98,8 +117,11 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
             This event will post whenever a spinner switch is hit and labels
             are defined for the spinner
             '''
-        self.delay.clear()
-        self.delay.add(self._active_ms, self._deactivate)
+        self.delay.reset(self._active_ms, self._deactivate, "deactivate")
+
+        if self._event_buffer_ms:
+            self.delay.add(self._event_buffer_ms, self._post_hit_event, "event_buffer",
+                           label=label, last_hits=self.hits)
 
     def _deactivate(self, **kwargs):
         """Post an 'inactive' event after no switch hits for the active_ms duration."""
@@ -116,7 +138,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         '''
         self._active = False
         if self.config['idle_ms']:
-            self.delay.add(self.config['idle_ms'], self._on_idle)
+            self.delay.reset(self.config['idle_ms'], self._on_idle, "idle")
             if self.config['reset_when_inactive']:
                 self.hits = 0
         else:
