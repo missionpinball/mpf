@@ -512,6 +512,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         return switch
 
+    # pylint: disable-msg=too-many-locals
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
         del platform_settings
@@ -567,7 +568,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
             elif int(parts[0]) > 255:
                 # EXP LED in int form, which is how "previous:" values are calculated
-                this_led_number = hex(int(parts[0]))[2:]
+
+                raw_hex_string = hex(int(parts[0]))[2:]  # lowercase with 0x prefix stripped"
+                this_led_number = Util.normalize_hex_string(raw_hex_string, len(raw_hex_string))
+
                 exp_board = self.exp_boards_by_address[this_led_number[:2]]
 
                 if this_led_number not in self.fast_exp_leds:
