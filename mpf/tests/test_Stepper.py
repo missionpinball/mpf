@@ -1,3 +1,4 @@
+from mpf.core.placeholder_manager import NativeTypeTemplate
 from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -142,7 +143,7 @@ class TestStepper(MpfTestCase):
     def test_ball_search(self):
         stepper = self.machine.steppers["linearAxis_stepper"]
 
-        self.machine.playfields["playfield"].config['enable_ball_search'] = True
+        self.machine.playfields["playfield"].config['enable_ball_search'] = NativeTypeTemplate(True, self.machine)
         self.machine.playfields["playfield"].balls += 1
 
         event_future = self.machine.events.wait_for_event("stepper_linearAxis_stepper_ready")

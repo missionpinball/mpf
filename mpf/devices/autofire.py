@@ -34,7 +34,8 @@ class AutofireCoil(SystemWideDevice):
     collection = 'autofire_coils'
     class_label = 'autofire'
 
-    __slots__ = ["_enabled", "_rule", "delay", "_ball_search_in_progress", "_timeout_watch_time", "_timeout_max_hits",
+    __slots__ = ["_enabled", "_rule", "delay", "_ball_search_in_progress", "playfield",
+                 "_timeout_watch_time", "_timeout_max_hits",
                  "_timeout_disable_time", "_timeout_hits"]
 
     def __init__(self, machine: "MachineController", name: str) -> None:
@@ -44,6 +45,7 @@ class AutofireCoil(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine)
         self._ball_search_in_progress = False
+        self.playfield = None
         self._timeout_watch_time = None
         self._timeout_max_hits = None
         self._timeout_disable_time = None
@@ -51,8 +53,9 @@ class AutofireCoil(SystemWideDevice):
 
     async def _initialize(self):
         await super()._initialize()
+        self.playfield = self.config['playfield'] or self.config['switch'].playfield
         if self.config['ball_search_order']:
-            self.config['playfield'].ball_search.register(
+            self.playfield.ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
         # pulse is handled via rule but add a handler so that we take notice anyway
         self.config['switch'].add_handler(self._hit)
@@ -61,13 +64,13 @@ class AutofireCoil(SystemWideDevice):
             self._timeout_max_hits = self.config['timeout_max_hits']
             self._timeout_disable_time = self.config['timeout_disable_time']
 
-        if f"{self.config['playfield'].name}_active" in self.config['switch'].tags:
+        if f"{self.playfield.name}_active" in self.config['switch'].tags:
             self.raise_config_error(
                 "Autofire device '{}' uses switch '{}' which has a "
                 "'{}_active' tag. This is handled internally by the device. Remove the "
                 "redundant '{}_active' tag from that switch.".format(
-                    self.name, self.config['switch'].name, self.config['playfield'].name,
-                    self.config['playfield'].name), 1)
+                    self.name, self.config['switch'].name, self.playfield.name,
+                    self.playfield.name), 1)
 
     @event_handler(1)
     def event_enable(self, **kwargs):
@@ -169,7 +172,7 @@ class AutofireCoil(SystemWideDevice):
         if not self._enabled:
             return
         if not self._ball_search_in_progress:
-            self.config['playfield'].mark_playfield_active_from_device_action()
+            self.playfield.mark_playfield_active_from_device_action(self.name)
         if self._timeout_watch_time:
             current_time = self.machine.clock.get_time()
             self._timeout_hits = [t for t in self._timeout_hits if t > current_time - self._timeout_watch_time / 1000.0]

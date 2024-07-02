@@ -1,3 +1,4 @@
+from mpf.core.placeholder_manager import NativeTypeTemplate
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from unittest.mock import MagicMock, patch
 
@@ -323,7 +324,7 @@ class TestDropTargets(MpfTestCase):
 
     def test_drop_target_ignore_ms_ball_search(self):
 
-        self.machine.playfields["playfield"].config['enable_ball_search'] = True
+        self.machine.playfields["playfield"].config['enable_ball_search'] = NativeTypeTemplate(True, self.machine)
         self.machine.playfields["playfield"].balls += 1
 
         self.mock_event('drop_target_center1_down')

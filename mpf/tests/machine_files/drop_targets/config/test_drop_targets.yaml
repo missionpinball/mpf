@@ -100,3 +100,4 @@ drop_target_banks:
      reset_coils: coil5
      ignore_switch_ms: 1000
      reset_events: reset_right_bank
+     debug: true
