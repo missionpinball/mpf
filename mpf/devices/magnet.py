@@ -14,7 +14,7 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
     """Controls a playfield magnet in a pinball machine."""
 
-    __slots__ = ["delay", "_active", "_release_in_progress"]
+    __slots__ = ["delay", "_active", "_release_in_progress", "playfield"]
 
     config_section = 'magnets'
     collection = 'magnets'
@@ -24,6 +24,7 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         """Initialize magnet."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine)
+        self.playfield = None
         self._active = False
         self._release_in_progress = False
 
@@ -33,6 +34,9 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
         if self.config['grab_switch']:
             self.config['grab_switch'].add_handler(self.grab_ball)
+            self.playfield = self.config['playfield'] or self.config['grab_switch'].playfield
+        else:
+            self.playfield = self.config['playfield']
 
     def _disable(self):
         """Disable magnet."""
@@ -61,8 +65,8 @@ class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
     def grab_ball(self):
         """Grab a ball."""
-        # mark the playfield active no matter what
-        self.config['playfield'].mark_playfield_active_from_device_action()
+        if self.playfield:
+            self.playfield.mark_playfield_active_from_device_action(self.name)
         # check if magnet is enabled or already active
         if not self.enabled or self._active or self._release_in_progress:
             return

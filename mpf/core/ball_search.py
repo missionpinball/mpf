@@ -121,13 +121,16 @@ class BallSearch(MpfController):
             return
 
         del kwargs
-        if self.playfield.config['enable_ball_search'] is False or (
-            not self.playfield.config['enable_ball_search'] and
+        is_ball_search_enabled = self.playfield.config['enable_ball_search'].evaluate({}) if \
+            self.playfield.config['enable_ball_search'] else None
+        if is_ball_search_enabled is False or (
+            is_ball_search_enabled is None and
                 not self.machine.config['mpf']['default_ball_search']):
             return
 
         if not self.callbacks:
-            raise AssertionError("No callbacks registered")
+            raise AssertionError(f"Cannot run ball search on playfield '{self.playfield.name}', no callbacks "
+                                 "registered. Do you have any shots/devices defined in this playfield?")
 
         self.debug_log("Enabling Ball Search")
 
@@ -255,14 +258,6 @@ class BallSearch(MpfController):
                 element = next(self.iterator)
             except StopIteration:
                 self.iteration += 1
-                self.machine.events.post('ball_search_phase_{}'.format(self.phase),
-                                         iteration=self.iteration)
-                '''event: ball_search_phase_(num)
-
-                desc: The ball search phase (num) has started.
-                args:
-                    iteration: Current iteration of phase (num)
-                '''
                 # give up at some point
                 if self.iteration > self.playfield.config[
                         'ball_search_phase_{}_searches'.format(self.phase)]:
@@ -271,6 +266,15 @@ class BallSearch(MpfController):
                     if self.phase > 3:
                         self.give_up()
                         return
+
+                self.machine.events.post('ball_search_phase_{}'.format(self.phase),
+                                         iteration=self.iteration)
+                '''event: ball_search_phase_(num)
+
+                desc: The ball search phase (num) has started.
+                args:
+                    iteration: Current iteration of phase (num)
+                '''
 
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)

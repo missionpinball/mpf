@@ -379,15 +379,15 @@ class Diverter(SystemWideDevice):
         del phase
         del iteration
         if self.active:
-            self.info_log("Temporarily deactivating diverter to search ball for %sms",
-                          self.config['ball_search_hold_time'])
+            self.debug_log("Temporarily deactivating diverter to search ball for %sms",
+                           self.config['ball_search_hold_time'])
             self._coil_deactivate()
             self.machine.delay.add(self.config['ball_search_hold_time'],
                                    self._coil_activate,
                                    'diverter_{}_ball_search'.format(self.name))
         else:
-            self.info_log("Temporarily activating diverter to search ball for %sms",
-                          self.config['ball_search_hold_time'])
+            self.debug_log("Temporarily activating diverter to search ball for %sms",
+                           self.config['ball_search_hold_time'])
             self._coil_activate()
             self.machine.delay.add(self.config['ball_search_hold_time'],
                                    self._coil_deactivate,
