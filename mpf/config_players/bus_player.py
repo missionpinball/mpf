@@ -4,8 +4,8 @@ from functools import partial
 from mpf.config_players.plugin_player import PluginPlayer
 
 
-class TrackPlayer(PluginPlayer):
-    """Base class for part of the track player which runs as part of MPF.
+class BusPlayer(PluginPlayer):
+    """Base class for part of the bus player which runs as part of MPF.
 
     Note: This class is loaded by MPF and everything in it is in the context of
     MPF, not the mc.
