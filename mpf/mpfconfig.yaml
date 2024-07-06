@@ -25,6 +25,7 @@ mpf:
         coil: mpf.config_players.coil_player.CoilPlayer
         event: mpf.config_players.event_player.EventPlayer
         blocking: mpf.config_players.block_event_player.BlockEventPlayer
+        bus_player: mpf.config_players.bus_player.BusPlayer
         queue_event: mpf.config_players.queue_event_player.QueueEventPlayer
         queue_relay: mpf.config_players.queue_relay_player.QueueRelayPlayer
         flasher: mpf.config_players.flasher_player.FlasherPlayer
