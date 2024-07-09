@@ -302,6 +302,11 @@ bonus_entries:
     player_score_entry: single|str|None
     skip_if_zero: single|bool|true
     skip_if_negative: single|bool|false
+bus_player:
+    __valid_in__: machine, mode, show
+    __type__: config_player
+    action: single|enum(pause,stop,unpause)|
+    fade: single|secs|0.1sec
 coils:
     __valid_in__: machine
     __type__: device
