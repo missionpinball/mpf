@@ -5,12 +5,12 @@ from mpf.config_players.plugin_player import PluginPlayer
 
 
 class BusPlayer(PluginPlayer):
+
     """Base class for part of the bus player which runs as part of MPF.
 
     Note: This class is loaded by MPF and everything in it is in the context of
     MPF, not the mc.
     """
-
 
     config_file_section = 'bus_player'
     show_section = 'buses'
