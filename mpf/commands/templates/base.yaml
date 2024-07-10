@@ -1,0 +1,9 @@
+#config_version=6
+
+# Base mode that starts at the beginning of each ball
+# and stops at the end of each ball.
+
+mode:
+  start_events: ball_starting
+  stop_events: ball_will_end
+  priority: 100
