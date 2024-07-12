@@ -44,7 +44,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         not consider whether a switch is NC or NO."""
 
         self.invert = 0
-        self._mutes = 0
+        self._mutes = set()
 
         self.recycle_secs = 0
         self.recycle_clear_time = None
@@ -212,8 +212,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
             self._create_activation_event(event, 0)
 
         if self.config['ignore_during_ball_search']:
-            self.machine.events.add_handler("ball_search_started", self.mute)
-            self.machine.events.add_handler("ball_search_stopped", self.unmute)
+            self.machine.events.add_handler("ball_search_started", self.mute, source="ball_search")
+            self.machine.events.add_handler("ball_search_stopped", self.unmute, source="ball_search")
 
     # pylint: disable-msg=too-many-arguments
     def add_handler(self, callback, state=1, ms=0, return_info=False,
@@ -251,21 +251,20 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         return self.machine.switch_controller.remove_switch_handler_obj(
             self, callback, state, ms)
 
-    def mute(self, **kwargs):
+    def mute(self, source, **kwargs):
         """Mute this switch so that switch hits do not trigger handlers."""
         del kwargs
-        self._mutes += 1
+        self._mutes.add(source)
 
-    def unmute(self, **kwargs):
+    def unmute(self, source, **kwargs):
         """Unmute this switch so that hits again trigger handlers."""
         del kwargs
-        self._mutes -= 1
-        assert self._mutes >= 0, "Switch %s has unmuted more times than muted." % self.name
+        self._mutes.discard(source)
 
     @property
     def is_muted(self):
         """True if this switch is currently muted."""
-        return self._mutes > 0
+        return len(self._mutes) > 0
 
     @property
     def playfield(self):
