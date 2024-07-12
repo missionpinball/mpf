@@ -95,6 +95,9 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
             self.task = self.loop.create_task(self._fade(start_brightness, start_time, target_brightness, target_time))
             self.task.add_done_callback(Util.raise_exceptions)
         else:
+            if self.task:
+                self.task.cancel()
+                self.task = None
             self.set_brightness_and_fade(target_brightness, max(fade_ms, 0))
 
     async def _fade(self, start_brightness, start_time, target_brightness, target_time):
