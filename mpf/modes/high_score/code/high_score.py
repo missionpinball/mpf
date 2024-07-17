@@ -1,5 +1,6 @@
 """Contains the High Score mode code."""
 import asyncio
+from random import choice
 
 from mpf.core.async_mode import AsyncMode
 from mpf.core.player import Player
@@ -256,7 +257,17 @@ class HighScore(AsyncMode):
             timeout=self.high_score_config['enter_initials_timeout']
         )   # type: dict
 
-        return event_result["text"] if "text" in event_result else ''
+        input_initials = event_result["text"] if "text" in event_result else ''
+
+        # If no initials were input, some can be randomly chosen from the 'filler_initials' config section
+        if not input_initials and self.high_score_config["filler_initials"]:
+            existing_initials = self.high_scores.keys()
+            unused_initials = [i for i in self.high_score_config["filler_initials"] if i not in existing_initials]
+            # If there aren't enough to choose something unique, just pick any from the fillers
+            if not unused_initials:
+                unused_initials = self.high_score_config["filler_initials"]
+            input_initials = choice(unused_initials)
+        return input_initials
 
     async def _show_award_slide(self, player_num, player_name: str, category_name: str, award: str, value: int) -> None:
         if not self.high_score_config['award_slide_display_time']:
