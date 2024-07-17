@@ -7,6 +7,7 @@ import shutil
 SUBCOMMAND = True
 INITIAL_MODES = ("attract", "base")
 
+
 class Command:
 
     """Initializes an MPF project folder."""
@@ -33,7 +34,7 @@ class Command:
         print("MPF project initialization complete!")
 
     def generate_config_file(self):
-        # Create the config folder
+        """Create a config folder and default config.yaml file."""
         config_dir = os.path.join(self.path, "config")
         try:
             os.stat(config_dir)
@@ -48,12 +49,12 @@ class Command:
             shutil.copy2(base_config_file, config_file)
 
     def generate_mode_folder(self):
+        """Create mode folder and default mode subfolders."""
         mode_dir = os.path.join(self.path, "modes")
         try:
             os.stat(mode_dir)
         except FileNotFoundError:
             os.mkdir(mode_dir)
-
 
         for mode in INITIAL_MODES:
             mode_path = os.path.join(mode_dir, mode, "config")
