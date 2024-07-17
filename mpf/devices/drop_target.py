@@ -72,12 +72,12 @@ class DropTarget(SystemWideDevice):
     def _ignore_switch_hits_for(self, ms, reset_attempt=None):
         """Ignore switch hits for ms."""
         self.debug_log("Ignoring switch hits for %sms", ms)
-        self.config['switch'].mute()
+        self.config['switch'].mute(self)
         self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms, reset_attempt=reset_attempt)
 
     def _restore_switch_hits(self, reset_attempt=None):
         self.debug_log("Restoring switch hits")
-        self.config['switch'].unmute()
+        self.config['switch'].unmute(self)
         self._update_state_from_switch(reconcile=True)
 
         if self.complete and reset_attempt:
@@ -358,7 +358,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             target.add_to_bank(self)
             assert self.config['playfield'] == target.playfield, \
                    f"Drop target bank has a playfield {self.config['playfield']} but target {target.name} " \
-                   "has playfield {target.playfield}. Banks do not support targets on multiple playfields."
+                   f"has playfield {target.playfield}. Banks do not support targets on multiple playfields."
 
         self.member_target_change()
 
@@ -398,7 +398,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
             # Mute all the bank's switches
             if self.config['ignore_switch_ms']:
-                drop_target.config['switch'].mute()
+                drop_target.config['switch'].mute(self)
 
         for coil in self.reset_coils:
             coils.add(coil)
@@ -428,7 +428,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
     def _restore_switch_hits(self, reset_attempt=None):
         self.debug_log("Restoring switch hits")
         for target in self.drop_targets:
-            target.config['switch'].unmute()
+            target.config['switch'].unmute(self)
             target.external_reset_from_bank()
         self.member_target_change()
 

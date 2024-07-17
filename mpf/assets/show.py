@@ -521,7 +521,7 @@ class RunningShow:
     def _start_play(self):
         if self._stopped:
             return
-        self.machine.show_controller.info_log("Starting show %s", self.show.name)
+        self.machine.show_controller.debug_log("Starting show %s", self.show.name)
 
         self._total_steps = len(self.show_steps)
 
@@ -561,7 +561,7 @@ class RunningShow:
         """Stop show."""
         if self._stopped:
             return
-        self.machine.show_controller.info_log("Stopping show %s", self.show.name)
+        self.machine.show_controller.debug_log("Stopping show %s", self.show.name)
 
         self._stopped = True
 
@@ -591,14 +591,14 @@ class RunningShow:
 
     def pause(self):
         """Pause show."""
-        self.machine.show_controller.info_log("Pausing show %s", self.show.name)
+        self.machine.show_controller.debug_log("Pausing show %s", self.show.name)
         self._remove_delay_handler()
         if self.show_config.events_when_paused:
             self._post_events(self.show_config.events_when_paused)
 
     def resume(self):
         """Resume paused show."""
-        self.machine.show_controller.info_log("Resuming show %s", self.show.name)
+        self.machine.show_controller.debug_log("Resuming show %s", self.show.name)
         self.next_step_time = self.machine.clock.get_time()
         self._run_next_step(post_events=self.show_config.events_when_resumed)
 
