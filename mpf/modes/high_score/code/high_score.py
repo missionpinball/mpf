@@ -196,7 +196,7 @@ class HighScore(AsyncMode):
                     # ask player for initials if we do not know them
                     if not player.initials:
                         try:
-                            player.initials = await self._ask_player_for_initials(player, award_names[i], value)
+                            player.initials = await self._ask_player_for_initials(player, award_names[i], value, category_name)
                         except asyncio.TimeoutError:
                             del new_list[i]
                             # no entry when the player missed the timeout
@@ -242,7 +242,7 @@ class HighScore(AsyncMode):
         return var_dict
 
     # pylint: disable-msg=too-many-arguments
-    async def _ask_player_for_initials(self, player: Player, award_label: str, value: int) -> str:
+    async def _ask_player_for_initials(self, player: Player, award_label: str, value: int, category_name: str) -> str:
         """Show text widget to ask player for initials."""
         self.info_log("New high score. Player: %s, award_label: %s"
                       ", Value: %s", player, award_label, value)
@@ -261,7 +261,8 @@ class HighScore(AsyncMode):
 
         # If no initials were input, some can be randomly chosen from the 'filler_initials' config section
         if not input_initials and self.high_score_config["filler_initials"]:
-            existing_initials = self.high_scores.keys()
+            # High scores are stored as an array of [name, score]
+            existing_initials = [n[0] for n in self.high_scores[category_name]]
             unused_initials = [i for i in self.high_score_config["filler_initials"] if i not in existing_initials]
             # If there aren't enough to choose something unique, just pick any from the fillers
             if not unused_initials:
