@@ -207,12 +207,16 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
     async def eject_and_plunge_ball(self, plunger_switch_name, plunger_lane_settle_time=2, **kwargs):
         """Shuffle the trough switches and plunger to simulate an eject."""
         del kwargs
-        self.info_log("Ejecting and plunging ball...")
-        self.set_switch_sync(self.trough_switches[0], 0)
+        # Find all the trough switches that currently have balls
+        active_trough_switches = [s for s in self.trough_switches if self.machine.switches[s].state]
+        assert len(active_trough_switches), "Unable to eject a ball. Trough is empty."
+        self.info_log("Ejecting and plunging ball from trough %s to plunger switch %s...",
+                      active_trough_switches[-1], plunger_switch_name)
+        self.set_switch_sync(active_trough_switches[0], 0)
         await asyncio.sleep(0.03)
-        self.set_switch_sync(self.trough_switches[-1], 0)
+        self.set_switch_sync(active_trough_switches[-1], 0)
         await asyncio.sleep(0.1)
-        self.set_switch_sync(self.trough_switches[0], 1)
+        self.set_switch_sync(active_trough_switches[0], 1)
         await asyncio.sleep(0.25)
         await self.set_switch(plunger_switch_name, 1, duration_secs=plunger_lane_settle_time)
         await asyncio.sleep(1)
@@ -221,7 +225,11 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         """Move a ball from the drain device to the trough device."""
         del kwargs
         drain_switches = self.machine.ball_devices.items_tagged('drain')[0].config.get('ball_switches')
-        self.set_switch_sync(drain_switches[-1], 0)
+        self.info_log("Found drain switches: %s of type %s", drain_switches, type(drain_switches))
+        # If there's only one drain switch it might be a single value, rather than a list
+        drain_switch = drain_switches if type(drain_switches) is str else drain_switches[-1]
+        self.info_log("Setting drain switch '%s' to zero", drain_switch)
+        self.set_switch_sync(drain_switch, 0)
         await asyncio.sleep(0.25)
         self.set_switch_sync(self.trough_switches[-1], 1)
         await asyncio.sleep(0.25)

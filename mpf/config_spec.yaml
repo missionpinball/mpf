@@ -841,6 +841,7 @@ high_score:
     award_slide_display_time: single|ms|4s
     categories: dict|str:list|
     defaults: dict|str:list|None
+    filler_initials: list|str|None
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
@@ -1117,6 +1118,7 @@ mpf:
     core_modules: ignore
     config_players: ignore
     device_modules: ignore
+    min_mpf_version: single|str|None
     plugins: ignore
     platforms: ignore
     paths: ignore
