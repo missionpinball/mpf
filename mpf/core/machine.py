@@ -6,6 +6,7 @@ import sys
 import threading
 from typing import Any, Callable, Dict, List, Set, Optional
 
+from packaging import version
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -368,6 +369,16 @@ class MachineController(LogMixin):
         self.validate_machine_config_section('machine')
         self.validate_machine_config_section('game')
         self.validate_machine_config_section('mpf')
+        self._validate_version()
+
+    def _validate_version(self):
+        if not self.config['mpf']['min_mpf_version']:
+            return
+        min_version = version.parse(self.config['mpf']['min_mpf_version'])
+        mpf_version = version.parse(__version__)
+        if mpf_version < min_version:
+            raise AssertionError(f'MPF version mismatch. MPF version {mpf_version} found but game config '
+                                 f'requires at least {min_version} ')
 
     def validate_machine_config_section(self, section: str) -> None:
         """Validate a config section."""
