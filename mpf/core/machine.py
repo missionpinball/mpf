@@ -685,7 +685,11 @@ class MachineController(LogMixin):
         if not self.initialize_mpf():
             return
 
-        self.info_log("Starting the main run loop.")
+        self.info_log("Starting the main run loop with active modes: %s",
+                      self.mode_controller.active_modes)
+        if not self.modes['attract'] in self.mode_controller.active_modes:
+            self.warning_log("Attract mode is not active, game will not be playable. "
+                             "Please check your attract mode configuration.")
         self._run_loop()
 
     def stop_with_exception(self, exception) -> None:
