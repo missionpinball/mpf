@@ -227,7 +227,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
         drain_switches = self.machine.ball_devices.items_tagged('drain')[0].config.get('ball_switches')
         self.info_log("Found drain switches: %s of type %s", drain_switches, type(drain_switches))
         # If there's only one drain switch it might be a single value, rather than a list
-        drain_switch = drain_switches if type(drain_switches) is str else drain_switches[-1]
+        drain_switch = drain_switches if isinstance(drain_switches, str) else drain_switches[-1]
         self.info_log("Setting drain switch '%s' to zero", drain_switch)
         self.set_switch_sync(drain_switch, 0)
         await asyncio.sleep(0.25)
