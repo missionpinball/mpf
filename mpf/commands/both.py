@@ -5,6 +5,7 @@ import argparse
 import shutil
 import subprocess
 import os
+import re
 
 
 def _start_mpf(mpf_path, machine_path, args):
@@ -12,7 +13,7 @@ def _start_mpf(mpf_path, machine_path, args):
     module.Command(mpf_path, machine_path, args)
 
 
-def _spawn_gmc(godot_exec_path, gmc_project_path):
+def _spawn_gmc(godot_exec_path, gmc_project_path, gmc_args=[], mpf_args=[]):
     full_godot_exec_path = shutil.which(godot_exec_path)
 
     # Verify that the godot executable exists
@@ -26,8 +27,16 @@ def _spawn_gmc(godot_exec_path, gmc_project_path):
         raise FileNotFoundError("Unable to find GMC project.godot file in '%s'. Please check this folder "
                                 "or specify a project directory with the -g argument." % gmc_project_path)
 
+    # Some args for MPF we'll borrow as well
+    transferred_args = []
+    # TODO: Refactor the ArgParse to use subparsers
+    # and parent parsers to simplify the whole affair.
+    verbose_regex = r'-[\w]*[vV]'
+    if re.match(verbose_regex, " ".join(mpf_args)):
+        transferred_args.append("-v")
+
     subprocess.Popen(
-        [full_godot_exec_path, ],
+        [full_godot_exec_path, *transferred_args],
         cwd=gmc_project_path
     )
 
@@ -56,8 +65,8 @@ class Command:
                             default=None, help=argparse.SUPPRESS)
 
         # Parse the GMC-specific args and pass the leftovers to MPF
-        self.args, remaining_args = parser.parse_known_args(args)
+        gmc_args, mpf_args = parser.parse_known_args(args)
 
-        _spawn_gmc(self.args.godot_exec_path, self.args.gmc_project_path)
+        _spawn_gmc(gmc_args.godot_exec_path, gmc_args.gmc_project_path, gmc_args, mpf_args)
 
-        _start_mpf(mpf_path, machine_path, remaining_args)
+        _start_mpf(mpf_path, machine_path, mpf_args)
