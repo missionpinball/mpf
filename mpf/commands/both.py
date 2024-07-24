@@ -2,6 +2,7 @@
 
 from importlib import import_module
 import argparse
+import configparser
 import shutil
 import subprocess
 import os
@@ -47,22 +48,34 @@ class Command:
 
     def __init__(self, mpf_path, machine_path, args):
         """Run game and gmc."""
+        # First load a config file for possible default values
+        config = configparser.ConfigParser(strict=False, allow_no_value=True)
+        try:
+            # It feels cleaner to use the same config file as GMC, even though the
+            # name is misleading
+            config_path = os.path.join(machine_path, "gmc.cfg")
+            os.stat(config_path)
+            config.read(config_path)
+        except FileNotFoundError:
+            pass
+
         parser = argparse.ArgumentParser(description='Starts MPF and GMC concurrently')
 
         parser.add_argument("-g",
                             action="store", dest="gmc_project_path",
-                            default=machine_path,
+                            default=config.get("cli", "gmc_project_path", fallback=machine_path).strip('\'"'),
                             help="Path to the GMC project folder, if not current directory.")
 
         parser.add_argument("-G",
                             action="store", dest="godot_exec_path",
-                            default="godot",
+                            default=config.get("cli", "godot_exec_path", fallback="godot").strip('\'"'),
                             help="Path to the Godot executable")
 
         parser.add_argument("-L",
                             action="store", dest="gmc_log_file",
                             metavar='gmc_log_file',
-                            default=None, help=argparse.SUPPRESS)
+                            default=config.get("cli", "gmc_log_file", fallback=None),
+                            help=argparse.SUPPRESS)
 
         # Parse the GMC-specific args and pass the leftovers to MPF
         gmc_args, mpf_args = parser.parse_known_args(args)
