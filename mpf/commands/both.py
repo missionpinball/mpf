@@ -14,19 +14,20 @@ def _start_mpf(mpf_path, machine_path, args):
     module.Command(mpf_path, machine_path, args)
 
 
-def _spawn_gmc(godot_exec_path, gmc_project_path, gmc_args=[], mpf_args=[]):
-    full_godot_exec_path = shutil.which(godot_exec_path)
+def _spawn_gmc(gmc_args, mpf_args):
+    full_godot_exec_path = shutil.which(gmc_args.godot_exec_path)
 
     # Verify that the godot executable exists
     if not full_godot_exec_path:
         raise FileNotFoundError("Unable to find Godot executable at '%s'. Please check this file, "
-                                "your PATH, or specify an executable with the -G argument." % godot_exec_path)
+                                "your PATH, or specify an executable with the -G argument." % gmc_args.godot_exec_path)
 
+    full_gmc_project_path = os.path.join(gmc_args.gmc_project_path, "project.godot")
     try:
-        os.stat(os.path.join(gmc_project_path, "project.godot"))
+        os.stat(full_gmc_project_path)
     except FileNotFoundError:
         raise FileNotFoundError("Unable to find GMC project.godot file in '%s'. Please check this folder "
-                                "or specify a project directory with the -g argument." % gmc_project_path)
+                                "or specify a project directory with the -g argument." % gmc_args.gmc_project_path)
 
     # Some args for MPF we'll borrow as well
     transferred_args = []
@@ -36,9 +37,10 @@ def _spawn_gmc(godot_exec_path, gmc_project_path, gmc_args=[], mpf_args=[]):
     if re.match(verbose_regex, " ".join(mpf_args)):
         transferred_args.append("-v")
 
+    #pylint: disable-msg=consider-using-with
     subprocess.Popen(
         [full_godot_exec_path, *transferred_args],
-        cwd=gmc_project_path
+        cwd=gmc_args.gmc_project_path
     )
 
 
@@ -80,6 +82,6 @@ class Command:
         # Parse the GMC-specific args and pass the leftovers to MPF
         gmc_args, mpf_args = parser.parse_known_args(args)
 
-        _spawn_gmc(gmc_args.godot_exec_path, gmc_args.gmc_project_path, gmc_args, mpf_args)
+        _spawn_gmc(gmc_args, mpf_args)
 
         _start_mpf(mpf_path, machine_path, mpf_args)
