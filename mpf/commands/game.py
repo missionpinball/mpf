@@ -140,17 +140,6 @@ class Command:
                                  "used for all"
                                  " devices")
 
-        # The following are just included for full compatibility with mc
-        # which is needed when using "mpf both".
-
-        parser.add_argument("-L",
-                            action="store", dest="mc_file_name",
-                            metavar='mc_file_name',
-                            default=None, help=argparse.SUPPRESS)
-
-        parser.add_argument("--no-sound",
-                            action="store_true", dest="no_sound", default=False)
-
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
