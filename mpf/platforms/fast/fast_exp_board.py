@@ -179,8 +179,9 @@ class FastExpansionBoard:
                 except Exception as e:
                     self.log.error(
                         f"Error decoding the following message for board {breakout_address} : {msg_header}{msg}")
-                    self.log.debug("Attempted update that caused this error: %s", dirty_leds)
-                    raise e
+                    self.log.info("Attempted update that caused this error: %s", dirty_leds)
+                    if not self.config['ignore_led_errors']:
+                        raise e
 
     def set_led_fade(self, rate: int) -> None:
         """Set LED fade rate in ms."""
