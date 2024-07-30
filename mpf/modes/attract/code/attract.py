@@ -1,9 +1,8 @@
 """Contains the Attract class which is the attract mode in a pinball machine."""
 
-from mpf.core.mode import Mode
+from mpf.modes.carousel.code.carousel import Carousel
 
-
-class Attract(Mode):
+class Attract(Carousel):
 
     """Default mode running in a machine when a game is not in progress.
 
@@ -49,6 +48,8 @@ class Attract(Mode):
             for playfield in self.machine.playfields.values():
                 playfield.ball_search.enable()
                 playfield.ball_search.start()
+
+        super().mode_start(**kwargs)
 
     def start_button_pressed(self):
         """Handle start button press.
