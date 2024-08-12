@@ -285,8 +285,7 @@ class BallCountHandler(BallDeviceStateHandler):
                 except asyncio.TimeoutError:
                     self.debug_log("BCH: Lost %s balls", missing_balls)
                     self._set_ball_count(new_balls)
-                    for _ in range(missing_balls):
-                        await self.ball_device.lost_idle_ball()
+                    await self.ball_device.lost_idle_ball(missing_balls)
                 else:
                     self._revalidate.set()
         else:

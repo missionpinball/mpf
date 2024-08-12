@@ -138,14 +138,15 @@ class BallDevice(SystemWideDevice):
         eject.already_left = True
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 
-    async def lost_idle_ball(self):
+    async def lost_idle_ball(self, balls=1):
         """Lost an ball while the device was idle."""
         # handle lost balls
+        self.info_log("Lost %s balls, will remove from count and add to ball_missing_target %s", balls, self.config['ball_missing_target'])
         if self.state == "idle":
             self.warning_log("Ball disappeared while idle. This should not normally happen.")
-        self.available_balls -= 1
-        self.config['ball_missing_target'].add_missing_balls(1)
-        await self._balls_missing(1)
+        self.available_balls -= balls
+        self.config['ball_missing_target'].add_missing_balls(balls)
+        await self._balls_missing(balls)
 
     async def lost_ejected_ball(self, target):
         """Handle an outgoing lost ball."""

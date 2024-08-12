@@ -435,12 +435,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 if new_balls < old_balls:
                     self.info_log("Found %s physical balls and %s expected balls", new_balls, old_balls)
                     # Post that the ball is lost
-                    await self.ball_device.lost_idle_ball()
+                    await self.ball_device.lost_idle_ball(old_balls - new_balls)
                     # Cancel the eject queue for the lost ball
-                    for _ in range(0, old_balls - new_balls):
-                        if not self._eject_queue.empty():
-                            self._eject_queue.get_nowait()
-                            self._eject_queue.task_done()
+                    if not self._eject_queue.empty():
+                        self._eject_queue.get_nowait()
+                        self._eject_queue.task_done()
                     self.info_log("Necessary queue requests are cancelled. Updating ball count to %s." % new_balls)
                     self.ball_device.ball_count_handler._set_ball_count(new_balls)  # pylint: disable=protected-access
 
