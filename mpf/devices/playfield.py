@@ -108,6 +108,8 @@ class Playfield(SystemWideDevice):
         # TODO: add incoming ball only and wait for confirm or timeout
         self.available_balls += balls
         self.balls += balls
+        self.debug_log("Added %s missing balls. Current balls now %s, available balls %s.",
+                       balls, self.balls, self.available_balls)
 
     @property
     def balls(self):
@@ -308,9 +310,10 @@ class Playfield(SystemWideDevice):
         '''
 
     def _ball_removed_handler2(self, balls):
-        self.debug_log("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
+        self.debug_log("%s ball(s) removed from the playfield. Current balls now %s, available balls %s.",
+                       balls, self.balls, self.available_balls)
         for _ in range(balls):
             self.machine.ball_controller.add_captured_ball(self)
 

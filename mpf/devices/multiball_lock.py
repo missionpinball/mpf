@@ -357,7 +357,11 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
         balls_added = 0
         for device in self._source_devices:
             balls_to_add = max(min(device.available_balls, balls - balls_added), 0)
+            self.debug_log("Requesting %s new balls from source device %s", balls_to_add, device)
             device.eject(balls=balls_to_add, target=self.source_playfield)
             balls_added += balls_to_add
 
-        self.source_playfield.add_ball(balls=max(balls - balls_added, 0))
+        remaining_balls = max(balls - balls_added, 0)
+        if remaining_balls:
+            self.debug_log("Requesting %s remaining balls from source playfield", remaining_balls)
+            self.source_playfield.add_ball(balls=remaining_balls)
