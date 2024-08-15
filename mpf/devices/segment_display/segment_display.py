@@ -51,7 +51,7 @@ class SegmentDisplay(SystemWideDevice):
 
     __slots__ = ["hw_display", "size", "virtual_connector", "_text_stack", "_current_placeholder",
                  "_current_text_stack_entry", "_transition_update_task", "_current_transition", "_default_color",
-                 "_current_state", "_current_placeholder_future"]
+                 "_current_state", "_current_placeholder_future", "_previous_text", "_previous_color", "_previous_transition_out"]
 
     config_section = 'segment_displays'
     collection = 'segment_displays'
@@ -73,6 +73,9 @@ class SegmentDisplay(SystemWideDevice):
         self._current_transition = None             # type: Optional[TransitionRunner]
         self._default_color = None                  # type: Optional[RGBColor]
         self._current_state = None                  # type: Optional[SegmentDisplayState]
+        self._previous_text = None                  # Last text entry for transitions if update_method = replace
+        self._previous_color = None                 # Last color for transitions if update_method = replace
+        self._previous_transition_out = None        # Last transistion_out if update_method = replace
 
     async def _initialize(self):
         """Initialize display."""
@@ -155,11 +158,57 @@ class SegmentDisplay(SystemWideDevice):
             raise ValueError(f"Unknown update_method '{self.config['update_method']}' for segment display {self.name}")
 
         # For the replace-text update method, skip the stack and write straight to the display
-        new_text = TextTemplate(self.machine, text).evaluate({})
-        text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
-                                           self.config['integrated_commas'], self.config['use_dots_for_commas'],
-                                           color)
-        self._update_display(SegmentDisplayState(text, flashing, flash_mask))
+
+        ###############################
+        #Store current color and text as previous text/color of next run even if no transition in this step,
+        #the next step might have a transition, that the old text/color needs to be included into that transition
+        ###############################
+
+        # Handle new and previous text
+        if self._previous_text:
+            previous_text = self._previous_text
+        else:
+            previous_text = ""
+        self._previous_text = text  # Save the new text as the next previous text
+
+        # Handle new and previous color
+        if self._previous_color:
+            previous_color = self._previous_color
+        else:
+            previous_color = self._default_color
+        self._previous_color = color  # Save the new color as the next previous color
+
+        if transition or self._previous_transition_out:
+            if transition: #if transition exists, then ignore transition_out of previous text/color
+                transition_conf = TransitionManager.get_transition(self.size,
+                                                                   self.config['integrated_dots'],
+                                                                   self.config['integrated_commas'],
+                                                                   self.config['use_dots_for_commas'],
+                                                                   transition)
+            elif self._previous_transition_out:
+                transition_conf = TransitionManager.get_transition(self.size,
+                                                                   self.config['integrated_dots'],
+                                                                   self.config['integrated_commas'],
+                                                                   self.config['use_dots_for_commas'],
+                                                                   self._previous_transition_out)
+            if transition_out:  #in case transition_out is set we need to preserve it for the next step but only after the previous transition_out is in this step's config
+                self._previous_transition_out = transition_out
+
+            #start transition
+            self._start_transition(transition_conf, previous_text, text,
+                                   previous_color, color,
+                                   self.config['default_transition_update_hz'], flashing, flash_mask)
+
+        else: #No transition configured
+            if len(color) == 0: #no color set in show, case handled in transition, so extra treatment here for no transition
+                color = self._default_color
+            if transition_out:  #in case transition_out is set we need to preserve it for the next step
+                self._previous_transition_out = transition_out
+            new_text = TextTemplate(self.machine, text).evaluate({})
+            text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
+                                               self.config['integrated_commas'], self.config['use_dots_for_commas'],
+                                               color)
+            self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.
@@ -171,7 +220,7 @@ class SegmentDisplay(SystemWideDevice):
     def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
         if self.config['update_method'] != "stack":
-            self.info_log("Segment display 'remove' action is TBD.")
+            self.add_text_entry("", self._previous_color, FlashingType.NO_FLASH, "", None, None, 100, key)
             return
 
         if key in self._text_stack:
