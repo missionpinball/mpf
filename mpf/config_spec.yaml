@@ -1498,7 +1498,7 @@ segment_display_player:
     action: single|enum(add,remove,flash,no_flash,flash_match,flash_mask,set_color)|add
     transition: ignore
     transition_out: ignore
-    flashing: single|enum(off,all,match,mask,not_set)|not_set
+    flashing: single|enum(off,all,match,mask,not_set)|off
     flash_mask: single|str|None
     key: single|str|None
     expire: single|ms_or_token|None
