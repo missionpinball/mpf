@@ -1699,7 +1699,7 @@ sound_player:
     pan: single|float_or_token|None
     loops: single|int_or_token|None
     priority: single|int_or_token|None
-    start_at: single|secs|None
+    start_at: single|template_secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
     about_to_finish_time: single|secs|-1
