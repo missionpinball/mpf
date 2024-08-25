@@ -29,7 +29,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
-    def test_block(self):
+    def test_block_true(self):
         self.mock_event("playfield_active")
         self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(.1)
@@ -59,6 +59,68 @@ class TestShots(MpfTestCase):
 
         self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
         self.assertEqual("mode1_two", self.machine.shots["mode1_shot_3"].state_name)
+
+    def test_block_false(self):
+        self.mock_event("playfield_active")
+        self.hit_and_release_switch("switch_5")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("playfield_active")
+
+        self.start_game()
+        self.assertEqual("unlit", self.machine.shots["shot_5"].state_name)
+
+        self.hit_and_release_switch("switch_5")
+        self.advance_time_and_run(.1)
+        self.assertTrue(self.machine.shots["shot_5"].enabled)
+        self.assertEqual("lit", self.machine.shots["shot_5"].state_name)
+
+        self.machine.shots["shot_5"].reset()
+        self.assertEqual("unlit", self.machine.shots["shot_5"].state_name)
+
+        # Start the mode and make sure those shots load
+        self.start_mode("mode1")
+
+        self.assertTrue(self.machine.shots["shot_5"].enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_5"].enabled)
+        self.assertEqual("unlit", self.machine.shots["shot_5"].state_name)
+        self.assertEqual("mode1_one", self.machine.shots["mode1_shot_5"].state_name)
+
+        self.hit_and_release_switch("switch_5")
+        self.advance_time_and_run(.1)
+
+        self.assertEqual("lit", self.machine.shots["shot_5"].state_name)
+        self.assertEqual("mode1_two", self.machine.shots["mode1_shot_5"].state_name)
+
+    def test_block_default(self): #Default behaves as false
+        self.mock_event("playfield_active")
+        self.hit_and_release_switch("switch_6")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("playfield_active")
+
+        self.start_game()
+        self.assertEqual("unlit", self.machine.shots["shot_6"].state_name)
+
+        self.hit_and_release_switch("switch_6")
+        self.advance_time_and_run(.1)
+        self.assertTrue(self.machine.shots["shot_6"].enabled)
+        self.assertEqual("lit", self.machine.shots["shot_6"].state_name)
+
+        self.machine.shots["shot_6"].reset()
+        self.assertEqual("unlit", self.machine.shots["shot_6"].state_name)
+
+        # Start the mode and make sure those shots load
+        self.start_mode("mode1")
+
+        self.assertTrue(self.machine.shots["shot_6"].enabled)
+        self.assertTrue(self.machine.shots["mode1_shot_6"].enabled)
+        self.assertEqual("unlit", self.machine.shots["shot_6"].state_name)
+        self.assertEqual("mode1_one", self.machine.shots["mode1_shot_6"].state_name)
+
+        self.hit_and_release_switch("switch_6")
+        self.advance_time_and_run(.1)
+
+        self.assertEqual("lit", self.machine.shots["shot_6"].state_name)
+        self.assertEqual("mode1_two", self.machine.shots["mode1_shot_6"].state_name)
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not

@@ -12,6 +12,10 @@ switches:
     number:
   switch_4:
     number:
+  switch_5:
+    number:
+  switch_6:
+    number:
   s_rotate_l:
     number:
   s_rotate_r:
