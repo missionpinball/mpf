@@ -191,6 +191,7 @@ class SegmentDisplay(SystemWideDevice):
                                                                    self.config['integrated_commas'],
                                                                    self.config['use_dots_for_commas'],
                                                                    self._previous_transition_out)
+                self._previous_transition_out = None # Once the transistion_out is played removed it that is not played in the next step again
             if transition_out:  #in case transition_out is set we need to preserve it for the next step but only after the previous transition_out is in this step's config
                 self._previous_transition_out = transition_out
 
