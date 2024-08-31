@@ -148,7 +148,14 @@ class SegmentDisplay(SystemWideDevice):
 
         This will replace texts with the same key.
         """
+
+        if len(color) == 0:
+            color = self._current_state.text.get_colors()
+
+
         if self.config['update_method'] == "stack":
+
+
             self._text_stack[key] = TextStackEntry(
                 text, color, flashing, flash_mask, transition, transition_out, priority, key)
             self._update_stack()
@@ -201,8 +208,6 @@ class SegmentDisplay(SystemWideDevice):
                                    self.config['default_transition_update_hz'], flashing, flash_mask)
 
         else: #No transition configured
-            if len(color) == 0: #no color set in show, case handled in transition, so extra treatment here for no transition
-                color = self._default_color
             if transition_out:  #in case transition_out is set we need to preserve it for the next step
                 self._previous_transition_out = transition_out
             new_text = TextTemplate(self.machine, text).evaluate({})
@@ -232,9 +237,8 @@ class SegmentDisplay(SystemWideDevice):
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,
                           current_colors: List[RGBColor], new_colors: List[RGBColor],
                           update_hz: float, flashing, flash_mask):
+
         """Start the specified transition."""
-        current_colors = self._expand_colors(current_colors, len(current_text))
-        new_colors = self._expand_colors(new_colors, len(new_text))
         if self._current_transition:
             self._stop_transition()
         self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
