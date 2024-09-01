@@ -1,5 +1,6 @@
 """Plugin config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
+from mpf.core.placeholder_manager import BaseTemplate, NativeTypeTemplate
 
 
 class PluginPlayer(DeviceConfigPlayer):
@@ -85,9 +86,19 @@ class PluginPlayer(DeviceConfigPlayer):
         # this play event won't be swallowed.
         if '_from_bcp' in kwargs:
             del kwargs['_from_bcp']
+        # If any templates need evaluating, do so *before* sending via BCP
+        eval_settings = {}
+        for s, settings_dict in settings.items():
+            for key, value in settings_dict.items():
+                if isinstance(value, (BaseTemplate, NativeTypeTemplate)):
+                    if s not in eval_settings:
+                        eval_settings[s] = settings_dict.copy()
+                    eval_settings[s][key] = value.evaluate(kwargs)
+
         self.machine.bcp.interface.bcp_trigger(
             name='{}_play'.format(self.show_section),
-            settings=settings, context=context, calling_context=calling_context,
+            settings={**settings, **eval_settings},
+            context=context, calling_context=calling_context,
             priority=priority, **kwargs)
 
     def clear_context(self, context):
