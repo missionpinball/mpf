@@ -1,6 +1,6 @@
 """Plugin config player."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
-from mpf.core.placeholder_manager import BaseTemplate
+from mpf.core.placeholder_manager import BaseTemplate, NativeTypeTemplate
 
 
 class PluginPlayer(DeviceConfigPlayer):
@@ -90,7 +90,7 @@ class PluginPlayer(DeviceConfigPlayer):
         eval_settings = {}
         for s, settings_dict in settings.items():
             for key, value in settings_dict.items():
-                if isinstance(value, BaseTemplate):
+                if isinstance(value, (BaseTemplate, NativeTypeTemplate)):
                     if not s in eval_settings:
                         eval_settings[s] = settings_dict.copy()
                     eval_settings[s][key] = value.evaluate(kwargs)
