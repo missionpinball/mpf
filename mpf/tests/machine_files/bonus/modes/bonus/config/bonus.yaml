@@ -12,3 +12,7 @@ mode_settings:
         score: 5000
         player_score_entry: modes
         reset_player_score_entry: False
+      - event: bonus_undefined_var
+        score: 5000
+        skip_if_zero: false
+        player_score_entry: undefined_var

@@ -38,6 +38,7 @@ class TestBonusMode(MpfTestCase):
     def testBonus(self):
         self.mock_event("bonus_ramps")
         self.mock_event("bonus_modes")
+        self.mock_event("bonus_undefined_var")
         self.mock_event("bonus_subtotal")
         self.mock_event("bonus_multiplier")
         self.mock_event("bonus_total")
@@ -78,6 +79,8 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(3, self._last_event_kwargs["bonus_ramps"]["hits"])
         self.assertEqual(10000, self._last_event_kwargs["bonus_modes"]["score"])
         self.assertEqual(2, self._last_event_kwargs["bonus_modes"]["hits"])
+        self.assertEqual(0, self._last_event_kwargs["bonus_undefined_var"]["score"])
+        self.assertEqual(0, self._last_event_kwargs["bonus_undefined_var"]["hits"])
         self.assertEqual(13000, self._last_event_kwargs["bonus_subtotal"]["score"])
         self.assertEqual(5, self._last_event_kwargs["bonus_multiplier"]["multiplier"])
         self.assertEqual(65000, self._last_event_kwargs["bonus_total"]["score"])
@@ -128,6 +131,7 @@ class TestBonusMode(MpfTestCase):
         self.mock_event("bonus_start")
         self.mock_event("bonus_ramps")
         self.mock_event("bonus_modes")
+        self.mock_event("bonus_undefined_var")
         self.mock_event("bonus_subtotal")
         self.mock_event("bonus_multiplier")
         self.mock_event("bonus_total")
@@ -153,6 +157,12 @@ class TestBonusMode(MpfTestCase):
 
         self.post_event('flipper_cancel', .1)
         self.assertEventCalled('bonus_modes')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled('bonus_undefined_var')
         self.assertEventNotCalled('bonus_subtotal')
         self.assertEventNotCalled('bonus_multiplier')
         self.assertEventNotCalled('bonus_total')
