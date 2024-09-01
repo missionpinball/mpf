@@ -16,3 +16,5 @@ mode_settings:
         score: 5000
         skip_if_zero: false
         player_score_entry: undefined_var
+      - event: bonus_static
+        score: 2000

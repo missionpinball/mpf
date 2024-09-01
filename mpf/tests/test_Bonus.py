@@ -39,6 +39,7 @@ class TestBonusMode(MpfTestCase):
         self.mock_event("bonus_ramps")
         self.mock_event("bonus_modes")
         self.mock_event("bonus_undefined_var")
+        self.mock_event("bonus_static")
         self.mock_event("bonus_subtotal")
         self.mock_event("bonus_multiplier")
         self.mock_event("bonus_total")
@@ -81,10 +82,12 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(2, self._last_event_kwargs["bonus_modes"]["hits"])
         self.assertEqual(0, self._last_event_kwargs["bonus_undefined_var"]["score"])
         self.assertEqual(0, self._last_event_kwargs["bonus_undefined_var"]["hits"])
-        self.assertEqual(13000, self._last_event_kwargs["bonus_subtotal"]["score"])
+        self.assertEqual(2000, self._last_event_kwargs["bonus_static"]["score"])
+        self.assertEqual(1, self._last_event_kwargs["bonus_static"]["hits"])
+        self.assertEqual(15000, self._last_event_kwargs["bonus_subtotal"]["score"])
         self.assertEqual(5, self._last_event_kwargs["bonus_multiplier"]["multiplier"])
-        self.assertEqual(65000, self._last_event_kwargs["bonus_total"]["score"])
-        self.assertEqual(66337, self.machine.game.player.score)
+        self.assertEqual(75000, self._last_event_kwargs["bonus_total"]["score"])
+        self.assertEqual(76337, self.machine.game.player.score)
 
         # check resets
         self.assertEqual(0, self.machine.game.player.ramps)
@@ -105,10 +108,10 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(0, self._last_event_kwargs["bonus_ramps"]["hits"])
         self.assertEqual(10000, self._last_event_kwargs["bonus_modes"]["score"])
         self.assertEqual(2, self._last_event_kwargs["bonus_modes"]["hits"])
-        self.assertEqual(10000, self._last_event_kwargs["bonus_subtotal"]["score"])
+        self.assertEqual(12000, self._last_event_kwargs["bonus_subtotal"]["score"])
         self.assertEqual(5, self._last_event_kwargs["bonus_multiplier"]["multiplier"])
-        self.assertEqual(50000, self._last_event_kwargs["bonus_total"]["score"])
-        self.assertEqual(116337, self.machine.game.player.score)
+        self.assertEqual(60000, self._last_event_kwargs["bonus_total"]["score"])
+        self.assertEqual(136337, self.machine.game.player.score)
 
         # multiplier should stay the same
         self.assertEqual(0, self.machine.game.player.ramps)
@@ -132,6 +135,7 @@ class TestBonusMode(MpfTestCase):
         self.mock_event("bonus_ramps")
         self.mock_event("bonus_modes")
         self.mock_event("bonus_undefined_var")
+        self.mock_event("bonus_static")
         self.mock_event("bonus_subtotal")
         self.mock_event("bonus_multiplier")
         self.mock_event("bonus_total")
@@ -163,6 +167,12 @@ class TestBonusMode(MpfTestCase):
 
         self.advance_time_and_run(.5)
         self.assertEventCalled('bonus_undefined_var')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled('bonus_static')
         self.assertEventNotCalled('bonus_subtotal')
         self.assertEventNotCalled('bonus_multiplier')
         self.assertEventNotCalled('bonus_total')
