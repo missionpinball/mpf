@@ -107,7 +107,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                 initial_active_switches = []
                 for switch_name in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
                     if switch_name not in self.machine.switches.keys():
-                        if " " in switch:
+                        if " " in switch_name:
                             self.raise_config_error("MPF no longer supports lists separated by space in "
                                                     "virtual_platform_start_active_switches. Please separate "
                                                     "switches by comma: {}.".format(switch_name), 1)
