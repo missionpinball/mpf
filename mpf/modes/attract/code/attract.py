@@ -2,6 +2,7 @@
 
 from mpf.modes.carousel.code.carousel import Carousel
 
+
 class Attract(Carousel):
 
     """Default mode running in a machine when a game is not in progress.

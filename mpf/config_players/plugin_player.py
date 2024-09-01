@@ -91,7 +91,7 @@ class PluginPlayer(DeviceConfigPlayer):
         for s, settings_dict in settings.items():
             for key, value in settings_dict.items():
                 if isinstance(value, (BaseTemplate, NativeTypeTemplate)):
-                    if not s in eval_settings:
+                    if s not in eval_settings:
                         eval_settings[s] = settings_dict.copy()
                     eval_settings[s][key] = value.evaluate(kwargs)
 
