@@ -20,6 +20,10 @@ shots:
       light: tag1
   shot_4:
     switch: switch_1
+  shot_5:
+    switch: switch_5
+  shot_6:
+    switch: switch_6
   led_1:
     switch: switch_1
     show_tokens:
