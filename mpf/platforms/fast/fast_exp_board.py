@@ -2,6 +2,7 @@
 
 import asyncio
 from base64 import b16decode
+from binascii import Error as binasciiError
 from importlib import import_module
 
 from packaging import version
@@ -176,7 +177,7 @@ class FastExpansionBoard:
 
                 try:
                     self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
-                except Exception as e:
+                except binasciiError as e:
                     self.log.error(
                         f"Error decoding the following message for board {breakout_address} : {msg_header}{msg}")
                     self.log.info("Attempted update that caused this error: %s", dirty_leds)

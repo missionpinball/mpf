@@ -105,16 +105,16 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
                 initial_active_switches = []
-                for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
-                    if switch not in self.machine.switches:
-                        if " " in switch:
+                for switch_name in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
+                    if switch_name not in self.machine.switches.keys():
+                        if " " in switch_name:
                             self.raise_config_error("MPF no longer supports lists separated by space in "
                                                     "virtual_platform_start_active_switches. Please separate "
-                                                    "switches by comma: {}.".format(switch), 1)
+                                                    "switches by comma: {}.".format(switch_name), 1)
                         else:
                             self.raise_config_error("Switch {} used in virtual_platform_start_active_switches was not "
-                                                    "found in switches section.".format(switch), 1)
-                    initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
+                                                    "found in switches section.".format(switch_name), 1)
+                    initial_active_switches.append(self.machine.switches[switch_name].hw_switch.number)
 
                 for k in self.hw_switches:
                     if k in initial_active_switches:
