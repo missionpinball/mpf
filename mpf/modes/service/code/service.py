@@ -560,6 +560,7 @@ sort_devices_by_number: single|bool|True
             return
 
         items.sort(key=lambda x: x.chain)
+        return items
 
     async def _volume_menu(self, platform=None):
         position = 0
