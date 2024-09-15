@@ -29,36 +29,51 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
-    def test_block(self):
+    def block_test(self, switch, shot, should_block):
+        high_priority_shot = "mode1_" + shot
         self.mock_event("playfield_active")
-        self.hit_and_release_switch("switch_3")
+        self.hit_and_release_switch(switch)
         self.advance_time_and_run(.1)
         self.assertEventCalled("playfield_active")
 
         self.start_game()
-        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.assertEqual("unlit", self.machine.shots[shot].state_name)
 
-        self.hit_and_release_switch("switch_3")
+        self.hit_and_release_switch(switch)
         self.advance_time_and_run(.1)
-        self.assertTrue(self.machine.shots["shot_3"].enabled)
-        self.assertEqual("lit", self.machine.shots["shot_3"].state_name)
+        self.assertFalse(self.machine.shots[high_priority_shot].enabled)
+        self.assertTrue(self.machine.shots[shot].enabled)
+        self.assertEqual("lit", self.machine.shots[shot].state_name)
 
-        self.machine.shots["shot_3"].reset()
-        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
+        self.machine.shots[shot].reset()
+        self.assertEqual("unlit", self.machine.shots[shot].state_name)
 
         # Start the mode and make sure those shots load
         self.start_mode("mode1")
 
-        self.assertTrue(self.machine.shots["shot_3"].enabled)
-        self.assertTrue(self.machine.shots["mode1_shot_3"].enabled)
-        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
-        self.assertEqual("mode1_one", self.machine.shots["mode1_shot_3"].state_name)
+        self.assertTrue(self.machine.shots[shot].enabled)
+        self.assertTrue(self.machine.shots[high_priority_shot].enabled)
+        self.assertEqual("unlit", self.machine.shots[shot].state_name)
+        self.assertEqual("mode1_one", self.machine.shots[high_priority_shot].state_name)
 
-        self.hit_and_release_switch("switch_3")
+        self.hit_and_release_switch(switch)
         self.advance_time_and_run(.1)
 
-        self.assertEqual("unlit", self.machine.shots["shot_3"].state_name)
-        self.assertEqual("mode1_two", self.machine.shots["mode1_shot_3"].state_name)
+        if should_block:
+            self.assertEqual("unlit", self.machine.shots[shot].state_name)
+        else:
+            self.assertEqual("lit", self.machine.shots[shot].state_name)
+
+        self.assertEqual("mode1_two", self.machine.shots[high_priority_shot].state_name)
+
+    def test_block_true(self):
+        self.block_test("switch_3", "shot_3", True)
+
+    def test_block_false(self):
+        self.block_test("switch_5", "shot_5", False)
+
+    def test_block_default(self): #Default behaves as false
+        self.block_test("switch_6", "shot_6", False)
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not

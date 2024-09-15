@@ -6,6 +6,7 @@ import sys
 import threading
 from typing import Any, Callable, Dict, List, Set, Optional
 
+from packaging import version
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -368,6 +369,16 @@ class MachineController(LogMixin):
         self.validate_machine_config_section('machine')
         self.validate_machine_config_section('game')
         self.validate_machine_config_section('mpf')
+        self._validate_version()
+
+    def _validate_version(self):
+        if not self.config['mpf']['min_mpf_version']:
+            return
+        min_version = version.parse(self.config['mpf']['min_mpf_version'])
+        mpf_version = version.parse(__version__)
+        if mpf_version < min_version:
+            raise AssertionError(f'MPF version mismatch. MPF version {mpf_version} found but game config '
+                                 f'requires at least {min_version} ')
 
     def validate_machine_config_section(self, section: str) -> None:
         """Validate a config section."""
@@ -685,7 +696,11 @@ class MachineController(LogMixin):
         if not self.initialize_mpf():
             return
 
-        self.info_log("Starting the main run loop.")
+        self.info_log("Starting the main run loop with active modes: %s",
+                      self.mode_controller.active_modes)
+        if not self.modes['attract'] in self.mode_controller.active_modes:
+            self.warning_log("Attract mode is not active, game will not be playable. "
+                             "Please check your attract mode configuration.")
         self._run_loop()
 
     def stop_with_exception(self, exception) -> None:

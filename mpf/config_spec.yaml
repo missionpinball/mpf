@@ -662,6 +662,7 @@ fast_exp_board:
     led_ports: list|subconfig(fast_led_port)|None
     led_fade_time: single|ms|0
     led_hz: single|float|30
+    ignore_led_errors: single|bool|false
 fast_breakout:
     port: single|enum(1,2,3)|
     model: single|str|
@@ -835,6 +836,7 @@ high_score:
     award_slide_display_time: single|ms|4s
     categories: dict|str:list|
     defaults: dict|str:list|None
+    filler_initials: list|str|None
     enter_initials_timeout: single|secs|20s
     reverse_sort: list|str|None
     reset_high_scores_events: list|event_handler|high_scores_reset,factory_reset
@@ -1111,6 +1113,7 @@ mpf:
     core_modules: ignore
     config_players: ignore
     device_modules: ignore
+    min_mpf_version: single|str|None
     plugins: ignore
     platforms: ignore
     paths: ignore
