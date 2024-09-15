@@ -24,6 +24,12 @@ shots:
   mode1_shot_3:
     switch: switch_3
     profile: mode1_shot_3
+  mode1_shot_5:
+    switch: switch_5
+    profile: mode1_shot_5
+  mode1_shot_6:
+    switch: switch_6
+    profile: mode1_shot_6
 
 shot_profiles:
   mode1_shot_2:
@@ -32,10 +38,21 @@ shot_profiles:
     - name: mode1_one
     - name: mode1_two
     - name: mode1_three
-  mode1_shot_3:
+  mode1_shot_3: # Test block: True
     show: rainbow2
     block: True
     states:
     - name: mode1_one
     - name: mode1_two
     - name: mode1_three
+  mode1_shot_5: # Test block: False
+    show: rainbow2
+    block: False
+    states:
+    - name: mode1_one
+    - name: mode1_two
+  mode1_shot_6: # Test block default
+    show: rainbow2
+    states:
+    - name: mode1_one
+    - name: mode1_two

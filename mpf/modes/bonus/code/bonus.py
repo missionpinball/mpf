@@ -95,29 +95,28 @@ class Bonus(Mode):
         # following names are reserved for end-of-bonus behavior.
         assert entry not in ["subtotal", "multiplier", "total"], "Bonus entry cannot be reserved word '%s'" % entry
 
-        # Calling player.vars.get() instead of player.get() bypasses the
-        # auto-fill zero and will throw if there is no player variable.
-        # The fallback value of 1 is used for bonus entries that don't use
-        # a player score, which are multiplied by one to get the bonus.
-        hits = self.player.vars.get(entry['player_score_entry'], 1)
+        # If a player_score_entry is provided, use player getattr to get a
+        # fallback value of zero if the variable is not set. Otherwise
+        # use 1 as the multiplier for non-player-score bonuses.
+        hits = self.player[entry['player_score_entry']] if entry['player_score_entry'] else 1
         score = entry['score'].evaluate([]) * hits
 
         if (not score and entry['skip_if_zero']) or (score < 0 and entry['skip_if_negative']):
-            self.debug_log("Skipping bonus entry '%s' because its value is 0",
-                           entry['entry'])
+            self.info_log("Skipping bonus entry '%s' because its value is 0",
+                          entry['entry'])
             self._bonus_next_item()
             return
 
         # pylint: disable=superfluous-parens
         if self.settings["rounding_value"] and (r := (score % self.settings["rounding_value"])):
-            self.debug_log("rounding bonus score %s remainder of %s", score, r)
+            self.info_log("rounding bonus score %s remainder of %s", score, r)
             if self.settings["rounding_direction"] == "down":
                 score -= r
             else:
                 score += self.settings["rounding_value"] - r
 
-        self.debug_log("Bonus Entry '%s': score: %s player_score_entry: %s=%s",
-                       entry['entry'], score, entry['player_score_entry'], hits)
+        self.info_log("Bonus Entry '%s': score: %s player_score_entry: %s=%s",
+                      entry['entry'], score, entry['player_score_entry'], hits)
 
         self.bonus_score += score
         self.machine.events.post("bonus_entry", entry=entry['entry'],

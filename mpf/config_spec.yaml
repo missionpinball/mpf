@@ -668,6 +668,7 @@ fast_exp_board:
     led_ports: list|subconfig(fast_led_port)|None
     led_fade_time: single|ms|0
     led_hz: single|float|30
+    ignore_led_errors: single|bool|false
 fast_breakout:
     port: single|enum(1,2,3)|
     model: single|str|
