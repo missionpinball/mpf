@@ -89,8 +89,14 @@ class SegmentDisplay(SystemWideDevice):
 
         self.size = self.config['size']
         self._default_color = [RGBColor(color) for color in self.config["default_color"][0:self.size]]
-        if len(self._default_color) < self.size:
-            self._default_color += [RGBColor("white")] * (self.size - len(self._default_color))
+
+        if (len(self._default_color)) == 1:
+            self._default_color = self._default_color * self.size
+        elif len(self._default_color) != self.size:
+            self.warning_log("The amount of colors you specified for your text has to be either equal to "
+                "the amount of digits in your display or equals 1. Your display has a size of %s and the "
+                "amount of colors specified is %s. All display colors will be set to white.", self.size, len(self._default_color))
+            self._default_color = [RGBColor("white")] * self.size
 
         # configure hardware
         try:
@@ -148,10 +154,8 @@ class SegmentDisplay(SystemWideDevice):
 
         This will replace texts with the same key.
         """
-
-        if len(color) == 0:
+        if not color:
             color = self._current_state.text.get_colors()
-
 
         if self.config['update_method'] == "stack":
 
@@ -172,35 +176,19 @@ class SegmentDisplay(SystemWideDevice):
         ###############################
 
         # Handle new and previous text
-        if self._previous_text:
-            previous_text = self._previous_text
-        else:
-            previous_text = ""
+        previous_text = self._previous_text or ""
         self._previous_text = text  # Save the new text as the next previous text
 
         # Handle new and previous color
-        if self._previous_color:
-            previous_color = self._previous_color
-        else:
-            previous_color = self._default_color
+        previous_color = self._previous_color or self._default_color
         self._previous_color = color  # Save the new color as the next previous color
 
         if transition or self._previous_transition_out:
-            if transition: #if transition exists, then ignore transition_out of previous text/color
-                transition_conf = TransitionManager.get_transition(self.size,
-                                                                   self.config['integrated_dots'],
-                                                                   self.config['integrated_commas'],
-                                                                   self.config['use_dots_for_commas'],
-                                                                   transition)
-            elif self._previous_transition_out:
-                transition_conf = TransitionManager.get_transition(self.size,
-                                                                   self.config['integrated_dots'],
-                                                                   self.config['integrated_commas'],
-                                                                   self.config['use_dots_for_commas'],
-                                                                   self._previous_transition_out)
-                self._previous_transition_out = None # Once the transistion_out is played removed it that is not played in the next step again
-            if transition_out:  #in case transition_out is set we need to preserve it for the next step but only after the previous transition_out is in this step's config
-                self._previous_transition_out = transition_out
+            transition_conf = TransitionManager.get_transition(self.size,
+                                                       self.config['integrated_dots'],
+                                                       self.config['integrated_commas'],
+                                                       self.config['use_dots_for_commas'],
+                                                       transition or self._previous_transition_out)
 
             #start transition
             self._start_transition(transition_conf, previous_text, text,
@@ -216,6 +204,12 @@ class SegmentDisplay(SystemWideDevice):
                                                color)
             self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
+        ###############################
+        # Once the transistion_out is played, removed it that is not played in the next step again, but in case transition_out is set in the current step
+        # then we need to preserve it for the next step but only after the previous step's transition_out is in this step's config (or the transition of the current step)
+        ###############################
+        self._previous_transition_out = transition_out or None
+
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack.
 
@@ -225,13 +219,23 @@ class SegmentDisplay(SystemWideDevice):
 
     def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
-        if self.config['update_method'] != "stack":
+        if self.config['update_method'] == "stack":
+            if key in self._text_stack:
+                del self._text_stack[key]
+                self._update_stack()
+        else: # must be update_method replace, send empyt text since no key in that case
             self.add_text_entry("", self._previous_color, FlashingType.NO_FLASH, "", None, None, 100, key)
-            return
 
-        if key in self._text_stack:
-            del self._text_stack[key]
-            self._update_stack()
+
+    def clear_segment_display(self, key: Optional[str]):
+        """Clear segment dispaly if context is removed from player."""
+
+        if self.config['update_method'] == "replace":
+            self._stop_transition()
+            self._previous_transition_out = None
+
+        self.remove_text_by_key(key)
+
 
     # pylint: disable=too-many-arguments
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,

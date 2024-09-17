@@ -74,25 +74,19 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
     def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
                            use_dots_for_commas: bool, colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
         """Create characters from text and color them.
-
-        - Colors are used from the left to the right (starting with the first character).
         - Dots and commas are embedded on the fly.
         - Text will be right aligned on the display, thus if text is shorter than display spaces will be padded before the text
-        - Provided colors are assumed to be for the text itself, thus the list of colors is "right aligned" too
-        - If list of colors is less than the display size the list will be extended with white as default color on the left endswith
-          so that the provided colors are for the text and not being used for invisible spaces
+        - If list of colors is less than the display size then all white will be used, if only one color is given that will be used for the full display
         """
         char_list = []
         uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas)
 
         # Adujust the color array if needed
-        color_length = len(colors)
-        if color_length > display_size:
-            for _ in range(color_length - display_size):
-                colors.pop(0) # remove very left color of array if too long
-        elif color_length < display_size:
-            for _ in range(display_size - color_length):
-                colors.append(RGBColor("white")) # add default color on the left of the array if too few colors
+        if (len(colors)) == 1:
+            colors = colors * display_size
+        elif len(colors) != display_size:
+            #TODO: Log that colors were adjusted to white as default
+            colors = [RGBColor("white")] * display_size
 
         # ensure list is the same size as the segment display (cut off on left if too long or right justify characters if too short)
         current_length = len(uncolored_chars)
@@ -103,9 +97,9 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
             for _ in range(display_size - current_length):
                 uncolored_chars.insert(0, (SPACE_CODE, False, False))
 
-        for _ in range(len(uncolored_chars)):
-            color = colors[_]
-            char_list.append(DisplayCharacter(uncolored_chars[_][0], uncolored_chars[_][1], uncolored_chars[_][2], color))
+        for i, char in enumerate(uncolored_chars):
+            color = colors[i]
+            char_list.append(DisplayCharacter(char[0], char[1], char[2], color)) #0: char code 1: char_has_dot 2: char_has_comma
 
         return char_list
 
