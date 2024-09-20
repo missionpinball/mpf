@@ -483,8 +483,14 @@ class TestFastNeuron(TestFastBase):
         self._test_switch_changes()
         self._test_switch_changes_nc()
         self._test_receiving_sa()
+        self._test_cross_platform_switches()
+
+    def _test_cross_platform_switches(self):
+        self.assertSwitchState("s_mixed_platform_example", 0)
+        self.assertEqual(self.machine.switches["s_mixed_platform_example"].platform, self.machine.hardware_platforms['smart_virtual'])
 
     def _test_startup_switches(self):
+        self.assertEqual(self.machine.switches["s_baseline"].platform, self.fast_platform())
         self.assertSwitchState("s_baseline", 1)
         self.assertSwitchState("s_flipper", 0)
         self.assertSwitchState("s_test_nc", 0)  # NC which SA reports active should be inactive

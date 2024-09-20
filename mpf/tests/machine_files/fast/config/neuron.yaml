@@ -34,6 +34,10 @@ fast:
                 order: 4
 
 switches:
+    s_mixed_platform_example:
+        number: 999
+        platform: smart_virtual
+
     s_baseline:  # Starts active via SA:
         number: io3208-0  # 0x00
     s_flipper:
