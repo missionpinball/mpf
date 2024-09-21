@@ -30,10 +30,11 @@ their spare time, unpaid, for the love of pinball!
  * Dave Ensminger <dave@ensadi.com>
  * Charles Duncan (nullbuilds)
  * Eric Selk <ericselk2018@gmail.com>
+ * Alex Lobascio (bosh)
 
 MPF was inspired by pyprocgame which was written by:
 
  * Adam Preble
  * Gerry Stellenberg
 
-Want to contribute to MPF? Get started here: https://missionpinball.org/about/contributing_to_mpf/
+Want to contribute to MPF? Get started here: https://missionpinball.org/latest/about/contributing_to_mpf/

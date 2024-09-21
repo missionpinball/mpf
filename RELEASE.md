@@ -1,1 +1,1 @@
-See: https://missionpinball.org/versions/release_notes/
+See: https://missionpinball.org/latest/versions/release_notes/

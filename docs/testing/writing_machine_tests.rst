@@ -25,7 +25,7 @@ your tests pass again!)
 .. rubric:: Tutorial for writing your own tests
 
 We have a complete tutorial which walks you through writing tests for your own machine. This tutorial
-conveniently follows the general MPF tutorial at `<https://missionpinball.org/tutorial>`_. Each step here matches the
+conveniently follows the general MPF tutorial at `<https://missionpinball.org/latest/tutorial>`_. Each step here matches the
 step with the same number there. (Just make sure you'll looking at the same version of the documentation
 in both places.)
 

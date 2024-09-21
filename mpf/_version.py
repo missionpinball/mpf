@@ -37,7 +37,7 @@ extended_version = "Mission Pinball Framework v{}, Config version:{}, Show versi
 '''An extended version string that includes the MPF version, show version,
 and BCP versions used in this build of MPF.'''
 
-log_url = "https://missionpinball.org/logs"
+log_url = "https://missionpinball.org/latest/logs"
 # TODO make dynamic "https://docs.missionpinball.org/en/dev/logs/{}.html"
 
 __api__ = ['version',

@@ -25,7 +25,7 @@ document the event in code and in the docs, we use a custom docblock annotation:
     reason: The reason for this awesomeness is stated here.
   '''
 
-The event should be added to the `event reference <https://missionpinball.org/events/>`_
+The event should be added to the `event reference <https://missionpinball.org/latest/events/>`_
 on missionpinball.org.
 
 Note: As of June 2023, the events list on missionpinball.org is no longer automatically generated.
