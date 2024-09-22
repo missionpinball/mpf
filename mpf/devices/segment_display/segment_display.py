@@ -178,7 +178,7 @@ class SegmentDisplay(SystemWideDevice):
     def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
         if self.config['update_method'] != "stack":
-            self.info_log("Segment display 'remove' action is TBD.")
+            self.add_text("")
             return
 
         if key in self._text_stack:
