@@ -161,7 +161,7 @@ class SegmentDisplay(SystemWideDevice):
             flash_mask = self._current_state.flash_mask
         if not color:
             color = self._current_state.text.get_colors()
-        
+
         new_text = TextTemplate(self.machine, text).evaluate({})
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
                                            self.config['integrated_commas'], self.config['use_dots_for_commas'],
