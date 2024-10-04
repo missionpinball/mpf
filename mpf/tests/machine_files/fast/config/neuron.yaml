@@ -6,7 +6,11 @@ mpf:
   report_crashes: never
 
 hardware:
-    platform: fast
+    platform: smart_virtual
+    coils: fast
+    dmd: fast
+    lights: fast
+    switches: fast
 
 machine:  # Needed for the game testing
     min_balls: 0
@@ -30,6 +34,10 @@ fast:
                 order: 4
 
 switches:
+    s_mixed_platform_example:
+        number: 999
+        platform: smart_virtual
+
     s_baseline:  # Starts active via SA:
         number: io3208-0  # 0x00
     s_flipper:

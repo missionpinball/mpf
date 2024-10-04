@@ -293,7 +293,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         This will silently sync the switch.hw_state. If the logical state changes,
         it will process it like any switch change.
         """
-        for switch in self.machine.switches.values():
+        for switch in [sw for sw in self.machine.switches.values() if sw.platform == self.platform]:
             hw_state = self.platform.hw_switch_data[switch.hw_switch.number]
 
             if hw_state != switch.hw_state:
