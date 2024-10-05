@@ -18,7 +18,7 @@ match up to any of MPF's built in devices. The elevator and claw unloader
 in *Demolition Man* is a good example, and what we'll use here.
 
 (You can read about how to download and run *Demo Man* in the
-`example games section <https://missionpinball.org/example_games/>`_
+`example games section <https://missionpinball.org/latest/examples/>`_
 section of the MPF User Documentation.)
 
 Here's how to create a custom code class:

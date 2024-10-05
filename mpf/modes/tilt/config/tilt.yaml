@@ -7,7 +7,7 @@ mode:
   stop_on_ball_end: False
 
 # Instructions on how to use this mode:
-# https://missionpinball.org/game_logic/tilt
+# https://missionpinball.org/latest/game_logic/tilt
 
 tilt:
   tilt_warning_switch_tag: tilt_warning

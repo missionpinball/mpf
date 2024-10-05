@@ -1,7 +1,7 @@
 Testing Tutorial Step 2. Create your machine folder
 ===================================================
 
-`Step 2 of the MPF Tutorial <https://missionpinball.org/tutorial/2_creating_a_new_machine>`_ is where
+`Step 2 of the MPF Tutorial <https://missionpinball.org/latest/tutorial/2_creating_a_new_machine>`_ is where
 you create your machine folder and get MPF up and running with an empty config. Since it ends with MPF running and the
 attract mode being active, we can actually write a test for it!
 
