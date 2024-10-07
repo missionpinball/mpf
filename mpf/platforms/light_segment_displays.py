@@ -2,7 +2,7 @@
 import logging
 
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
-from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS,\
+from mpf.core.segment_mappings import SEVEN_SEGMENTS, BCD_SEGMENTS, FOURTEEN_SEGMENTS, SIXTEEN_SEGMENTS, \
     EIGHT_SEGMENTS, TextToSegmentMapper
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 from mpf.core.platform import SegmentDisplaySoftwareFlashPlatform
