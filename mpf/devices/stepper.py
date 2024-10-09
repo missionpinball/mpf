@@ -94,9 +94,13 @@ class Stepper(SystemWideDevice):
         # wait for switches to be initialized
         await self.machine.events.wait_for_event("init_phase_3")
 
-        # first home the stepper
-        self.info_log("Initializing stepper and homing.")
-        await self._home()
+        if self.config['home_on_startup']:
+            # first home the stepper
+            self.info_log("Initializing stepper and homing.")
+            await self._home()
+        else:
+            self.info_log("Initializing stepper but will not home.")
+            self._is_homed = True
 
         # run the loop at least once
         self._is_moving.set()

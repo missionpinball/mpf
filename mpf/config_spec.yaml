@@ -1946,6 +1946,7 @@ steppers:
     __type__: device
     named_positions: dict|float:str|None
     home_events: event_handler|event_handler:ms|None
+    home_on_startup: single|bool|true
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
