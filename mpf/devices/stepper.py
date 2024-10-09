@@ -132,7 +132,7 @@ class Stepper(SystemWideDevice):
 
     def _move_to_absolute_position(self, position):
         """Move stepper to position."""
-        self.info_log("Moving to absolute position %s. Current position: %s",
+        self.info_log("%s: Moving to absolute position %s. Current position: %s",
                       self.hw_stepper, position, self._current_position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
