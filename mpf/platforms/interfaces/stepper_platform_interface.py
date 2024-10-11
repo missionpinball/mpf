@@ -35,7 +35,7 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def move_rel_pos(self, position):
+    def move_rel_pos(self, position, speed=None):
         """Move axis to a certain relative position."""
         raise NotImplementedError
 

@@ -42,17 +42,31 @@ class FastStepper(StepperPlatformInterface):
         self._send_command("MH")
 
     async def wait_for_move_completed(self):
-        pass
+        return
 
-    def move_rel_pos(self, position):
+        # while True:
+        #     await asyncio.sleep(1 / POLL_MS)
+        #     status = await self.exp_connection.
+
+    def move_rel_pos(self, position, speed=None):
         """Move the servo a relative number of steps position."""
         if not position:
             return
 
         base_command = "MF" if position > 0 else "MR"
         hex_position = Util.int_to_hex_string(position, True)
+        cmd_args = [hex_position]
+        print(f"Moving stepper {self.stepper_index} with speed {speed}")
 
-        self._send_command(base_command, [hex_position])
+        if speed:
+            if speed < 350 or speed > 1650:
+                raise ConfigFileError("FAST Stepper only supports speeds between 350-1650, "
+                                      f"but received value of {speed}.",
+                                      2, self.__class__.__name__)
+            speed = Util.int_to_hex_string(speed, True)
+            cmd_args.append(speed)
+
+        self._send_command(base_command, cmd_args)
 
     def move_vel_mode(self, _velocity):
         pass
