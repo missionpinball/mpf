@@ -87,14 +87,12 @@ class Stepper(SystemWideDevice):
     def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):
         """Validate stepper config."""
         # If positions are just strings, expand them into strings and speeds
-        print(f"Initial stepper config: {config}")
+        # TODO: Figure out how to use express_config() to map this
         for cfg in ('named_positions', 'relative_positions'):
             if cfg in config:
                 for pos, value in config[cfg].items():
-                    print(f"Checking key {pos} with value {value}")
                     if isinstance(value, str):
                         config[cfg][pos] = { 'event': value }
-        print(f"Reworked stepper config: {config}")
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
             'stepper_controllers', getattr(config, "platform", None))

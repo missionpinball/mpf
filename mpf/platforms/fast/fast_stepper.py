@@ -12,35 +12,21 @@ class FastStepper(StepperPlatformInterface):
 
     """A stepper in the FAST platform connected to a FAST Expansion Board."""
 
-    # __slots__ = ["number", "exp_connection"]
+    __slots__ = ["base_address", "config", "exp_connection", "log", "stepper_index",
+                 "_is_moving"]
 
     def __init__(self, breakout_board, port, config):
         """Initialize servo."""
         self.config = config
         self.exp_connection = breakout_board.communicator
 
-        self.base_address = breakout_board.address
-        # Try this
-        self.base_address = '90'
-        #
         self.stepper_index = Util.int_to_hex_string(int(port) - 1)  # Steppers are 0-indexed
+        self.base_address = breakout_board.address
+        self.log = breakout_board.log
 
         self.exp_connection.register_processor('MS:', self.base_address, self.stepper_index, self._process_ms)
         self._is_moving = False
-        # self.max_runtime = f"{config['max_runtime']:02X}"
 
-    #     self.write_config_to_servo()
-
-    # def write_config_to_servo(self):
-    #     """Send the servo configuration to the platform."""
-    #     min_us = f"{self.config['min_us']:02X}"
-    #     max_us = f"{self.config['max_us']:02X}"
-    #     home_us = f"{self.config['home_us']:02X}"
-
-    #     # EM:<INDEX>,1,<MAX_TIME_MS>,<MIN>,<MAX>,<NEUTRAL><CR>
-    #     self.exp_connection.send_with_confirmation(
-    #         f"EM@{self.base_address}:{self.stepper_index},1,{self.max_runtime},{min_us},{max_us},{home_us}",
-    #         'EM:P')
 
     def home(self, direction):
         if direction != 'counterclockwise':
@@ -66,7 +52,7 @@ class FastStepper(StepperPlatformInterface):
         base_command = "MF" if position > 0 else "MR"
         hex_position = Util.int_to_hex_string(position, True)
         cmd_args = [hex_position]
-        print(f"Moving stepper {self.stepper_index} with speed {speed}")
+        self.log.debug("Moving stepper index %s: %s steps with speed %s", self.stepper_index, position, speed)
 
         if speed:
             if speed < 350 or speed > 1650:
@@ -94,7 +80,6 @@ class FastStepper(StepperPlatformInterface):
             f'{base_command}@{self.base_address}:{self.stepper_index}', *payload]))
 
     def _process_ms(self, message):
-        print(f"FASTStepper {self.stepper_index} has an MS message! '{message}'")
-        index, state = message.split(",")
+        _index, state = message.split(",")
         state_flags = Util.hex_string_to_int(state)
         self._is_moving = state_flags & 1

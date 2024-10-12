@@ -118,8 +118,6 @@ class FastExpCommunicator(FastSerialCommunicator):
         self._device_processors[message_prefix][board_address][device_id] = callback
 
     def _process_device_msg(self, message_prefix, message):
-        print(f"Processing '{message_prefix}'message for devices: '{message}'")
-        print(f"Available processors: {self._device_processors[message_prefix]}")
         # Commands like MS: currently don't include the EXP board in the response,
         # so there's no way to know which board needs to be informed. Inform them
         # all? If multiple boards are running concurrently, it'll get ugly.
