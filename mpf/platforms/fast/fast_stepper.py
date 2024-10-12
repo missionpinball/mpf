@@ -7,6 +7,8 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 POLL_MS = 100
+MIN_SPEED = 350
+MAX_SPEED = 1650
 
 class FastStepper(StepperPlatformInterface):
 
@@ -54,7 +56,7 @@ class FastStepper(StepperPlatformInterface):
         self.log.debug("Moving stepper index %s: %s steps with speed %s", self.stepper_index, position, speed)
 
         if speed:
-            if speed < 350 or speed > 1650:
+            if speed < MIN_SPEED or speed > MAX_SPEED:
                 raise ConfigFileError("FAST Stepper only supports speeds between 350-1650, "
                                       f"but received value of {speed}.",
                                       2, self.__class__.__name__)
@@ -65,8 +67,18 @@ class FastStepper(StepperPlatformInterface):
         self._is_moving = True
         self._send_command(base_command, [hex_position, speed])
 
-    def move_vel_mode(self, _velocity):
-        pass
+    def move_vel_mode(self, velocity):
+        """Move the motor indefinitely in either direction.
+
+        FAST does not support this, so instead send the longest possible move time."""
+        base_command = "MR" if velocity < 0 else "MF"
+        # The only place in MPF code that uses move_vel_mode is the software-based
+        # homing, which sends 1/-1 as values. Interpret that as slowest possible
+        # speed.
+        speed = MIN_SPEED if abs(velocity) == 1 else abs(velocity)
+        self._is_moving = True
+        # Maximum supported move time is FFFF
+        self._send_command(base_command, ["FFFF", speed])
 
     def stop(self):
         """Called during shutdown."""
