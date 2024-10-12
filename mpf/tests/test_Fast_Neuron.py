@@ -156,6 +156,12 @@ class TestFastNeuron(TestFastBase):
 
         self.net_cpu.expected_commands.update(net_commands_from_this_config)
 
+    def fast_platform(self):
+        return self.machine.hardware_platforms['fast']
+
+    def fast_net_serial(self):
+        return self.fast_platform().serial_connections['net']
+
     def test_coils(self):
         # The default expected commands will verify all the coils are configured properly.
         # We just need to ensure things get enabled properly.
@@ -179,7 +185,7 @@ class TestFastNeuron(TestFastBase):
             'Board 3 - Model: FP-I/O-0024, Firmware: 01.10, Switches: 24, Drivers: 8\n'
             )
 
-        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
+        self.assertEqual(info_str, self.machine.hardware_platforms['fast'].get_info_string())
 
     def _test_pulse(self):
 
@@ -477,8 +483,14 @@ class TestFastNeuron(TestFastBase):
         self._test_switch_changes()
         self._test_switch_changes_nc()
         self._test_receiving_sa()
+        self._test_cross_platform_switches()
+
+    def _test_cross_platform_switches(self):
+        self.assertSwitchState("s_mixed_platform_example", 0)
+        self.assertEqual(self.machine.switches["s_mixed_platform_example"].platform, self.machine.hardware_platforms['smart_virtual'])
 
     def _test_startup_switches(self):
+        self.assertEqual(self.machine.switches["s_baseline"].platform, self.fast_platform())
         self.assertSwitchState("s_baseline", 1)
         self.assertSwitchState("s_flipper", 0)
         self.assertSwitchState("s_test_nc", 0)  # NC which SA reports active should be inactive
@@ -486,11 +498,11 @@ class TestFastNeuron(TestFastBase):
     def _test_bad_switch_configs(self):
         # invalid switch
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('io3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.hardware_platforms['fast'].configure_switch('io3208-32', SwitchConfig(name="", debounce='auto', invert=0), {})
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
+            self.machine.hardware_platforms['fast'].configure_switch('brian-0', SwitchConfig(name="", debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertSwitchState("s_flipper", 0)
@@ -501,7 +513,7 @@ class TestFastNeuron(TestFastBase):
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_flipper_eos_active", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:02\r")
+        self.fast_net_serial().parse_incoming_raw_bytes(b"-L:02\r")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -512,7 +524,7 @@ class TestFastNeuron(TestFastBase):
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_flipper_eos", 1)
 
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:02\r")
+        self.fast_net_serial().parse_incoming_raw_bytes(b"/L:02\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_flipper_eos", 0)
@@ -523,13 +535,13 @@ class TestFastNeuron(TestFastBase):
         self.assertSwitchState("s_test_nc", 0)
         self.assertFalse(self.switch_hit)
 
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:05\r")
+        self.fast_net_serial().parse_incoming_raw_bytes(b"-L:05\r")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertSwitchState("s_test_nc", 1)
 
         self.machine.events.add_handler("s_test_nc_inactive", self._switch_hit_cb)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:05\r")
+        self.fast_net_serial().parse_incoming_raw_bytes(b"/L:05\r")
         self.advance_time_and_run(1)
 
         self.assertSwitchState("s_test_nc", 0)
@@ -547,7 +559,7 @@ class TestFastNeuron(TestFastBase):
         self.assertSwitchState("s_cab_flipper", 0)
 
         # Send an SA:
-        self.loop.run_until_complete(self.machine.default_platform.get_hw_switch_states(True))
+        self.loop.run_until_complete(self.fast_platform().get_hw_switch_states(True))
         self.advance_time_and_run()
 
         self.assertSwitchState("s_cab_flipper", 1)
@@ -555,7 +567,7 @@ class TestFastNeuron(TestFastBase):
         # Process a random SA coming in (this shouldn't happen but should work in non async mode)
         # Switch 0x09 is also now active
         self.assertSwitchState("s_debounce_custom", 0)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"SA:0E,2902000000000001000000000000\r")
+        self.fast_net_serial().parse_incoming_raw_bytes(b"SA:0E,2902000000000001000000000000\r")
         self.advance_time_and_run()
         self.assertSwitchState("s_debounce_custom", 1)
 
@@ -884,30 +896,31 @@ class TestFastNeuron(TestFastBase):
         self.advance_time_and_run()
         self.assertIsNotNone(self.machine.game)
 
+        net_serial = self.fast_net_serial()
         # hit the flipper and to simulate the EOS and everything
         # and earlier bug caused it to disable the flipper which is why we test this now
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
+        net_serial.parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
         self.advance_time_and_run(0.015)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
+        net_serial.parse_incoming_raw_bytes(b"-L:0B\r")  # eos
         self.advance_time_and_run(3)
 
         # release both
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
+        net_serial.parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
         self.advance_time_and_run(0.001)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
+        net_serial.parse_incoming_raw_bytes(b"/L:0B\r")
         self.advance_time_and_run(3)
 
         # ---
 
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
+        net_serial.parse_incoming_raw_bytes(b"-L:0A\r")  # flipper
         self.advance_time_and_run(0.016)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"-L:0B\r")  # eos
+        net_serial.parse_incoming_raw_bytes(b"-L:0B\r")  # eos
         self.advance_time_and_run(0.100)
 
         # release both
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
+        net_serial.parse_incoming_raw_bytes(b"/L:0A\r")  # flipper
         self.advance_time_and_run(0.100)
-        self.machine.default_platform.serial_connections['net'].parse_incoming_raw_bytes(b"/L:0B\r")
+        net_serial.parse_incoming_raw_bytes(b"/L:0B\r")
         self.advance_time_and_run(3)
 
         # end game

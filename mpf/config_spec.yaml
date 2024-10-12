@@ -754,6 +754,9 @@ fast_servos:
     min_us: single|int|1000
     home_us: single|int|1500
     max_runtime: single|ms|2000  # 65535 max
+fast_steppers:
+    __valid_in__: machine                 # todo add to validator
+    __allow_others__:
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict
@@ -1785,23 +1788,28 @@ spinners:
 steppers:
     __valid_in__: machine
     __type__: device
-    named_positions: dict|float:str|None
     home_events: event_handler|event_handler:ms|None
+    home_on_startup: single|bool|true
     homing_mode: single|enum(hardware,switch)|hardware
     homing_switch: single|machine(switches)|None
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
+    homing_speed: single|int|None
     pos_min: single|int|0
     pos_max: single|int|1000
     ball_search_min: single|int|0
     ball_search_max: single|int|1
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|true
-    relative_positions: dict|float:str|None
+    relative_positions: dict|float:subconfig(stepper_position_settings)|None
     reset_position: single|int|0
     reset_events: event_handler|event_handler:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    named_positions: dict|float:subconfig(stepper_position_settings)|None
     number: single|str|
     platform: single|str|None
     platform_settings: single|dict|None
+stepper_position_settings:
+    event: single|str|
+    speed: single|int|None
 spike_stepper_settings:
     homing_speed: single|int|10
     speed: single|int|20

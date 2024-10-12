@@ -27,6 +27,12 @@ VALID_IO_BOARDS = (
 )
 
 EXPANSION_BOARD_FEATURES = {
+    'FP-EXP-0061': {
+        'min_fw': '0.31',
+        'local_breakouts': ['FP-EXP-0061'],
+        'breakout_ports': 0,
+        'default_address': '90'
+    },
     'FP-EXP-0071': {
         'min_fw': '0.11',
         'local_breakouts': ['FP-EXP-0071'],
@@ -54,6 +60,11 @@ EXPANSION_BOARD_FEATURES = {
 }
 
 BREAKOUT_FEATURES = {
+    'FP-EXP-0061': {
+        'min_fw': '0.33',
+        'led_ports': 4,
+        'stepper_ports': 2
+    },
     'FP-EXP-0071': {
         'min_fw': '0.11',
         'led_ports': 4,

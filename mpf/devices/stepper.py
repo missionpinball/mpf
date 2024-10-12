@@ -26,7 +26,8 @@ class Stepper(SystemWideDevice):
     class_label = 'stepper'
 
     __slots__ = ["hw_stepper", "_target_position", "_current_position", "_ball_search_started",
-                 "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay"]
+                 "_ball_search_old_target", "_is_homed", "_is_moving", "_move_task", "delay",
+                 "_target_speed"]
 
     def __init__(self, machine, name):
         """Initialize stepper."""
@@ -34,6 +35,7 @@ class Stepper(SystemWideDevice):
         self.platform = None            # type: Optional[Stepper]
         self._target_position = 0       # in user units
         self._current_position = 0      # in user units
+        self._target_speed = None       # in steps per second
         self._ball_search_started = False
         self._ball_search_old_target = 0
         self._is_homed = False
@@ -51,14 +53,16 @@ class Stepper(SystemWideDevice):
         self._target_position = self.config['reset_position']
 
         for position in self.config['named_positions']:
-            self.machine.events.add_handler(self.config['named_positions'][position],
-                                            self.event_move_to_position,
-                                            position=position)
-
-        for position in self.config['relative_positions']:
-            self.machine.events.add_handler(self.config['relative_positions'][position],
+            self.machine.events.add_handler(self.config['named_positions'][position]['event'],
                                             self.event_move_to_position,
                                             position=position,
+                                            speed=self.config['named_positions'][position]['speed'])
+
+        for position in self.config['relative_positions']:
+            self.machine.events.add_handler(self.config['relative_positions'][position]['event'],
+                                            self.event_move_to_position,
+                                            position=position,
+                                            speed=[self.config['relative_positions'][position]['speed']],
                                             is_relative=True)
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
@@ -82,6 +86,13 @@ class Stepper(SystemWideDevice):
 
     def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str = None):
         """Validate stepper config."""
+        # If positions are just strings, expand them into strings and speeds
+        # TODO: Figure out how to use express_config() to map this
+        for cfg in ('named_positions', 'relative_positions'):
+            if cfg in config:
+                for pos, value in config[cfg].items():
+                    if isinstance(value, str):
+                        config[cfg][pos] = { 'event': value }
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
             'stepper_controllers', getattr(config, "platform", None))
@@ -94,9 +105,13 @@ class Stepper(SystemWideDevice):
         # wait for switches to be initialized
         await self.machine.events.wait_for_event("init_phase_3")
 
-        # first home the stepper
-        self.info_log("Initializing stepper and homing.")
-        await self._home()
+        if self.config['home_on_startup']:
+            # first home the stepper
+            self.info_log("Initializing stepper and homing.")
+            await self._home()
+        else:
+            self.info_log("Initializing stepper but will not home.")
+            self._is_homed = True
 
         # run the loop at least once
         self._is_moving.set()
@@ -119,7 +134,7 @@ class Stepper(SystemWideDevice):
                 self.info_log("Stepper moving relative %s to hit target %s from %s",
                               delta, target_position, self._current_position)
                 # move stepper
-                self.hw_stepper.move_rel_pos(delta)
+                self.hw_stepper.move_rel_pos(delta, self._target_speed)
                 # wait for the move to complete
                 await self.hw_stepper.wait_for_move_completed()
             else:
@@ -127,15 +142,18 @@ class Stepper(SystemWideDevice):
                               self._target_position)
             # set current position
             self._current_position = target_position
+            # Clear the speed override
+            self._target_speed = None
             # post ready event
             self._post_ready_event()
 
-    def _move_to_absolute_position(self, position):
+    def _move_to_absolute_position(self, position, speed=None):
         """Move stepper to position."""
-        self.info_log("Moving to absolute position %s. Current position: %s",
+        self.info_log("%s: Moving to absolute position %s. Current position: %s",
                       self.hw_stepper, position, self._current_position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
+            self._target_speed = speed
             self._is_moving.set()
         else:
             raise ValueError("_move_to_absolute_position: position argument beyond limits")
@@ -201,22 +219,22 @@ class Stepper(SystemWideDevice):
         self._move_to_absolute_position(self.config['reset_position'])
 
     @event_handler(5)
-    def event_move_to_position(self, position=None, is_relative=False, **kwargs):
+    def event_move_to_position(self, position=None, speed=None, is_relative=False, **kwargs):
         """Event handler for move_to_position event."""
         del kwargs
         if position is None:
             raise AssertionError("move_to_position event is missing a position.")
 
-        self.move_to_position(position, is_relative)
+        self.move_to_position(position, speed, is_relative)
 
-    def move_to_position(self, position, is_relative=False):
+    def move_to_position(self, position, speed=None, is_relative=False):
         """Move stepper to a position."""
         self.info_log("Stepper at %s moving to %s position %s", self._current_position,
                       "relative" if is_relative else "absolute", position)
         self._target_position = (self._current_position + position) if is_relative else position
         if self._ball_search_started:
             return
-        self._move_to_absolute_position(self._target_position)
+        self._move_to_absolute_position(self._target_position, speed)
 
     def _ball_search_start(self, **kwargs):
         del kwargs

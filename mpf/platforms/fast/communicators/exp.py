@@ -1,6 +1,8 @@
 """FAST Expansion Board Serial Communicator."""
 # mpf/platforms/fast/communicators/exp.py
 
+from functools import partial
+
 from mpf.platforms.fast.fast_defines import EXPANSION_BOARD_FEATURES
 from mpf.platforms.fast.fast_exp_board import FastExpansionBoard
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
@@ -18,14 +20,16 @@ class FastExpCommunicator(FastSerialCommunicator):
 
     IGNORED_MESSAGES = ['XX:F']
 
-    __slots__ = ["exp_boards_by_address", "active_board"]
+    __slots__ = ["exp_boards_by_address", "active_board", "_device_processors"]
 
     def __init__(self, platform, processor, config):
         """Initialize the EXP communicator."""
         super().__init__(platform, processor, config)
 
         self.exp_boards_by_address = dict()  # keys = board addresses, values = FastExpansionBoard objects
+        self._device_processors = dict()
         self.active_board = None
+
         self.message_processors['BR:'] = self._process_br
 
     async def init(self):
@@ -104,3 +108,19 @@ class FastExpCommunicator(FastSerialCommunicator):
 
         self.platform.debug_log("%s - Setting LED fade rate to %sms", self, rate)
         self.send_and_forget(f'RF@{board_address}:{Util.int_to_hex_string(rate, True)}')
+
+    def register_processor(self, message_prefix, board_address, device_id, callback):
+        if message_prefix not in self.message_processors:
+            self.message_processors[message_prefix] = partial(self._process_device_msg, message_prefix)
+            self._device_processors[message_prefix]= dict()
+        if board_address not in self._device_processors[message_prefix]:
+            self._device_processors[message_prefix][board_address] = dict()
+        self._device_processors[message_prefix][board_address][device_id] = callback
+
+    def _process_device_msg(self, message_prefix, message):
+        # Commands like MS: currently don't include the EXP board in the response,
+        # so there's no way to know which board needs to be informed. Inform them
+        # all? If multiple boards are running concurrently, it'll get ugly.
+        device_id = message.split(",")[0]
+        for board_callback in self._device_processors[message_prefix].values():
+            board_callback[device_id](message)

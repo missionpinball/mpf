@@ -8,6 +8,7 @@ from serial import SerialException
 from mpf.core.platform import (RgbDmdPlatform, DriverConfig, DriverSettings,
                                LightsPlatform, RepulseSettings,
                                SegmentDisplayPlatform, ServoPlatform,
+                               StepperPlatform,
                                SwitchConfig, SwitchSettings)
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
@@ -24,6 +25,7 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_port_detector import FastPortDetector
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_servo import FastServo
+from mpf.platforms.fast.fast_stepper import FastStepper
 from mpf.platforms.fast.fast_switch import FASTSwitch
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -31,7 +33,7 @@ from mpf.platforms.system11 import System11OverlayPlatform
 
 
 class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
-                           SegmentDisplayPlatform,
+                           SegmentDisplayPlatform, StepperPlatform,
                            System11OverlayPlatform):
 
     """Platform class for the FAST Pinball hardware."""
@@ -427,6 +429,40 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         del config['platform_settings']
 
         return FastServo(brk_board, port, config)
+
+    async def configure_stepper(self, number: str, config: dict) -> FastStepper:
+        """Configure a servo.
+
+        Args:
+        ----
+            number: Number of stepper
+            config: Dict of config settings.
+
+        Returns: Stepper object.
+        """
+        # TODO consolidate with similar code in configure_light()
+        number = number.lower()
+        parts = number.split("-")
+
+        exp_board = self.exp_boards_by_name[parts[0]]
+
+        try:
+            _, port = parts
+            breakout_id = '0'
+        except ValueError:
+            _, breakout_id, port = parts
+            breakout_id = breakout_id.strip('b')
+
+        brk_board = exp_board.breakouts[breakout_id]
+
+        # verify this board support servos
+        assert int(port) <= int(brk_board.features['stepper_ports'])  # TODO should this be stored as an int?
+
+        if 'platform_settings' in config:
+            config.update(self.machine.config_validator.validate_config('fast_steppers', config['platform_settings']))
+            del config['platform_settings']
+
+        return FastStepper(brk_board, port, config)
 
     def _parse_switch_number(self, number):
         try:
