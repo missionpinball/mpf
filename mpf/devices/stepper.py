@@ -194,7 +194,9 @@ class Stepper(SystemWideDevice):
 
     def stop_device(self):
         """Stop motor."""
-        self.hw_stepper.stop()
+        # A crash during startup may not have initialized the hw_stepper yet
+        if self.hw_stepper:
+            self.hw_stepper.stop()
         self._is_moving.clear()
         if self._move_task:
             self._move_task.cancel()
