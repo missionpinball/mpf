@@ -7,6 +7,7 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 POLL_MS = 100
+DEFAULT_SPEED = Util.int_to_hex_string(600, True)
 
 class FastStepper(StepperPlatformInterface):
 
@@ -51,7 +52,6 @@ class FastStepper(StepperPlatformInterface):
 
         base_command = "MF" if position > 0 else "MR"
         hex_position = Util.int_to_hex_string(position, True)
-        cmd_args = [hex_position]
         self.log.debug("Moving stepper index %s: %s steps with speed %s", self.stepper_index, position, speed)
 
         if speed:
@@ -60,10 +60,11 @@ class FastStepper(StepperPlatformInterface):
                                       f"but received value of {speed}.",
                                       2, self.__class__.__name__)
             speed = Util.int_to_hex_string(speed, True)
-            cmd_args.append(speed)
+        else:
+            speed = DEFAULT_SPEED
 
         self._is_moving = True
-        self._send_command(base_command, cmd_args)
+        self._send_command(base_command, [hex_position, speed])
 
     def move_vel_mode(self, _velocity):
         pass
@@ -81,5 +82,10 @@ class FastStepper(StepperPlatformInterface):
 
     def _process_ms(self, message):
         _index, state = message.split(",")
-        state_flags = Util.hex_string_to_int(state)
+        state_flags = int(state, 16)
         self._is_moving = state_flags & 1
+        ## Unused
+        # self._is_reversed = state_flags & (1 << 1)
+        # self._is_home = state_flags & (1 << 2)
+        # self._is_limit = state_flags & (1 << 3)
+        # self.is_braked = state_flags & (1 << 4)
