@@ -26,6 +26,7 @@ class FastStepper(StepperPlatformInterface):
         self.stepper_index = Util.int_to_hex_string(int(port) - 1)  # Steppers are 0-indexed
 
         self.exp_connection.register_processor('MS:', self.base_address, self.stepper_index, self._process_ms)
+        self._is_moving = False
         # self.max_runtime = f"{config['max_runtime']:02X}"
 
     #     self.write_config_to_servo()
@@ -46,17 +47,16 @@ class FastStepper(StepperPlatformInterface):
             raise ConfigFileError("FAST Stepper only supports home in counter-clockwise direction. "
                                   "Please rewire your motor and set homing_direction: counterclockwise "
                                   "in your stepper config.", 1, self.__class__.__name__)
+        self._is_moving = True
         self._send_command("MH")
 
     async def wait_for_move_completed(self):
         # return
-        polls = 0
         while True:
+            if not self._is_moving:
+                return
             await asyncio.sleep(1 / POLL_MS)
             self._send_command('MS')
-            polls += 1
-            if polls > 500:
-                return
 
     def move_rel_pos(self, position, speed=None):
         """Move the servo a relative number of steps position."""
@@ -76,6 +76,7 @@ class FastStepper(StepperPlatformInterface):
             speed = Util.int_to_hex_string(speed, True)
             cmd_args.append(speed)
 
+        self._is_moving = True
         self._send_command(base_command, cmd_args)
 
     def move_vel_mode(self, _velocity):
@@ -94,3 +95,6 @@ class FastStepper(StepperPlatformInterface):
 
     def _process_ms(self, message):
         print(f"FASTStepper {self.stepper_index} has an MS message! '{message}'")
+        index, state = message.split(",")
+        state_flags = Util.hex_string_to_int(state)
+        self._is_moving = state_flags & 1
