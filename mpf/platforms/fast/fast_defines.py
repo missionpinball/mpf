@@ -61,7 +61,7 @@ EXPANSION_BOARD_FEATURES = {
 
 BREAKOUT_FEATURES = {
     'FP-EXP-0061': {
-        'min_fw': '0.31',
+        'min_fw': '0.33',
         'led_ports': 4,
         'stepper_ports': 2
     },

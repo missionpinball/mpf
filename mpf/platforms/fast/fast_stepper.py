@@ -1,10 +1,12 @@
 """Fast servo implementation."""
 
+import asyncio
 
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
+POLL_MS = 100
 
 class FastStepper(StepperPlatformInterface):
 
@@ -18,7 +20,12 @@ class FastStepper(StepperPlatformInterface):
         self.exp_connection = breakout_board.communicator
 
         self.base_address = breakout_board.address
-        self.stepper_index = str(int(port) - 1)  # Steppers are 0-indexed
+        # Try this
+        self.base_address = '90'
+        #
+        self.stepper_index = Util.int_to_hex_string(int(port) - 1)  # Steppers are 0-indexed
+
+        self.exp_connection.register_processor('MS:', self.base_address, self.stepper_index, self._process_ms)
         # self.max_runtime = f"{config['max_runtime']:02X}"
 
     #     self.write_config_to_servo()
@@ -42,11 +49,14 @@ class FastStepper(StepperPlatformInterface):
         self._send_command("MH")
 
     async def wait_for_move_completed(self):
-        return
-
-        # while True:
-        #     await asyncio.sleep(1 / POLL_MS)
-        #     status = await self.exp_connection.
+        # return
+        polls = 0
+        while True:
+            await asyncio.sleep(1 / POLL_MS)
+            self._send_command('MS')
+            polls += 1
+            if polls > 500:
+                return
 
     def move_rel_pos(self, position, speed=None):
         """Move the servo a relative number of steps position."""
@@ -82,4 +92,5 @@ class FastStepper(StepperPlatformInterface):
         self.exp_connection.send_and_forget(','.join([
             f'{base_command}@{self.base_address}:{self.stepper_index}', *payload]))
 
-
+    def _process_ms(self, message):
+        print(f"FASTStepper {self.stepper_index} has an MS message! '{message}'")
