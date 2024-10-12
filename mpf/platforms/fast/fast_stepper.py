@@ -39,11 +39,14 @@ class FastStepper(StepperPlatformInterface):
         self._send_command("MH")
 
     async def wait_for_move_completed(self):
-        # return
+        # If not moving, return immediately
+        if not self._is_moving:
+            return
         while True:
+            await asyncio.sleep(POLL_MS / 1000)
+            # We may have stopped since the last poll, so check again
             if not self._is_moving:
                 return
-            await asyncio.sleep(1 / POLL_MS)
             self._send_command('MS')
 
     def move_rel_pos(self, position, speed=None):
