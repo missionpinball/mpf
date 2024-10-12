@@ -458,11 +458,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         # verify this board support servos
         assert int(port) <= int(brk_board.features['stepper_ports'])  # TODO should this be stored as an int?
 
-        if 'platform_settings' in config:
-            config.update(self.machine.config_validator.validate_config('fast_steppers', config['platform_settings']))
-            del config['platform_settings']
-
         return FastStepper(brk_board, port, config)
+
+    @classmethod
+    def get_stepper_config_section(cls):
+        """Return config section."""
+        return "fast_stepper_settings"
 
     def _parse_switch_number(self, number):
         try:

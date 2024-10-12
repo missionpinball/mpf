@@ -748,9 +748,9 @@ fast_servos:
     min_us: single|int|1000
     home_us: single|int|1500
     max_runtime: single|ms|2000  # 65535 max
-fast_steppers:
+fast_stepper_settings:
     __valid_in__: machine                 # todo add to validator
-    __allow_others__:
+    default_speed: single|int|600
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
     __type__: config_dict

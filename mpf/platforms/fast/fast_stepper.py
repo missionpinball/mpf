@@ -7,14 +7,13 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 POLL_MS = 100
-DEFAULT_SPEED = Util.int_to_hex_string(600, True)
 
 class FastStepper(StepperPlatformInterface):
 
     """A stepper in the FAST platform connected to a FAST Expansion Board."""
 
     __slots__ = ["base_address", "config", "exp_connection", "log", "stepper_index",
-                 "_is_moving"]
+                 "_is_moving", "_default_speed"]
 
     def __init__(self, breakout_board, port, config):
         """Initialize servo."""
@@ -27,7 +26,7 @@ class FastStepper(StepperPlatformInterface):
 
         self.exp_connection.register_processor('MS:', self.base_address, self.stepper_index, self._process_ms)
         self._is_moving = False
-
+        self._default_speed = Util.int_to_hex_string(self.config['default_speed'], True)
 
     def home(self, direction):
         if direction != 'counterclockwise':
@@ -61,7 +60,7 @@ class FastStepper(StepperPlatformInterface):
                                       2, self.__class__.__name__)
             speed = Util.int_to_hex_string(speed, True)
         else:
-            speed = DEFAULT_SPEED
+            speed = self._default_speed
 
         self._is_moving = True
         self._send_command(base_command, [hex_position, speed])
