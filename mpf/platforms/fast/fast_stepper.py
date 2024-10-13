@@ -56,7 +56,7 @@ class FastStepper(StepperPlatformInterface):
 
         base_command = "MF" if position > 0 else "MR"
         hex_position = Util.int_to_hex_string(position, True)
-        self.log.debug("Moving stepper index %s: %s steps with speed %s", self.stepper_index, position, speed)
+        self.log.info("Moving stepper index %s: %s steps with speed %s", self.stepper_index, position, speed)
 
         if speed:
             if speed < MIN_SPEED or speed > MAX_SPEED:
