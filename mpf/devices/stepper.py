@@ -62,7 +62,7 @@ class Stepper(SystemWideDevice):
             self.machine.events.add_handler(self.config['relative_positions'][position]['event'],
                                             self.event_move_to_position,
                                             position=position,
-                                            speed=[self.config['relative_positions'][position]['speed']],
+                                            speed=self.config['relative_positions'][position]['speed'],
                                             is_relative=True)
 
         if not self.platform.features['allow_empty_numbers'] and self.config['number'] is None:
