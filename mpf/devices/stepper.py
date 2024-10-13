@@ -135,6 +135,9 @@ class Stepper(SystemWideDevice):
                               delta, target_position, self._current_position)
                 # move stepper
                 self.hw_stepper.move_rel_pos(delta, self._target_speed)
+                # Clear the speed override here, in case a subsequent move wants
+                # to set one before this one finishes.
+                self._target_speed = None
                 # wait for the move to complete
                 await self.hw_stepper.wait_for_move_completed()
             else:
@@ -142,15 +145,13 @@ class Stepper(SystemWideDevice):
                               self._target_position)
             # set current position
             self._current_position = target_position
-            # Clear the speed override
-            self._target_speed = None
             # post ready event
             self._post_ready_event()
 
     def _move_to_absolute_position(self, position, speed=None):
         """Move stepper to position."""
-        self.info_log("%s: Moving to absolute position %s. Current position: %s",
-                      self.hw_stepper, position, self._current_position)
+        self.info_log("Moving to absolute position %s. Current position: %s",
+                      position, self._current_position)
         if self.config['pos_min'] <= position <= self.config['pos_max']:
             self._target_position = position
             self._target_speed = speed
