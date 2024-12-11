@@ -319,7 +319,7 @@ Display count: 5
             b'\x1F       \x00': None
         }
 
-        self.advance_time_and_run(1.5)
+        self.advance_time_and_run(1)
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
