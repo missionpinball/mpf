@@ -293,49 +293,6 @@ Display count: 5
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # set info display to TEST
-        self.serialMock.expected_commands = {
-            b'\x1E   TEST\x00': None
-        }
-        self.machine.segment_displays["info_display"].add_text("TEST")
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
-
-        # set player 1 display to 42000
-        self.serialMock.expected_commands = {
-            b'\x1F  42000\x00': None
-        }
-        self.machine.segment_displays["player1_display"].add_text("42000")
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
-
-        # set player 1 display to flashing
-        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.FLASH_ALL)
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
-
-        self.serialMock.expected_commands = {
-            b'\x1F  42000\x00': None,
-            b'\x1F       \x00': None
-        }
-
-        self.advance_time_and_run(1)
-        self.assertFalse(self.serialMock.expected_commands)
-
-        self.serialMock.expected_commands = {
-            b'\x1F       \x00': None
-        }
-
-        self.advance_time_and_run(.5)
-        self.assertFalse(self.serialMock.expected_commands)
-
-        self.serialMock.expected_commands = {
-            b'\x1F  42000\x00': None,
-        }
-        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.NO_FLASH)
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
-
         # test sound
         self.serialMock.expected_commands = {
             b'\x32\x02': None
@@ -405,6 +362,49 @@ Display count: 5
             b'\x33': None
         }
         self.post_event("test_stop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set info display to TEST
+        self.serialMock.expected_commands = {
+            b'\x1E   TEST\x00': None
+        }
+        self.machine.segment_displays["info_display"].add_text("TEST")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set player 1 display to 42000
+        self.serialMock.expected_commands = {
+            b'\x1F  42000\x00': None
+        }
+        self.machine.segment_displays["player1_display"].add_text("42000")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set player 1 display to flashing
+        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.FLASH_ALL)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F  42000\x00': None,
+            b'\x1F       \x00': None
+        }
+
+        self.advance_time_and_run(1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F       \x00': None
+        }
+
+        self.advance_time_and_run(.5)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F  42000\x00': None,
+        }
+        self.machine.segment_displays["player1_display"].set_flashing(FlashingType.NO_FLASH)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
