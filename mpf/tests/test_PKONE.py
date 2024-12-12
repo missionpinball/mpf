@@ -40,6 +40,7 @@ class BaseMockPKONE(MockSerial):
         return False
 
     def write(self, msg):
+        print("W: ", msg)
         parts = msg.split(b'E')
         # remove last newline
         assert parts.pop() == b''
@@ -50,6 +51,7 @@ class BaseMockPKONE(MockSerial):
         return len(msg)
 
     def _handle_msg(self, msg):
+        print("HANDLE", msg)
         msg_len = len(msg)
         cmd = msg.decode()
 
@@ -65,13 +67,17 @@ class BaseMockPKONE(MockSerial):
             return msg_len
 
         if self.validate_expected_commands_mode:
+            print("VALEX MODE")
             if cmd in self.expected_commands:
                 if self.expected_commands[cmd]:
+                    print("FOUND EXPECTED:", cmd)
                     self.queue.append(self.expected_commands[cmd])
                 del self.expected_commands[cmd]
                 self.sent_commands.append(cmd)
                 return msg_len
             else:
+                print("UNEXPECTED:", cmd)
+                print(self.expected_commands)
                 raise Exception(str(cmd))
         else:
             self.sent_commands.append(cmd)
