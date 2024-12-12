@@ -27,7 +27,9 @@ class BaseMockPKONE(MockSerial):
         del length
         if not self.queue:
             return
-        msg = (self.queue.pop() + 'E').encode('ascii', 'replace')
+        dequeued = self.queue.pop()
+        print("READ", dequeued)
+        msg = (dequeued + 'E').encode('ascii', 'replace')
         return msg
 
     def read_ready(self):
