@@ -19,6 +19,7 @@ class MockSpikeSocket(MockSerial):
             return b''
         msg = self.queue.pop()
 
+        print(f"DQ: {msg}")
         return msg
 
     def read_ready(self):
@@ -40,15 +41,19 @@ class MockSpikeSocket(MockSerial):
                 self.queue.append(b'MPF Spike Bridge!\r\n')
                 return len(encoded_msg)
             if encoded_msg[0] == 0x00:
+                print("WR1")
                 self._handle_msg(encoded_msg[0:1])
                 encoded_msg = encoded_msg[1:]
             elif encoded_msg[0] == 0x01:
+                print("WR2")
                 self._handle_msg(encoded_msg[0:2])
                 encoded_msg = encoded_msg[2:]
             elif encoded_msg[0] == 0x80 and encoded_msg[2] == 0x90:
+                print("WR3")
                 self._handle_msg(encoded_msg[0:2051])
                 encoded_msg = encoded_msg[2051:]
             else:
+                print("W4")
                 msg_len = encoded_msg[1] + 3
                 self._handle_msg(encoded_msg[0:msg_len])
                 encoded_msg = encoded_msg[msg_len:]
@@ -70,6 +75,7 @@ class MockSpikeSocket(MockSerial):
 
         msg = encoded_msg
 
+        print(f"HA: {msg}")
         msg = bytes(msg)
 
         if msg and msg[0] & 0x80 and (msg[2] == 0x11 or (msg[2] == 0xf0 and msg[3] == 0x10)):
