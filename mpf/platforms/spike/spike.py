@@ -1103,7 +1103,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         """Send cmd and wait for response."""
         assert response_len > 0
         if node > 15:
-            raise AssertionError("Node must be 0-15.")
+            raise AssertionError(f"Node must be 0-15. Got: {node}")
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
@@ -1134,7 +1134,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
     def _create_cmd_str(self, node, cmd, data):
         if node > 15:
-            raise AssertionError("Node must be 0-15.")
+            raise AssertionError(f"Node must be 0-15. Got: {node}")
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
