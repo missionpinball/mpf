@@ -1235,6 +1235,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertAvailableBallsOnPlayfield(1)
         self.mock_event("multiball_mb_grace_period_restart_will_end")
         self.mock_event("multiball_mb_grace_period_restart_ended")
+        self.mock_event("multiball_mb_grace_period_restart_will_resume")
 
         # start mb, default ball save, 5s restart grace period
         self.post_event("mb_grace_period_restart_start")
@@ -1242,13 +1243,12 @@ class TestMultiBall(MpfGameTestCase):
         self.assertAvailableBallsOnPlayfield(2)
 
         self.drain_one_ball()
-        self.advance_time_and_run(5)
+        self.advance_time_and_run(10)
 
         self.assertEventCalled("multiball_mb_grace_period_restart_will_end", 1)
-        self.assertEventCalled("multiball_mb_grace_period_restart_ended", 0)
-
-        self.advance_time_and_run(5)
+        self.assertEventNotCalled("multiball_mb_grace_period_restart_will_resume")
         self.assertEventCalled("multiball_mb_grace_period_restart_ended", 1)
+        self.assertAvailableBallsOnPlayfield(1)
 
 
     def testEndMultiballGracePeriodAddABallRestart(self):
@@ -1268,12 +1268,18 @@ class TestMultiBall(MpfGameTestCase):
         self.drain_one_ball()
         self.advance_time_and_run(3)
 
+        # we should now be in the grace period (set at 5 seconds)
         self.assertEventCalled("multiball_mb_grace_period_restart_will_end", 1)
-        self.assertEventCalled("multiball_mb_grace_period_restart_ended", 0)
+        self.assertEventNotCalled("multiball_mb_grace_period_restart_ended")
 
+        # trigger the add a ball during grace period
         self.post_event("add_ball")
-        self.assertEventCalled("multiball_mb_grace_period_restart_ended", 0)
+        self.advance_time_and_run()
+        self.assertEventNotCalled("multiball_mb_grace_period_restart_ended")
         self.assertEventCalled("multiball_mb_grace_period_restart_will_resume", 1)
-        self.advance_time_and_run(5)
+
+        # fast-forward time past the grace period and ensure multiball has resumed (i.e. with 2 balls)
+        self.advance_time_and_run(10)
         self.assertAvailableBallsOnPlayfield(2)
         self.assertEventCalled("ball_save_mb_grace_period_restart_timer_start")
+        self.assertEventNotCalled("multiball_mb_grace_period_restart_ended")
