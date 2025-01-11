@@ -239,20 +239,20 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
         restart_grace_period_ms = self.config['restart_grace_period'].evaluate([])
 
-        if not self.machine.game or (self.machine.game.balls_in_play - balls < 1 and restart_grace_period_ms==0):
+        if not self.machine.game or (self.machine.game.balls_in_play - balls < 1 and restart_grace_period_ms == 0):
             self._multiball_end()
-        elif restart_grace_period_ms>0:
+        elif restart_grace_period_ms > 0:
             if self.machine.game.balls_in_play == 0:
-                self.delay.run_now(f"{self.name}_restart_grace_period")
+                self.delay.run_now("restart_grace_period")
             elif self.machine.game.balls_in_play - balls < 1:
-                self.machine.events.post(f"multiball_{self.name}_will_end", duration=restart_grace_period_ms)
+                self.machine.events.post(f"multiball_{self.name}_will_end", grace_period=restart_grace_period_ms)
                 '''event: multiball_(name)_will_end
                 desc: The multiball called (name) does not have multiple balls active, enabling grace period.
                 args:
-                    duration: duration of the restart grace period
+                    grace_period: restart duration grace period in ms
                 '''
 
-                self.delay.add(name=f"{self.name}_restart_grace_period",
+                self.delay.add(name="restart_grace_period",
                                ms=restart_grace_period_ms,
                                callback=self._multiball_end)
 
@@ -265,7 +265,6 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
         desc: The multiball called (name) has just ended.
         '''
         self.debug_log("Ball drained. MB ended.")
-
 
     @event_handler(5)
     def event_stop(self, **kwargs):
@@ -304,10 +303,9 @@ class Multiball(EnableDisableMixin, SystemWideDevice, ModeDevice):
 
     def add_a_ball(self):
         """Add a ball if multiball has started."""
-
         # remove if it exists as multiball now has multiple balls
-        if self.delay.check(f"{self.name}_restart_grace_period"):
-            self.delay.remove(f"{self.name}_restart_grace_period")
+        if self.delay.check("restart_grace_period"):
+            self.delay.remove("restart_grace_period")
             self.machine.events.post(f"multiball_{self.name}_will_resume")
             '''event: multiball_(name)_will_resume
             desc: Multiball (name) has been resumed during end of multiball grace period.
