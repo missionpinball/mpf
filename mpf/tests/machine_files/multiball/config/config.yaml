@@ -128,3 +128,12 @@ multiballs:
         add_a_ball_grace_period: 10s
         start_events: mb_add_a_ball_timers_start
         stop_events: mb_add_a_ball_timers_stop
+    mb_grace_period_restart:
+        ball_count: 2
+        add_a_ball_events: add_ball
+        add_a_ball_shoot_again: 20s
+        add_a_ball_hurry_up_time: 5s
+        add_a_ball_grace_period: 10s
+        restart_grace_period: 5s
+        start_events: mb_grace_period_restart_start
+        stop_events: mb_grace_period_restart_stop
