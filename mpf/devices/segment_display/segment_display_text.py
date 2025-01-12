@@ -81,7 +81,7 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
         char_list = []
         uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas)
 
-        # Adujust the color array if needed
+        # Adjust the color array if needed
         if (len(colors)) == 1:
             colors = colors * display_size
         elif len(colors) != display_size:
