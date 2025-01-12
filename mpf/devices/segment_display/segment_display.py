@@ -170,10 +170,8 @@ class SegmentDisplay(SystemWideDevice):
 
         # For the replace-text update method, skip the stack and write straight to the display
 
-        ###############################
-        #Store current color and text as previous text/color of next run even if no transition in this step,
-        #the next step might have a transition, that the old text/color needs to be included into that transition
-        ###############################
+        # Store current color and text as previous text/color of next run even if no transition in this step,
+        # the next step might have a transition, that the old text/color needs to be included into that transition
 
         # Handle new and previous text
         previous_text = self._previous_text or ""
