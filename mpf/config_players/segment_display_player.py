@@ -107,10 +107,8 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
     def clear_context(self, context):
 
-        ##############
         # Remove all texts. Ignore what keys are available, that will be checked later in the segment display code.
         # Especially important for update_method replace since there are no keys.
-        ##############
 
         instance_dict = self._get_instance_dict(context) # key of the dict is the display, the value is another dict
 
