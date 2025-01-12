@@ -113,7 +113,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         instance_dict = self._get_instance_dict(context) # key of the dict is the display, the value is another dict
 
         for display, keys_dict in instance_dict.items(): # keys_dict key is the show key, the value is a boolean (with yet unknown usage)
-            if(keys_dict): #depending on the situation the keys_dict might be empty, still need to clear the display
+            if keys_dict: #depending on the situation the keys_dict might be empty, still need to clear the display
                 for key in dict(keys_dict).keys():
                     display.clear_segment_display(key)
                     if instance_dict[display][key] is not True:
