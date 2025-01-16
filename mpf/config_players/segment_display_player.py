@@ -106,14 +106,13 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
             del instance_dict[display][key]
 
     def clear_context(self, context):
+        """Remove all texts. Ignore what keys are available, that will be checked later in the segment display code.
+        Especially important for update_method replace since there are no keys."""
 
-        # Remove all texts. Ignore what keys are available, that will be checked later in the segment display code.
-        # Especially important for update_method replace since there are no keys.
+        instance_dict = self._get_instance_dict(context)  # key of the dict is the display, the value is another dict
 
-        instance_dict = self._get_instance_dict(context) # key of the dict is the display, the value is another dict
-
-        for display, keys_dict in instance_dict.items(): # keys_dict key is the show key, the value is a boolean (with yet unknown usage)
-            if keys_dict: #depending on the situation the keys_dict might be empty, still need to clear the display
+        for display, keys_dict in instance_dict.items():  # keys_dict key is the show key, value is bool(unknown usage)
+            if keys_dict:  #depending on the situation the keys_dict might be empty, still need to clear the display
                 for key in dict(keys_dict).keys():
                     display.clear_segment_display(key)
                     if instance_dict[display][key] is not True:

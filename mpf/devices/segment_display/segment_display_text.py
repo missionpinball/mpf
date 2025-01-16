@@ -75,8 +75,9 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
                            use_dots_for_commas: bool, colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
         """Create characters from text and color them.
         - Dots and commas are embedded on the fly.
-        - Text will be right aligned on the display, thus if text is shorter than display spaces will be padded before the text
-        - If list of colors is less than the display size then all white will be used, if only one color is given that will be used for the full display
+        - Text will be right aligned on the display, if text is shorter than display spaces add on the left
+        - If list of colors is less than the display size then all white will be used,
+        - If only one color is given that will be used for the full display
         """
         char_list = []
         uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas)
@@ -88,18 +89,20 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
             #TODO: Log that colors were adjusted to white as default
             colors = [RGBColor("white")] * display_size
 
-        # ensure list is the same size as the segment display (cut off on left if too long or right justify characters if too short)
+        # ensure list is the same size as the segment display
+        # cut off on left if too long or right justify characters if too short
         current_length = len(uncolored_chars)
         if current_length > display_size:
             for _ in range(current_length - display_size):
-                uncolored_chars.pop(0) # remove very left char of array if too long
+                uncolored_chars.pop(0) #  remove very left char of array if too long
         elif current_length < display_size:
             for _ in range(display_size - current_length):
                 uncolored_chars.insert(0, (SPACE_CODE, False, False))
 
         for i, char in enumerate(uncolored_chars):
             color = colors[i]
-            char_list.append(DisplayCharacter(char[0], char[1], char[2], color)) #0: char code 1: char_has_dot 2: char_has_comma
+            #0: char code 1: char_has_dot 2: char_has_comma
+            char_list.append(DisplayCharacter(char[0], char[1], char[2], color))
 
         return char_list
 
