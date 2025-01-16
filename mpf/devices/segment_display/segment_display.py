@@ -194,7 +194,7 @@ class SegmentDisplay(SystemWideDevice):
                                    previous_color, color,
                                    self.config['default_transition_update_hz'], flashing, flash_mask)
 
-        else: # No transition configured
+        else:  # No transition configured
             if transition_out:  # in case transition_out is set we need to preserve it for the next step
                 self._previous_transition_out = transition_out
             new_text = TextTemplate(self.machine, text).evaluate({})

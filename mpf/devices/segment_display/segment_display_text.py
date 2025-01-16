@@ -73,13 +73,13 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
     @classmethod
     def _create_characters(cls, text: str, display_size: int, collapse_dots: bool, collapse_commas: bool,
                            use_dots_for_commas: bool, colors: List[Optional[RGBColor]]) -> List[DisplayCharacter]:
-        """
-        Create characters from text and color them.
+        """Create characters from text and color them.
         - Dots and commas are embedded on the fly.
         - Text will be right aligned on the display, if text is shorter than display spaces add on the left
         - If list of colors is less than the display size then all white will be used,
         - If only one color is given that will be used for the full display
         """
+
         char_list = []
         uncolored_chars = cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas)
 
