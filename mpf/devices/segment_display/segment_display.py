@@ -51,7 +51,8 @@ class SegmentDisplay(SystemWideDevice):
 
     __slots__ = ["hw_display", "size", "virtual_connector", "_text_stack", "_current_placeholder",
                  "_current_text_stack_entry", "_transition_update_task", "_current_transition", "_default_color",
-                 "_current_state", "_current_placeholder_future", "_previous_text", "_previous_color", "_previous_transition_out"]
+                 "_current_state", "_current_placeholder_future", "_previous_text",
+                 "_previous_color", "_previous_transition_out"]
 
     config_section = 'segment_displays'
     collection = 'segment_displays'
@@ -94,8 +95,10 @@ class SegmentDisplay(SystemWideDevice):
             self._default_color = self._default_color * self.size
         elif len(self._default_color) != self.size:
             self.warning_log("The amount of colors you specified for your text has to be either equal to "
-                "the amount of digits in your display or equals 1. Your display has a size of %s and the "
-                "amount of colors specified is %s. All display colors will be set to white.", self.size, len(self._default_color))
+                             "the amount of digits in your display or equals 1."
+                             " Your display has a size of %s and the "
+                             "amount of colors specified is %s. All display colors"
+                             " will be set to white.", self.size, len(self._default_color))
             self._default_color = [RGBColor("white")] * self.size
 
         # configure hardware
@@ -158,8 +161,6 @@ class SegmentDisplay(SystemWideDevice):
             color = self._current_state.text.get_colors()
 
         if self.config['update_method'] == "stack":
-
-
             self._text_stack[key] = TextStackEntry(
                 text, color, flashing, flash_mask, transition, transition_out, priority, key)
             self._update_stack()
@@ -183,18 +184,18 @@ class SegmentDisplay(SystemWideDevice):
 
         if transition or self._previous_transition_out:
             transition_conf = TransitionManager.get_transition(self.size,
-                                                       self.config['integrated_dots'],
-                                                       self.config['integrated_commas'],
-                                                       self.config['use_dots_for_commas'],
-                                                       transition or self._previous_transition_out)
+                                                               self.config['integrated_dots'],
+                                                               self.config['integrated_commas'],
+                                                               self.config['use_dots_for_commas'],
+                                                               transition or self._previous_transition_out)
 
-            #start transition
+            # start transition
             self._start_transition(transition_conf, previous_text, text,
                                    previous_color, color,
                                    self.config['default_transition_update_hz'], flashing, flash_mask)
 
-        else: #No transition configured
-            if transition_out:  #in case transition_out is set we need to preserve it for the next step
+        else: # No transition configured
+            if transition_out:  # in case transition_out is set we need to preserve it for the next step
                 self._previous_transition_out = transition_out
             new_text = TextTemplate(self.machine, text).evaluate({})
             text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
@@ -202,10 +203,11 @@ class SegmentDisplay(SystemWideDevice):
                                                color)
             self._update_display(SegmentDisplayState(text, flashing, flash_mask))
 
-        ###############################
-        # Once the transistion_out is played, removed it that is not played in the next step again, but in case transition_out is set in the current step
-        # then we need to preserve it for the next step but only after the previous step's transition_out is in this step's config (or the transition of the current step)
-        ###############################
+        # Once the transistion_out is played, removed it that is not played in the next step again,
+        # but in case transition_out is set in the current step then we need to preserve it for the next step
+        # but only after the previous step's transition_out is in this step's config
+        # (or the transition of the current step)
+
         self._previous_transition_out = transition_out or None
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
@@ -221,25 +223,21 @@ class SegmentDisplay(SystemWideDevice):
             if key in self._text_stack:
                 del self._text_stack[key]
                 self._update_stack()
-        else: # must be update_method replace, send empyt text since no key in that case
+        else:  # must be update_method replace, send empyt text since no key in that case
             self.add_text_entry("", self._previous_color, FlashingType.NO_FLASH, "", None, None, 100, key)
-
 
     def clear_segment_display(self, key: Optional[str]):
         """Clear segment dispaly if context is removed from player."""
-
         if self.config['update_method'] == "replace":
             self._stop_transition()
             self._previous_transition_out = None
 
         self.remove_text_by_key(key)
 
-
     # pylint: disable=too-many-arguments
     def _start_transition(self, transition: TransitionBase, current_text: str, new_text: str,
                           current_colors: List[RGBColor], new_colors: List[RGBColor],
                           update_hz: float, flashing, flash_mask):
-
         """Start the specified transition."""
         if self._current_transition:
             self._stop_transition()
