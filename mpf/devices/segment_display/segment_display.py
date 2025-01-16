@@ -195,8 +195,6 @@ class SegmentDisplay(SystemWideDevice):
                                    self.config['default_transition_update_hz'], flashing, flash_mask)
 
         else:  # No transition configured
-            if transition_out:  # in case transition_out is set we need to preserve it for the next step
-                self._previous_transition_out = transition_out
             new_text = TextTemplate(self.machine, text).evaluate({})
             text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
                                                self.config['integrated_commas'], self.config['use_dots_for_commas'],
