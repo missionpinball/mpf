@@ -19,7 +19,6 @@ coils:
     eject_coil6:
         number:
 
-
 switches:
     s_ball_switch1:
         number:
@@ -39,8 +38,8 @@ switches:
         tags: launch
     s_vuk:
         number:
-
-
+    s_bd_autofire:
+        number:
 
 ball_devices:
     test_trough:
@@ -72,7 +71,7 @@ ball_devices:
         eject_timeouts: 6s
         eject_targets: playfield
         mechanical_eject: true
-        auto_fire_on_unexpected_ball: false
+        auto_fire_on_unexpected_ball: False
         confirm_eject_type: target
     test_vuk:
         eject_coil: eject_coil5
@@ -80,5 +79,24 @@ ball_devices:
         debug: true
         eject_timeouts: 3s
         eject_targets: test_launcher
-        auto_fire_on_unexpected_ball: false
+        auto_fire_on_unexpected_ball: False
         confirm_eject_type: target
+    test_bd_dyna_autofire:
+        mechanical_eject: true
+        eject_coil: eject_coil6
+        ball_switches: s_bd_autofire
+        debug: true
+        eject_timeouts: 3s
+        eject_targets: test_launcher
+        auto_fire_on_unexpected_ball: settings.autofire_bd_dyna
+        confirm_eject_type: target
+
+settings:
+    autofire_bd_dyna:
+        label: "Should dyna autofire"
+        key_type: bool
+        default: True
+        sort: 111
+        values:
+            True: "yes"
+            False: "no"
