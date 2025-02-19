@@ -27,8 +27,6 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
             # remove any non-numbers and spaces
             text = re.sub(r'[^0-9 ]', "", text)
 
-            # special char for spaces
-            text = text.replace(" ", "?")
             # set text
             if flashing == FlashingType.FLASH_ALL:
                 cmd = b'2:'
