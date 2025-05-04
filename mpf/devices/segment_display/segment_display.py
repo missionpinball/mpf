@@ -160,6 +160,8 @@ class SegmentDisplay(SystemWideDevice):
         if not color:
             color = self._current_state.text.get_colors()
 
+        self._expand_colors(color, len(text))
+
         if self.config['update_method'] == "stack":
             self._text_stack[key] = TextStackEntry(
                 text, color, flashing, flash_mask, transition, transition_out, priority, key)
@@ -237,6 +239,8 @@ class SegmentDisplay(SystemWideDevice):
                           current_colors: List[RGBColor], new_colors: List[RGBColor],
                           update_hz: float, flashing, flash_mask):
         """Start the specified transition."""
+        current_colors = self._expand_colors(current_colors, len(current_text))
+        new_colors = self._expand_colors(new_colors, len(new_text))
         if self._current_transition:
             self._stop_transition()
         self._current_transition = TransitionRunner(self.machine, transition, current_text, new_text,
@@ -276,10 +280,11 @@ class SegmentDisplay(SystemWideDevice):
         """Expand color to a certain length."""
         if not colors:
             colors = self._default_color
-        if len(colors) > length:
-            colors = colors[0:length]
-        elif len(colors) < length:
-            colors = colors + [colors[len(colors) - 1]] * (length - len(colors))
+        else:
+            if (len(colors)) == 1:
+                colors = colors * length
+            elif len(colors) != length:
+                colors = [RGBColor("white")] * length
 
         return colors
 
