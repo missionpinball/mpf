@@ -47,6 +47,21 @@ fast:
             type: apa-102
       eli:
         model: FP-EXP-0081-1  # test including hw revision number
+        led_ports:
+          - port: 1
+            leds: 16 #give up 16
+          - port: 2
+            leds: 50 #take 16 from 1 and 2 from 3
+          # port 3 left as default to prove automatic gapping works
+          - port: 4
+            leds: 72 #take 30 from 3
+
+          - port: 5
+            leds: 0 #give up all
+          - port: 6
+            leds: 64 #take 32 from 1
+          - port: 7  #give up all 32
+            leds: 64 #take 32 from 8
       neuron:
         model: FP-EXP-2000
         breakouts:
@@ -105,13 +120,13 @@ lights:
   led23:  # previous numbering, RGB LED
     previous: led22  # 48003-0, 48003-1, 48003-2
     type: rgb
-  led24:  # start channel, RGBW LED
+  led24:  # start channel, RGBW LED using only RGB channels
     start_channel: neuron-1-5-0  #48004-0, 48004-1, 48004-2, 48005-0
     type: rgbw
-  led25:  # start channel, RGBW LED
+  led25:  # start channel, RGBW LED using only RGB channels
     start_channel: neuron-1-6-1  # 48005-1, 48005-2, 48006-0, 48006-1
     type: rgbw
-  led26:  # previous numbering, RGBW LED
+  led26:  # previous numbering, RGBW LED using only RGB channels
     previous: led25  # 48006-2, 48007-0, 48007-1, 48007-2
     type: rgbw
   led27:  # make sure we can get back to normal

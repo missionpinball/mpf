@@ -17,7 +17,7 @@ class TestFastExp(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['exp'].expected_commands = {'RA@880:000000': '',
+        self.serial_connections['exp'].expected_commands = {'RA@880:000000': '', #RA=set all on breakout to color
                                                             'RA@881:000000': '',
                                                             'RA@882:000000': '',
                                                             'RA@890:000000': '',
@@ -28,13 +28,14 @@ class TestFastExp(TestFastBase):
                                                             'RA@480:000000': '',
                                                             'RA@481:000000': '',
                                                             'RA@482:000000': '',
-                                                            'RF@89:5DC': '',
-                                                            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
+                                                            'RF@89:5DC': '',     #RF=set default fade rate
+                                                            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',  #EM=configure motor
                                                             'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
                                                             'EM@882:7,1,7D0,3E8,7D0,5DC': '',
-                                                            'MP@B40:0,7F,7D0': '',
+                                                            'MP@B40:0,7F,7D0': '', #MP=set motor position
                                                             'MP@B40:1,7F,7D0': '',
-                                                            'MP@882:7,7F,7D0': '',}
+                                                            'MP@882:7,7F,7D0': '',
+                                                            }
 
     def test_servo(self):
         # go to min position
@@ -133,7 +134,7 @@ class TestFastExp(TestFastBase):
     def _test_led_colors(self):
 
         self.exp_cpu.expected_commands = {
-            'RD@880:0201ff123402121212': '',
+            'RD@880:0201ff123402121212': '', #RD=set individual leds by binary
             'RD@881:0100ffffff': '',
             'RD@841:0160ffffff': ','}
 
