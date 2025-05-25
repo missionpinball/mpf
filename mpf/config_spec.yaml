@@ -670,7 +670,6 @@ fast_breakout:
     led_ports: list|subconfig(fast_led_port)|None
 fast_led_port:
     port: single|str|
-    type: single|enum(ws2812,apa-102)|ws2812
     leds: single|int|32
 fast_aud:
     port: list|str|auto

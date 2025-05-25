@@ -17,10 +17,8 @@ fast:
         led_ports:
           - port: 1
             leds: 32
-            type: ws2812
           - port: 2
             leds: 32
-            type: apa-102
         led_hz: 30
       aaron:
         model: FP-EXP-0091-2  # test hw revision number included
@@ -32,19 +30,15 @@ fast:
         led_ports:
           - port: 1
             leds: 32
-            type: ws2812
           - port: 2
             leds: 32
-            type: apa-102
       dave:
         model: FP-EXP-0071
         led_ports:
           - port: 1
             leds: 32
-            type: ws2812
           - port: 2
             leds: 32
-            type: apa-102
       eli:
         model: FP-EXP-0081-1  # test including hw revision number
         led_ports:
