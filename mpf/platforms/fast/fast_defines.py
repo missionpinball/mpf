@@ -72,7 +72,7 @@ BREAKOUT_FEATURES = {
     },
     'FP-EXP-0081': {
         'min_fw': '0.11',
-        'led_ports': 4,
+        'led_ports': 8,
     },
     'FP-EXP-0091': {
         'min_fw': '0.11',
