@@ -17,30 +17,31 @@ class TestFastExp(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['exp'].expected_commands = {'RA@880:000000': '', #RA=set all on breakout to color
-                                                            'RA@881:000000': '',
-                                                            'RA@882:000000': '',
-                                                            'RA@890:000000': '',
-                                                            'RA@892:000000': '',
-                                                            'RA@B40:000000': '',
-                                                            'RA@840:000000': '',
-                                                            'RA@841:000000': '',
-                                                            'RA@480:000000': '',
-                                                            'RA@481:000000': '',
-                                                            'RA@482:000000': '',
-                                                            'RF@89:5DC': '',     #RF=set default fade rate
-                                                            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',  #EM=configure motor
-                                                            'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
-                                                            'EM@882:7,1,7D0,3E8,7D0,5DC': '',
-                                                            'MP@B40:0,7F,7D0': '', #MP=set motor position
-                                                            'MP@B40:1,7F,7D0': '',
-                                                            'MP@882:7,7F,7D0': '',
-                                                            }
+        self.serial_connections['exp'].expected_commands = {
+            'RA@880:000000': '',                #RA=set all on breakout to color
+            'RA@881:000000': '',
+            'RA@882:000000': '',
+            'RA@890:000000': '',
+            'RA@892:000000': '',
+            'RA@B40:000000': '',
+            'RA@840:000000': '',
+            'RA@841:000000': '',
+            'RA@480:000000': '',
+            'RA@481:000000': '',
+            'RA@482:000000': '',
+            'RF@89:5DC': '',                    #RF=set default fade rate
+            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',   #EM=configure motor
+            'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
+            'EM@882:7,1,7D0,3E8,7D0,5DC': '',
+            'MP@B40:0,7F,7D0': '',              #MP=set motor position
+            'MP@B40:1,7F,7D0': '',
+            'MP@882:7,7F,7D0': '',
+        }
 
     def test_servo(self):
         # go to min position
         self.exp_cpu.expected_commands = {
-                "MP@B40:0,00,7D0": ""                    # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
+            "MP@B40:0,00,7D0": "" # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
         }
         self.machine.servos["servo1"].go_to_position(0)
         self.advance_time_and_run(1)
@@ -136,7 +137,8 @@ class TestFastExp(TestFastBase):
         self.exp_cpu.expected_commands = {
             'RD@880:0201ff123402121212': '', #RD=set individual leds by binary
             'RD@881:0100ffffff': '',
-            'RD@841:0160ffffff': ','}
+            'RD@841:0160ffffff': ','
+        }
 
         self.led1.on()
         self.led2.color("ff1234")
@@ -173,7 +175,8 @@ class TestFastExp(TestFastBase):
         self.exp_cpu.expected_commands = {
             'RD@881:0100ff1234': '',
             'RD@880:0102467fff': '',
-            'RD@B40:016a6a6a6a': '',}
+            'RD@B40:016a6a6a6a': '',
+        }
 
         self.led1.color("ff1234")
         self.led3.color("467fff")
@@ -219,11 +222,13 @@ class TestFastExp(TestFastBase):
 
     def _test_led_software_fade(self):
 
-        self.exp_cpu.expected_commands = {'RD@B40:0169151515': '',
-                                          'RD@B40:01692b2b2b': '',
-                                          'RD@B40:0169424242': '',
-                                          'RD@B40:0169585858': '',
-                                          'RD@B40:0169646464': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@B40:0169151515': '',
+            'RD@B40:01692b2b2b': '',
+            'RD@B40:0169424242': '',
+            'RD@B40:0169585858': '',
+            'RD@B40:0169646464': '',
+        }
 
         self.led17.color(RGBColor((100, 100, 100)), fade_ms=150)
         self.advance_time_and_run(.04)
