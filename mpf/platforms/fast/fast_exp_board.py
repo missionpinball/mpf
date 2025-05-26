@@ -4,6 +4,7 @@ import asyncio
 from base64 import b16decode
 from binascii import Error as binasciiError
 from importlib import import_module
+from mpf.core.utility_functions import Util
 
 from packaging import version
 
@@ -17,7 +18,7 @@ class FastExpansionBoard:
 
     # pylint: disable-msg=too-many-instance-attributes
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
-                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate"]
+                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate",  "led_ports"]
 
     def __init__(self, name: str, communicator, address: str, config: dict) -> None:
         """Initializes a FAST Expansion Board.
@@ -66,6 +67,75 @@ class FastExpansionBoard:
                 raise AssertionError(f'Breakout port {brk["port"]} is not available on {self}')
 
             self.create_breakout(brk)
+
+        self.create_led_ports()
+
+    def create_led_ports(self):
+        # create the led ports
+        led_port_configurations = [[], []] #grouped into breakout 0 and 1
+        for led_port in self.config['led_ports']:
+            normalized_port_number = int(led_port['port']) - 1
+            port_config = {
+                'normalized_port': normalized_port_number,
+                'led_count': int(led_port['leds'])
+            }
+            if normalized_port_number < 4:
+                led_port_configurations[0].append(port_config)
+            else:
+                led_port_configurations[1].append(port_config)
+
+        breakout_led_group_number = -1
+        for port_group_configurations in led_port_configurations:
+            breakout_led_group_number += 1
+            if len(port_group_configurations) == 0:
+                continue # no need to configure if no overrides are made in the breakout group
+
+            total_leds = sum(map(lambda item: item['led_count'], port_group_configurations))
+
+            unclaimed_count = 128 - total_leds
+            if unclaimed_count < 0: # each breakout supports 128 lights total
+                self.log.error(f"Error configuring FAST EXP {self.address} breakout leds : {total_leds} total assigned but only 128 allowed per block of 4 ports")
+                return
+
+            addresses = [
+                breakout_led_group_number * 4 + 0,
+                breakout_led_group_number * 4 + 1,
+                breakout_led_group_number * 4 + 2,
+                breakout_led_group_number * 4 + 3
+            ]
+            prepared_sets = []
+            attempts = 0
+            leds_claimed = 0
+            while len(addresses) > 0:
+                attempts += 1
+                address = addresses.pop(0)
+                config_data = next(filter(lambda x: x['normalized_port'] == address, port_group_configurations), None)
+                if config_data:
+                    leds_claimed += config_data['led_count']
+                    prepared_sets.append(config_data)
+                else:
+                    if attempts <= 4:
+                        addresses.append(address) #put at end for retry after defined set
+                    else:
+                        usable_leds = max(min(32, 128 - leds_claimed), 0) #claim 32 or whatever is left, never less than 0
+                        leds_claimed += usable_leds
+                        prepared_sets.append({'normalized_port': address, 'led_count': usable_leds})
+
+            led_offset = 0
+            sorted_configs = sorted(prepared_sets, key = lambda x: x['normalized_port'])
+            for port_configuration in sorted_configs:
+                number = port_configuration['normalized_port']
+                type = '0'
+                start = led_offset
+                count = port_configuration['led_count']
+                led_offset += count
+                message = f'ER@{self.address}:{number},{type},{Util.int_to_hex_string(start)},{Util.int_to_hex_string(count)}'
+                if start < 128: # start at 128 for 0 lights is a possible case that we skip
+                    self.log.info(message)
+                    self.communicator.send_with_confirmation(message, 'ER:P')
+                    msg2 = f'RA@{self.address}:ffffff'
+                    self.log.info(msg2)
+                    self.communicator.send_and_forget(msg2)
 
     def create_breakout(self, config: dict) -> None:
         """Define a breakout board within an EXP board."""

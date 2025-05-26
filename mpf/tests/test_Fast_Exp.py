@@ -18,7 +18,19 @@ class TestFastExp(TestFastBase):
         # Individual tests can override / add as needed
 
         self.serial_connections['exp'].expected_commands = {
-            'RA@880:000000': '',                #RA=set all on breakout to color
+            # ER=configure non-default headers
+            # ER:<port>,<type>,<start>,<count><CR>
+            'ER@84:0,0,00,10': '', #16 on port 1
+            'ER@84:1,0,10,32': '', #50 on port 2
+            'ER@84:2,0,42,08': '', # 8 on port 3
+            'ER@84:3,0,4A,36': '', #54 on port 4
+            'ER@84:4,0,00,00': '', # 0 on port 5
+            'ER@84:5,0,00,40': '', #64 on port 6
+            'ER@84:6,0,40,40': '', #64 on port 7
+            'ER@84:7,0,80,00': '', # 0 on port 8
+
+            #RA=set all on breakout to color
+            'RA@880:000000': '',
             'RA@881:000000': '',
             'RA@882:000000': '',
             'RA@890:000000': '',
@@ -29,11 +41,17 @@ class TestFastExp(TestFastBase):
             'RA@480:000000': '',
             'RA@481:000000': '',
             'RA@482:000000': '',
-            'RF@89:5DC': '',                    #RF=set default fade rate
-            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',   #EM=configure motor
+
+            #RF=set default fade rate
+            'RF@89:5DC': '',
+
+            #EM=configure motor
+            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
             'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
             'EM@882:7,1,7D0,3E8,7D0,5DC': '',
-            'MP@B40:0,7F,7D0': '',              #MP=set motor position
+
+            #MP=set motor position
+            'MP@B40:0,7F,7D0': '',
             'MP@B40:1,7F,7D0': '',
             'MP@882:7,7F,7D0': '',
         }

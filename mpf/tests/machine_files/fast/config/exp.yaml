@@ -14,11 +14,11 @@ fast:
             model: FP-BRK-0001
           - port: 2
             model: FP-DRV-0800
-        led_ports:
-          - port: 1
-            leds: 32
-          - port: 2
-            leds: 32
+        # led_ports:
+        #   - port: 1
+        #     leds: 32
+        #   - port: 2
+        #     leds: 32
         led_hz: 30
       aaron:
         model: FP-EXP-0091-2  # test hw revision number included
@@ -27,18 +27,18 @@ fast:
         breakouts:
           - port: 2
             model: FP-BRK-0001
-        led_ports:
-          - port: 1
-            leds: 32
-          - port: 2
-            leds: 32
+        # led_ports:
+        #   - port: 1
+        #     leds: 32
+        #   - port: 2
+        #     leds: 32
       dave:
         model: FP-EXP-0071
-        led_ports:
-          - port: 1
-            leds: 32
-          - port: 2
-            leds: 32
+        # led_ports:
+        #   - port: 1
+        #     leds: 32
+        #   - port: 2
+        #     leds: 32
       eli:
         model: FP-EXP-0081-1  # test including hw revision number
         led_ports:
@@ -46,15 +46,13 @@ fast:
             leds: 16 #give up 16
           - port: 2
             leds: 50 #take 16 from 1 and 2 from 3
-          # port 3 left as default to prove automatic gapping works
+          # port 3 left as default to prove automatic gapping works, should have 8
           - port: 4
-            leds: 72 #take 30 from 3
+            leds: 54 #take 22 from 3
 
-          - port: 5
-            leds: 0 #give up all
           - port: 6
             leds: 64 #take 32 from 1
-          - port: 7  #give up all 32
+          - port: 7
             leds: 64 #take 32 from 8
       neuron:
         model: FP-EXP-2000
