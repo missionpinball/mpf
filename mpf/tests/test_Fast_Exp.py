@@ -20,14 +20,14 @@ class TestFastExp(TestFastBase):
         self.serial_connections['exp'].expected_commands = {
             # ER=configure non-default headers
             # ER:<port>,<type>,<start>,<count><CR>
-            'ER@84:0,0,00,10': '', #16 on port 1
-            'ER@84:1,0,10,32': '', #50 on port 2
-            'ER@84:2,0,42,08': '', # 8 on port 3
-            'ER@84:3,0,4A,36': '', #54 on port 4
-            'ER@84:4,0,00,00': '', # 0 on port 5
-            'ER@84:5,0,00,40': '', #64 on port 6
-            'ER@84:6,0,40,40': '', #64 on port 7
-            'ER@84:7,0,80,00': '', # 0 on port 8
+            'ER@840:0,0,00,10': '', #16 on port 1
+            'ER@840:1,0,10,32': '', #50 on port 2
+            'ER@840:2,0,42,08': '', # 8 on port 3
+            'ER@840:3,0,4A,36': '', #54 on port 4
+            'ER@841:0,0,00,00': '', # 0 on port 5
+            'ER@841:1,0,00,40': '', #64 on port 6
+            'ER@841:2,0,40,40': '', #64 on port 7
+            'ER@841:3,0,80,00': '', # 0 on port 8
 
             #RA=set all on breakout to color
             'RA@880:000000': '',

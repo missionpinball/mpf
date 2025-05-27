@@ -4,10 +4,10 @@ import asyncio
 from base64 import b16decode
 from binascii import Error as binasciiError
 from importlib import import_module
-from mpf.core.utility_functions import Util
 
 from packaging import version
 
+from mpf.core.utility_functions import Util
 from mpf.platforms.fast.fast_defines import (BREAKOUT_FEATURES,
                                              EXPANSION_BOARD_FEATURES)
 
@@ -68,11 +68,11 @@ class FastExpansionBoard:
 
             self.create_breakout(brk)
 
-        self.create_led_ports()
-
+    # pylint: disable-msg=too-many-locals
+    # pylint: disable-msg=line-too-long
     def create_led_ports(self):
-        # create the led ports
-        led_port_configurations = [[], []] #grouped into breakout 0 and 1
+        """Parse the LED port overrides and create port configurations."""
+        led_port_configurations = [[], []]  # grouped into breakout 0 and 1
         for led_port in self.config['led_ports']:
             normalized_port_number = int(led_port['port']) - 1
             port_config = {
@@ -88,14 +88,14 @@ class FastExpansionBoard:
         for port_group_configurations in led_port_configurations:
             breakout_led_group_number += 1
             if len(port_group_configurations) == 0:
-                continue # no need to configure if no overrides are made in the breakout group
+                continue  # no need to configure if no overrides are made in the breakout group
 
             total_leds = sum(map(lambda item: item['led_count'], port_group_configurations))
 
             unclaimed_count = 128 - total_leds
-            if unclaimed_count < 0: # each breakout supports 128 lights total
-                self.log.error(f"Error configuring FAST EXP {self.address} breakout leds : {total_leds} total assigned but only 128 allowed per block of 4 ports")
-                return
+            if unclaimed_count < 0:  # each breakout supports 128 lights total
+                self.log.error(f"Error configuring FAST EXP {self.address} breakout leds : "
+                               f"{total_leds} total assigned but only 128 allowed per block of 4 ports")
 
             addresses = [
                 breakout_led_group_number * 4 + 0,
@@ -109,33 +109,39 @@ class FastExpansionBoard:
             while len(addresses) > 0:
                 attempts += 1
                 address = addresses.pop(0)
-                config_data = next(filter(lambda x: x['normalized_port'] == address, port_group_configurations), None)
+                config_data = next(filter(
+                    lambda x, a=address: x['normalized_port'] == a,
+                    port_group_configurations), None)
                 if config_data:
                     leds_claimed += config_data['led_count']
                     prepared_sets.append(config_data)
                 else:
                     if attempts <= 4:
-                        addresses.append(address) #put at end for retry after defined set
+                        addresses.append(address)  # put at end for retry after defined set
                     else:
-                        usable_leds = max(min(32, 128 - leds_claimed), 0) #claim 32 or whatever is left, never less than 0
+                        # claim 32 or whatever is left, never less than 0
+                        usable_leds = max(min(32, 128 - leds_claimed), 0)
                         leds_claimed += usable_leds
                         prepared_sets.append({'normalized_port': address, 'led_count': usable_leds})
 
             led_offset = 0
-            sorted_configs = sorted(prepared_sets, key = lambda x: x['normalized_port'])
+            sorted_configs = sorted(prepared_sets, key=lambda x: x['normalized_port'])
             for port_configuration in sorted_configs:
-                number = port_configuration['normalized_port']
-                type = '0'
+                number = port_configuration['normalized_port'] % 4
+                chain_type = '0'
                 start = led_offset
                 count = port_configuration['led_count']
                 led_offset += count
-                message = f'ER@{self.address}:{number},{type},{Util.int_to_hex_string(start)},{Util.int_to_hex_string(count)}'
-                if start < 128: # start at 128 for 0 lights is a possible case that we skip
+                if start < 129:  # start at 128 for 0 lights is a possible case
+                    hex_start = Util.int_to_hex_string(start)
+                    hex_count = Util.int_to_hex_string(count)
+                    breakout_address = f'{self.address}{breakout_led_group_number}'
+                    message = f'ER@{breakout_address}:{number},{chain_type},{hex_start},{hex_count}'
                     self.log.info(message)
                     self.communicator.send_with_confirmation(message, 'ER:P')
-                    msg2 = f'RA@{self.address}:ffffff'
-                    self.log.info(msg2)
-                    self.communicator.send_and_forget(msg2)
+                    # msg2 = f'RA@{self.address}:ffffff'
+                    # self.log.info(msg2)
+                    # self.communicator.send_and_forget(msg2)
 
     def create_breakout(self, config: dict) -> None:
         """Define a breakout board within an EXP board."""
@@ -210,6 +216,8 @@ class FastExpansionBoard:
         """Send a reset command to the EXP board."""
         await self.communicator.send_and_wait_for_response_processed(f'BR@{self.address}:', 'BR:P')
 
+        self.create_led_ports()
+
         # TODO move this to mixin classes for device types?
         if self.config['led_fade_time']:
             self.set_led_fade(self.config['led_fade_time'])
@@ -241,6 +249,7 @@ class FastExpansionBoard:
 
                 log_msg = f'RD@{breakout_address}:{msg}'  # pretty version of the message for the log
 
+                self.log.warning(log_msg)
                 try:
                     self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
                 except binasciiError as e:
