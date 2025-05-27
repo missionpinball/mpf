@@ -18,7 +18,7 @@ class FastExpansionBoard:
 
     # pylint: disable-msg=too-many-instance-attributes
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
-                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate",  "led_ports"]
+                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate",  "led_ports" , "led_port_configurations"]
 
     def __init__(self, name: str, communicator, address: str, config: dict) -> None:
         """Initializes a FAST Expansion Board.
@@ -85,6 +85,7 @@ class FastExpansionBoard:
                 led_port_configurations[1].append(port_config)
 
         breakout_led_group_number = -1
+        final_configurations = []
         for port_group_configurations in led_port_configurations:
             breakout_led_group_number += 1
             if len(port_group_configurations) == 0:
@@ -142,6 +143,8 @@ class FastExpansionBoard:
                     # msg2 = f'RA@{self.address}:ffffff'
                     # self.log.info(msg2)
                     # self.communicator.send_and_forget(msg2)
+            final_configurations.append(prepared_sets)
+        self.led_port_configurations = final_configurations
 
     def create_breakout(self, config: dict) -> None:
         """Define a breakout board within an EXP board."""

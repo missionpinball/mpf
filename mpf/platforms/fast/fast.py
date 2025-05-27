@@ -596,7 +596,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                     # TODO change to mpf config exception
                     raise AssertionError(f'Board {exp_board} does not have a config entry for Breakout {breakout}')
 
-                index = self.port_idx_to_hex(port, led, 32, config.name)
+                index = self.port_idx_to_hex(port, led, 32, config.name, port_configurations=exp_board.led_port_configurations)
                 this_led_number = f'{brk_board.address}{index}'
 
                 # this code runs once for each channel, so it will be called 3x per LED which
@@ -646,7 +646,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             return fast_led_channel
         raise AssertionError(f"Unknown light subtype {subtype}")
 
-    def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
+    def port_idx_to_hex(self, port, device_num, devices_per_port, name=None, port_configurations=None):
         """Converts port number and LED index into the proper FAST hex number.
 
         port: the LED port number printed on the board. First port is 1. No zeros.
@@ -665,6 +665,16 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         if port < 1:
             raise AssertionError(f"Port {port} is not valid for device {device_num}")
+
+        if port_configurations:
+            #  port is 1-indexed, configs are 0-indexed
+
+            filtered_sum = sum([x['led_count'] for x in port_configurations if x['normalized_port'] < p])
+
+            port_offset = sum(map(filter(lambda x, p=port-1: x['normalized_port'] < p, port_configurations)))
+            device_num = device_num - 1
+            actual_position = port_offset + device_num
+            return f'{(actual_position):02X}'
 
         if device_num > devices_per_port:
             if name:
