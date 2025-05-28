@@ -596,7 +596,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                     # TODO change to mpf config exception
                     raise AssertionError(f'Board {exp_board} does not have a config entry for Breakout {breakout}')
 
-                index = self.port_idx_to_hex(port, led, 32, config.name, port_configurations=exp_board.led_port_configurations)
+                port_configurations = exp_board.led_port_configurations
+                if port_configurations:
+                    ports_on_breakout = port_configurations[int(breakout)]
+                else:
+                    ports_on_breakout = None
+
+                index = self.port_idx_to_hex(port, led, 32, config.name, ports_on_breakout)
                 this_led_number = f'{brk_board.address}{index}'
 
                 # this code runs once for each channel, so it will be called 3x per LED which
@@ -646,13 +652,43 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             return fast_led_channel
         raise AssertionError(f"Unknown light subtype {subtype}")
 
-    def port_idx_to_hex(self, port, device_num, devices_per_port, name=None, port_configurations=None):
+    def port_idx_to_hex_with_configurations(self, port, device_num, ports_on_breakout, name=None):
+        """Converts port number and LED index into the proper FAST hex number.
+
+        This accounts for rewriting LED chain lengths with the FAST EXP ER command
+
+        port: the LED port number printed on the board. First port is 1. No zeros.
+        device_num: LED position in the change, First LED is 1. No zeros.
+        name: used for config error logging
+        ports_on_breakout: configurations from the exp board breakout, using 0 based port numbers 0-7
+
+        Returns: FAST hex string for the LED
+        """
+        port_offset = sum([pc['led_count'] for pc in ports_on_breakout if pc['normalized_port'] % 4 < port - 1])
+        total_on_port = next(filter(lambda pc, p=port - 1:
+                                    pc['normalized_port'] % 4 == p, ports_on_breakout))['led_count']
+
+        if device_num > total_on_port:
+            if name:
+                self.raise_config_error(f"Device number {device_num} exceeds the number of devices per port "
+                                        f"({total_on_port}) for LED {name}", 9)
+            else:
+                raise AssertionError(f"Device number {device_num} exceeds the number of devices per port "
+                                     f"({total_on_port})")
+
+        actual_position = port_offset + device_num - 1
+
+        return f'{(actual_position):02X}'
+
+    # pylint: disable-msg=too-many-arguments 
+    def port_idx_to_hex(self, port, device_num, devices_per_port, name=None, ports_on_breakout=None):
         """Converts port number and LED index into the proper FAST hex number.
 
         port: the LED port number printed on the board. First port is 1. No zeros.
         device_num: LED position in the change, First LED is 1. No zeros.
         devices_per_port: number of LEDs per port. Typically 32.
         name: used for config error logging
+        ports_on_breakout: ports on breakout with number 0-7
 
         Returns: FAST hex string for the LED
         """
@@ -666,15 +702,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         if port < 1:
             raise AssertionError(f"Port {port} is not valid for device {device_num}")
 
-        if port_configurations:
-            #  port is 1-indexed, configs are 0-indexed
-
-            filtered_sum = sum([x['led_count'] for x in port_configurations if x['normalized_port'] < p])
-
-            port_offset = sum(map(filter(lambda x, p=port-1: x['normalized_port'] < p, port_configurations)))
-            device_num = device_num - 1
-            actual_position = port_offset + device_num
-            return f'{(actual_position):02X}'
+        if ports_on_breakout:
+            return self.port_idx_to_hex_with_configurations(port, device_num, ports_on_breakout, name)
 
         if device_num > devices_per_port:
             if name:

@@ -101,7 +101,7 @@ lights:
   led18:
     number: dave-4-11
   led19:
-    number: eli-8-1  # 84160
+    number: eli-7-64  # 8417f
   led20:
     number: neuron-1-1
   led21:

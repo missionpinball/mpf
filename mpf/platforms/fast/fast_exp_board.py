@@ -18,7 +18,8 @@ class FastExpansionBoard:
 
     # pylint: disable-msg=too-many-instance-attributes
     __slots__ = ["name", "communicator", "config", "platform", "log", "address", "model", "features", "breakouts",
-                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate",  "led_ports" , "led_port_configurations"]
+                 "breakouts_with_leds", "firmware_version", "hw_verified", "led_fade_rate",
+                 "led_ports", "led_port_configurations"]
 
     def __init__(self, name: str, communicator, address: str, config: dict) -> None:
         """Initializes a FAST Expansion Board.
@@ -52,6 +53,7 @@ class FastExpansionBoard:
         self.features = EXPANSION_BOARD_FEATURES[self.model]  # ([local model numbers,], num of remotes) tuple
         self.breakouts = dict()
         self.breakouts_with_leds = list()
+        self.led_port_configurations = list()
 
         if self.config['led_hz'] > 31.25:
             self.config['led_hz'] = 31.25
@@ -69,7 +71,6 @@ class FastExpansionBoard:
             self.create_breakout(brk)
 
     # pylint: disable-msg=too-many-locals
-    # pylint: disable-msg=line-too-long
     def create_led_ports(self):
         """Parse the LED port overrides and create port configurations."""
         led_port_configurations = [[], []]  # grouped into breakout 0 and 1
@@ -133,16 +134,13 @@ class FastExpansionBoard:
                 start = led_offset
                 count = port_configuration['led_count']
                 led_offset += count
-                if start < 129:  # start at 128 for 0 lights is a possible case
+                if start <= 128:  # start at 128 for 0 lights is a possible case
                     hex_start = Util.int_to_hex_string(start)
                     hex_count = Util.int_to_hex_string(count)
                     breakout_address = f'{self.address}{breakout_led_group_number}'
                     message = f'ER@{breakout_address}:{number},{chain_type},{hex_start},{hex_count}'
                     self.log.info(message)
                     self.communicator.send_with_confirmation(message, 'ER:P')
-                    # msg2 = f'RA@{self.address}:ffffff'
-                    # self.log.info(msg2)
-                    # self.communicator.send_and_forget(msg2)
             final_configurations.append(prepared_sets)
         self.led_port_configurations = final_configurations
 
@@ -251,8 +249,6 @@ class FastExpansionBoard:
                     msg += f'{led_num[3:]}{color}'
 
                 log_msg = f'RD@{breakout_address}:{msg}'  # pretty version of the message for the log
-
-                self.log.warning(log_msg)
                 try:
                     self.communicator.send_bytes(b16decode(f'{msg_header}{msg}'), log_msg)
                 except binasciiError as e:

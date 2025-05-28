@@ -155,7 +155,7 @@ class TestFastExp(TestFastBase):
         self.exp_cpu.expected_commands = {
             'RD@880:0201ff123402121212': '', #RD=set individual leds by binary
             'RD@881:0100ffffff': '',
-            'RD@841:0160ffffff': ','
+            'RD@841:017fffffff': ','
         }
 
         self.led1.on()
