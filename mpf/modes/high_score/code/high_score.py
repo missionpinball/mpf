@@ -205,7 +205,7 @@ class HighScore(AsyncMode):
                     # get vars from config
                     self._load_vars()
                     if category_name in self.vars:
-                        var_dict = self._assign_vars(category_name, player)
+                        var_dict = self._assign_vars(category_name, player.number - 1)
                         # add high score with variables
                         new_list[i] = [player.initials, value, var_dict]
                     else:
@@ -225,19 +225,21 @@ class HighScore(AsyncMode):
         self._write_scores_to_disk()
         self._create_machine_vars()
 
-    def _assign_vars(self, category_name, player):
+    def _assign_vars(self, category_name, player_num_index):
         """Define all vars that are for the given category, and assign their values."""
         # create dictionary of the variable name and its value, then load it for the category
-        player_num_index = player.number - 1
+        category_entries = self.vars[category_name]
         var_dict = dict()
         j = 0
-        while j < len(self.vars[category_name]) and bool(self.vars[category_name]):
-            if 'player' in self.vars[category_name][j][0]:
-                var_dict[self.vars[category_name][j][0] + '_' + self.vars[category_name][j][1]] \
-                    = self.machine.game.player_list[player_num_index][self.vars[category_name][j][1]]
+        while j < len(category_entries) and bool(self.vars[category_name]):
+            entry = category_entries[j]
+            entry_name = entry[0]
+            entry_score = entry[1]
+            var_dict_key = entry_name + '_' + entry_score
+            if 'player' in entry_name:
+                var_dict[var_dict_key] = self.machine.game.player_list[player_num_index][entry_score]
             else:
-                var_dict[self.vars[category_name][j][0] + '_' + self.vars[category_name][j][1]] \
-                    = self.machine.variables.get_machine_var(self.vars[category_name][j][1])
+                var_dict[var_dict_key] = self.machine.variables.get_machine_var(entry_score)
             j += 1
         # return the dictionary of items for this specific player and category entry
         return var_dict
