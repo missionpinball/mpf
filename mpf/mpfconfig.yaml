@@ -249,7 +249,7 @@ auditor:
       -  game_started
       -  ball_ended
       -  game_ended
-    num_player_top_records: 10
+    num_player_top_records: 50
     audit:
       -  shots
       -  switches
