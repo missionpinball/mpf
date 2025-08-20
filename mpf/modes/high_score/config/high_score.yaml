@@ -42,24 +42,11 @@ slide_player:
   high_score_enter_initials:
     high_score:
         action: play
-  #   high_score_award_display:
-  #       action: remove
-  #   #Make sure to remove any slides you add under this high_score_enter_initials slide, or it will continue to
-  #   #show the award slide instead of initials for another player that also earned a high score.
-  #   score_award_display:
+  # TODO: slide not yet available, but comment section was updated per event name changes
+  #   high_score_award:
   #       action: remove
   # high_score_award_display:
-  #   high_score_award_display:
+  #   high_score_award:
   #       action: play
-  #   high_score_enter_initials:
-  #       action: remove
-  # #This is used to show the slide for a specific award and show additional parameters.  This can include any
-  # #static lables as well as dynamic player and machine variables.
-  # #You will need to generate this block again and swap the name for any subsequent categories that you want
-  # #to show unique additional values.
-  # score_award_display:
-  #   score_award_display:
-  #       action: play
-  #       priority: 1
   #   high_score_enter_initials:
   #       action: remove

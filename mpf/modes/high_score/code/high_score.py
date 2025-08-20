@@ -235,7 +235,16 @@ class HighScore(AsyncMode):
         """Show text widget to ask player for initials."""
         self.info_log("New high score. Player: %s, award_label: %s" ", Value: %s", player, award_label, value)
 
-        self.machine.events.post('high_score_enter_initials', award=award_label, player_num=player.number, value=value)
+        self.machine.events.post('high_score_enter_initials',
+                                 award=award_label, player_num=player.number, value=value, category_name=category_name)
+        '''event high_score_enter_initials
+            desc: A high score has been submitted and the award slide can be displayed.
+            args:
+               player_num: The player number of the player being prompted for a name (counts from 1)
+               category_name: The category name of the award (e.g. "score")
+               award: The name of the award, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
+               value: The numerical value the player achieved
+        '''
 
         event_result = await asyncio.wait_for(
             self.machine.events.wait_for_event("text_input_high_score_complete"),
@@ -260,9 +269,20 @@ class HighScore(AsyncMode):
         if not self.high_score_config['award_slide_display_time']:
             return
 
-        self.machine.events.post('high_score_award_display', player_name=player_name, award=award, value=value)
-        self.machine.events.post('{}_award_display'.format(award), player_name=player_name, award=award, value=value)
-        self.machine.events.post('{}_award_display'.format(category_name), player_num=player_num, player_name=player_name, category_name=category_name, award=award, value=value)
+        self.machine.events.post('high_score_award_display',
+            player_name=player_name, award=award, value=value,
+            player_num=player_num, category_name=category_name)
+
+        '''event high_score_award_display
+            desc: A high score has been submitted and the award slide can be displayed.
+            args:
+               player_name: The text name of the player being awarded.
+               player_num: The player number of the player being awarded (counts from 1)
+               category_name: The category name of the award (e.g. "score")
+               award: The name of the award, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
+               value: The numerical value the player achieved
+        '''
+
         await asyncio.sleep(self.high_score_config['award_slide_display_time'] / 1000)
 
     def _write_scores_to_disk(self) -> None:
