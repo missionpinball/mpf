@@ -33,7 +33,6 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.opp.opp_switch import OPPSwitch  # pylint: disable-msg=cyclic-import,unused-import
 
 
-
 # pylint: disable-msg=too-many-instance-attributes
 class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlatform):
 
@@ -346,7 +345,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             msg: Message to send.
         """
         self.opp_connection[chain_serial].send(msg)
-
 
     def update_incand(self):
         """Update all the incandescents connected to OPP hardware.
