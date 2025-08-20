@@ -48,5 +48,5 @@ slide_player:
   # high_score_award_display:
   #   high_score_award:
   #       action: play
-  #   high_score_enter_initials:
+  #   high_score:
   #       action: remove

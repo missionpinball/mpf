@@ -82,9 +82,11 @@ class HighScore(AsyncMode):
                     if not isinstance(entry[0], str) or not isinstance(entry[1], (int, float)):
                         self.log.warning("Found invalid data type in high score entry.")
                         return False
-                if len(data[category]) != len(self.config['high_score']['defaults'][category]):
+
+                category_default_scores = self.config['high_score']['defaults'][category]
+                if len(data[category]) != len(category_default_scores):
                     self.log.warning("High Score Category %s contains %s entries while defaults contain %s",
-                                     category, len(data[category]), len(self.config['high_score']['defaults'][category]))
+                                     category, len(data[category]), len(category_default_scores))
                     return False
 
         except TypeError:
@@ -181,7 +183,8 @@ class HighScore(AsyncMode):
                     # ask player for initials if we do not know them
                     if not player.initials:
                         try:
-                            player.initials = await self._ask_player_for_initials(player, award_names[i], value, category_name)
+                            text = await self._ask_player_for_initials(player, award_names[i], value, category_name)
+                            player.initials = text
                         except asyncio.TimeoutError:
                             del new_list[i]
                             # no entry when the player missed the timeout
@@ -233,7 +236,7 @@ class HighScore(AsyncMode):
     # pylint: disable-msg=too-many-arguments
     async def _ask_player_for_initials(self, player: Player, award_label: str, value: int, category_name: str) -> str:
         """Show text widget to ask player for initials."""
-        self.info_log("New high score. Player: %s, award_label: %s" ", Value: %s", player, award_label, value)
+        self.info_log("New high score. Player: %s, award_label: %s, Value: %s", player, award_label, value)
 
         self.machine.events.post('high_score_enter_initials',
                                  award=award_label, player_num=player.number, value=value, category_name=category_name)
@@ -242,7 +245,7 @@ class HighScore(AsyncMode):
             args:
                player_num: The player number of the player being prompted for a name (counts from 1)
                category_name: The category name of the award (e.g. "score")
-               award: The name of the award, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
+               award: The award name, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
                value: The numerical value the player achieved
         '''
 
@@ -270,8 +273,8 @@ class HighScore(AsyncMode):
             return
 
         self.machine.events.post('high_score_award_display',
-            player_name=player_name, award=award, value=value,
-            player_num=player_num, category_name=category_name)
+                                 player_name=player_name, award=award, value=value,
+                                 player_num=player_num, category_name=category_name)
 
         '''event high_score_award_display
             desc: A high score has been submitted and the award slide can be displayed.
@@ -279,7 +282,7 @@ class HighScore(AsyncMode):
                player_name: The text name of the player being awarded.
                player_num: The player number of the player being awarded (counts from 1)
                category_name: The category name of the award (e.g. "score")
-               award: The name of the award, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
+               award: The award name, based on the ordered set of rank names in the category (e.g. "GRAND CHAMPION")
                value: The numerical value the player achieved
         '''
 
