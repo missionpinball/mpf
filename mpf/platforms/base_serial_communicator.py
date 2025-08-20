@@ -2,7 +2,7 @@
 from typing import Optional
 
 import asyncio
-from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
 from mpf.core.utility_functions import Util
 

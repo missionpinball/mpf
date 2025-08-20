@@ -1,11 +1,10 @@
 """OPP serial communicator."""
 import asyncio
+from serial import SerialException
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator, HEX_FORMAT
-
-from serial import SerialException
 
 MYPY = False
 if MYPY:    # pragma: no cover
@@ -31,7 +30,6 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         super().__init__(platform, port, baud)
         self.platform = platform    # hint the right type
-
 
     async def _read_id(self):
         msg = bytearray([0x20, 0x00, 0x00, 0x00, 0x00, 0x00])
@@ -236,8 +234,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         return message_found
 
     async def drain_writer(self):
-        """Drain writer buffer.
-        """
+        """Drain writer buffer."""
         try:
             await self.writer.drain()
         except SerialException as e:
