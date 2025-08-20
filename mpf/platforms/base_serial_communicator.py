@@ -48,22 +48,11 @@ class BaseSerialCommunicator:
 
     async def _connect_to_hardware(self, port, baud, xonxoff=False):
         self.log.info("Connecting to %s at %sbps", port, baud)
-        while True:
-            try:
-                connector = self.machine.clock.open_serial_connection(
-                    url=port, baudrate=baud, limit=0, xonxoff=xonxoff,
-                    bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
-                self.reader, self.writer = await connector
-            except SerialException:
-                if not self.machine.options["production"]:
-                    raise
+        connector = self.machine.clock.open_serial_connection(
+            url=port, baudrate=baud, limit=0, xonxoff=xonxoff,
+            bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE)
 
-                # if we are in production mode retry
-                await asyncio.sleep(.1)
-                self.log.debug("Connection to %s failed. Will retry.", port)
-            else:
-                # we got a connection
-                break
+        self.reader, self.writer = await connector
 
         serial = self.writer.transport.serial
         if hasattr(serial, "set_low_latency_mode"):
@@ -118,14 +107,15 @@ class BaseSerialCommunicator:
         except asyncio.CancelledError:  # pylint: disable-msg=try-except-raise
             raise
         except Exception as e:  # pylint: disable-msg=broad-except
-            self.log.warning("Serial error: {}".format(e))
+            self.log.warning("Serial {} error: {}".format(self.port, e))
             self.machine.events.post("serial_error")
-            return None
+            resp = None
 
         # we either got empty response (-> socket closed) or and error
         if not resp:
-            self.log.warning("Serial closed.")
-            self.machine.stop("Serial {} closed.".format(self.port))
+            if self.writer.is_closing():
+                self.log.error("Serial {} closed.".format(self.port))
+                self.machine.stop("Serial {} closed.".format(self.port))
             return None
 
         if self.debug:
@@ -142,7 +132,7 @@ class BaseSerialCommunicator:
         if self.read_task:
             self.read_task.cancel()
             self.read_task = None
-        if self.writer:
+        if self.writer and not self.writer.is_closing():
             self.writer.close()
             if hasattr(self.writer, "wait_closed"):
                 # Python 3.7+ only
