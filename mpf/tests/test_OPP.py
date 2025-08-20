@@ -349,6 +349,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
         inputs3b_message = b"\x23\x19\x00\x00\x00\x00\x00\x00\x00\x01"
+        getserial_message = b'\x20\x00\x00\x00\x00\x00'
 
         self.serialMock.expected_commands = {
             b'\xf0': b'\xf0\x20\x21\x22\x23',     # boards 20 + 21 + 22 + 23 installed
@@ -372,6 +373,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
+            self._crc_message(getserial_message): self._crc_message(getserial_message),
             self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
             self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),
             self._crc_message(b'\x23\x08\x00\x00\x00\x00'): self._crc_message(inputs3a_message),
@@ -382,40 +384,40 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         assert isinstance(self.machine.default_platform, OppHardwarePlatform)
 
         self._wait_for_processing()
-        self.assertEqual(0x02000000, self.machine.default_platform.min_version["com1"])
+        self.assertEqual(0x02000000, self.machine.default_platform.min_version["0"])
 
         self.assertFalse(self.serialMock.expected_commands)
         self.maxDiff = 100000
 
         # test hardware scan
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud. Chain Serial: com1
+ - Port: com1 at 115200 baud. Chain Serial: 0
  -> Board: 0x20 Firmware: 0x2000000
  -> Board: 0x21 Firmware: 0x2000000
  -> Board: 0x22 Firmware: 0x2000000
  -> Board: 0x23 Firmware: 0x2000000
 
 Incand cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
- - Chain: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,\
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 0 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,\
  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,\
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: 0 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,\
  22, 23, 24, 25, 26, 27]
- - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
- - Chain: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,\
+ - Chain: 0 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
+ - Chain: 0 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,\
  50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,\
  79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
 
 Solenoid cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
- - Chain: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: 0 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: 0 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
 
 LEDs:
- - Chain: com1 Board: 0x21 Card: 1
+ - Chain: 0 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -552,6 +554,7 @@ class TestOPP(OPPCommon, MpfTestCase):
         board2_version = b'\x21\x02\x00\x01\x01\x00'     # 0.1.1.0
         inputs1_message = b'\x20\x08\x00\x00\x00\x0c'    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b'\x21\x08\x00\x00\x00\x00'
+        getserial_message = b'\x20\x00\x00\x00\x00\x00'
 
         self.serialMock.expected_commands = {
             b'\xf0': b'\xf0\x20\x21',     # boards 20 + 21 installed
@@ -569,6 +572,7 @@ class TestOPP(OPPCommon, MpfTestCase):
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
+            self._crc_message(getserial_message): self._crc_message(getserial_message),
             self._crc_message(b'\x20\x08\x00\x00\x00\x00'): self._crc_message(inputs1_message),
             self._crc_message(b'\x21\x08\x00\x00\x00\x00'): self._crc_message(inputs2_message),  # read inputs
         }
@@ -589,23 +593,23 @@ class TestOPP(OPPCommon, MpfTestCase):
         # test hardware scan
         self.maxDiff = 100000
         info_str = """Connected CPUs:
- - Port: com1 at 115200 baud. Chain Serial: com1
+ - Port: com1 at 115200 baud. Chain Serial: 0
  -> Board: 0x20 Firmware: 0x10100
  -> Board: 0x21 Firmware: 0x10100
 
 Incand cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 Input cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
- - Chain: com1 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - Chain: 0 Board: 0x21 Card: 1 Numbers: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
 
 Solenoid cards:
- - Chain: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
- - Chain: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - Chain: 0 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - Chain: 0 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
 
 LEDs:
- - Chain: com1 Board: 0x21 Card: 1
+ - Chain: 0 Board: 0x21 Card: 1
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -641,7 +645,7 @@ LEDs:
         self.serialMock.permanent_commands = permanent_commands
 
     def _test_coils(self):
-        self.assertEqual("OPP com1 Board 0x20", self.machine.coils["c_test"].hw_driver.get_board_name())
+        self.assertEqual("OPP 0 Board 0x20", self.machine.coils["c_test"].hw_driver.get_board_name())
         # pulse coil
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x00')] = False   # configure coil 0
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x01\x00\x01')] = False
