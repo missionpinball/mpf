@@ -39,7 +39,7 @@ class TestQueueEventPlayer(MpfTestCase):
 
         self.queue2.clear()
         self.advance_time_and_run()
-        self.assertEventCalled("queue_event1_finished")
+        self.assertEventCalledWith("queue_event1_finished", queue_event="queue_event1", foo="bar")
 
     def _cb(self, **kwargs):
         del kwargs
