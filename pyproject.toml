@@ -34,7 +34,7 @@ dependencies = [
     "setuptools ~= 72.2.0",  # Nov 16, 2024,
     "sortedcontainers == 2.4.0",  # Oct 4 2023, used by platform batch light system
     "terminaltables == 3.1.10",  # Oct 4 2023, used for the service CLI
-    "Pillow == 9.5.0"  # Nov 4 2023. Asciimatics needs Pillow > 2.7, but latest 10.x breaks kivy for now (fix due in 2.3), so we pin to latest working Pillow for now.
+    "Pillow == 10.4.0"  # Early 10.x had issues installing, mid 10.x may have had issues with kivy
     ]
 dynamic = ["version"]
 
