@@ -368,7 +368,7 @@ class TextUi(MpfController):
 
     def _create_window(self):
         self.screen = Screen.open()
-        self.frame = Frame(self.screen, self.screen.height, self.screen.width, has_border=False, title="Test")
+        self.frame = Frame(self.screen, self.screen.height, self.screen.width, has_border=False, can_scroll=True, title="Test")
         self.frame.set_theme("mpf_theme")
 
         title_layout = Layout([1, 5, 1])

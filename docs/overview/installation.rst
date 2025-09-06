@@ -26,7 +26,7 @@ MPF is installed.
 * ``pyserial`` >= 3.5.0: Used for serial communication with several types of hardware
 * ``pyserial-asyncio`` >= 0.4: Also used for serial communication
 * ``sortedcontainers`` >= 2.3.0
-* ``asciimatics`` >= 1.12.0
+* ``asciimatics`` >= 1.15.0
 * ``terminaltables`` >= 3.1.0
 * ``psutil`` >= 5.7.3
 * ``grpcio_tools`` >= 1.34.0
