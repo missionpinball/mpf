@@ -22,6 +22,7 @@ jobs:
           python-version: 3.12
         - os: windows-latest
           python-version: 3.13
+
         - os: ubuntu-latest
           python-version: 3.8
         - os: ubuntu-latest
@@ -30,9 +31,11 @@ jobs:
           python-version: "3.10"
         - os: ubuntu-latest
           python-version: 3.11
-        # Ubuntu can't run 3.12 because Pillow dependencies.
         - os: ubuntu-latest
-          python-version: 3.13 # trying out 13, expecting failure :)
+          python-version: 3.12
+        - os: ubuntu-latest
+          python-version: 3.13
+
         - os: macos-latest
           python-version: 3.8
         - os: macos-latest
