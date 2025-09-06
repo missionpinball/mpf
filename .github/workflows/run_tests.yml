@@ -20,6 +20,8 @@ jobs:
           python-version: 3.11
         - os: windows-latest
           python-version: 3.12
+        - os: windows-latest
+          python-version: 3.13
         - os: ubuntu-latest
           python-version: 3.8
         - os: ubuntu-latest
@@ -29,6 +31,8 @@ jobs:
         - os: ubuntu-latest
           python-version: 3.11
         # Ubuntu can't run 3.12 because Pillow dependencies.
+        - os: ubuntu-latest
+          python-version: 3.13 # trying out 13, expecting failure :)
         - os: macos-latest
           python-version: 3.8
         - os: macos-latest
@@ -39,6 +43,8 @@ jobs:
           python-version: 3.11
         - os: macos-latest
           python-version: 3.12
+        - os: macos-latest
+          python-version: 3.13
 
     steps:
       - name: Checkout MPF
