@@ -38,7 +38,7 @@ shots:
       switch_15: 2s
   shot_delay_event:
     switch: switch_29
-    delay_events:
+    delay_event_list:
       my_delay_event: 2s
   default_show_light:
     switch: switch_5

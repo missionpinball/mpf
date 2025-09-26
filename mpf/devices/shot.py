@@ -99,7 +99,7 @@ class Shot(EnableDisableMixin, ModeDevice):
                                                                   priority=priority,
                                                                   blocking_facility="shot"))
 
-        for event, ms in list(self.config['delay_events'].items()):
+        for event, ms in list(self.config['delay_event_list'].items()):
             self._handlers.append(self.machine.events.add_handler(event,
                                                                   self._delay_switch_hit,
                                                                   name=event,
