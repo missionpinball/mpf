@@ -49,6 +49,29 @@ lights:
     number: 1-0
   test_led2:
     number: 1-1
+  virtual_led3:
+    channels:
+      red:
+        - number: 7
+      green:
+        - number: 8
+      blue:
+        - number: 9
+      white:
+        - number: 10
+
+  virtual_led4:
+    previous: virtual_led3
+    type: rgbw
+  virtual_led5:
+    previous: virtual_led4
+    type: rgbw
+  virtual_led6:
+    previous: virtual_led5
+    type: rgbw
+  virtual_led7:
+    previous: virtual_led6
+    type: rgbw
 
 autofire_coils:
     ac_slingshot_test:

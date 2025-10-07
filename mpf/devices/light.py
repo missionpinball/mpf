@@ -197,7 +197,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def _load_hw_driver_sequentially(self, next_channel):
         if self.config['number'] or self.config['channels']:
-            self.raise_config_error("Cannot use start_channel/previous and number or channels.", 3)
+            self.raise_config_error("Cannot use start_channel/previous with either number or channels.", 3)
         if not self.config['type']:
             self.raise_config_error("Cannot use previous or start_channel without type. "
                                     "Add a type setting to your light.", 2)
