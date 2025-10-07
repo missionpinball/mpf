@@ -74,7 +74,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         for switch in self.config['cancel_switches']:
             self.machine.switch_controller.add_switch_handler_obj(
-                switch, self.event_cancel, 1)
+                switch, self.event_cancel, 1, return_info=True)
 
         for switch, ms in list(self.config['delay_switch_list'].items()):
             self.machine.switch_controller.add_switch_handler_obj(
@@ -194,8 +194,13 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     @event_handler(0)
     def event_cancel(self, **kwargs):
         """Event handler for cancel event."""
-        del kwargs
-        self.reset_all_sequences()
+        if 'switch_name' in kwargs:
+            switch = kwargs['switch_name']
+            seqs = (lambda event_name = f'{switch}_active':
+                    [x for x in self.active_sequences if x.next_event == event_name])()
+            self.active_sequences = list(seqs)
+        else:
+            self.reset_all_sequences()
 
     def reset_all_sequences(self):
         """Reset all sequences."""

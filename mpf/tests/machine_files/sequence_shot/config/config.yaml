@@ -18,6 +18,10 @@ switches:
     number:
   seq4_delay:
     number:
+  switch_4:
+    number:
+  switch_5:
+    number:
 
 sequence_shots:
     sequence1:
@@ -62,6 +66,24 @@ sequence_shots:
             - event_5
             - event_5
             - event_5
+    sequence_with_dupes_and_cancel:
+        switch_sequence:
+            - switch_4
+            - switch_4
+            - switch_5
+            - switch_5
+        cancel_switches:
+            - switch_4
+            - switch_5
+    sequence_with_dupes_and_cancel2:
+        switch_sequence:
+            - switch_4
+            - switch_5
+            - switch_4
+            - switch_5
+        cancel_switches:
+            - switch_4
+            - switch_5
     sequence4:
         debug: True
         switch_sequence:
