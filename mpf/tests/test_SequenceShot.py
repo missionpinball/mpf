@@ -119,10 +119,28 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.assertEventCalled("sequence3_hit")
 
-    def test_sequence_with_duplicates(self):
+    def test_sequence_with_duplicates_reg_once(self):
         self.assertEqual(1, len(self.machine.events.registered_handlers["event_1"]))
         self.assertEqual(1, len(self.machine.events.registered_handlers["event_2"]))
         self.assertEqual(1, len(self.machine.events.registered_handlers["event_3"]))
+
+    def test_sequence_with_duplicates(self):
+        self.mock_event("sequence_with_dupes_hit")
+        self.post_event("event_1")
+        self.machine_run()
+        self.post_event("event_2")
+        self.machine_run()
+        self.post_event("event_1")
+        self.machine_run()
+        self.post_event("event_3")
+        self.machine_run()
+        self.assertEventCalled("sequence_with_dupes_hit", 0)
+        self.post_event("event_1")
+        self.machine_run()
+        self.assertEventCalled("sequence_with_dupes_hit", 1)
+        self.post_event("event_1")
+        self.machine_run()
+        self.assertEventCalled("sequence_with_dupes_hit", 1)
 
     def test_interleaved_sequences(self):
         """"Two balls pass through the sequence."""
