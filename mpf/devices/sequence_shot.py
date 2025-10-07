@@ -107,13 +107,12 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         self.debug_log("Sequence advance: %s", event_name)
 
-       # Get the sequences that have next_event set to this event_name.
-       # This is not a loop because we only want to advance 1 sequence
-       # (the most advanced one, so we sort and select the greater one)
+        # Get the sequences that have next_event set to this event_name.
+        # This is not a loop because we only want to advance 1 sequence
+        # (the most advanced one, so we sort and select the greater one)
 
-        seqs = (lambda event_name = event_name:
-                [x for x in self.active_sequences if x.next_event == event_name])()
-        seqs.sort(key=lambda _:_.current_position_index)
+        seqs = [x for x in self.active_sequences if x.next_event == event_name]
+        seqs.sort(key=lambda _: _.current_position_index)
         if len(seqs) >= 1:
             # advance this sequence
             self._advance_sequence(seqs[-1])
@@ -196,8 +195,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         """Event handler for cancel event."""
         if 'switch_name' in kwargs:
             switch = kwargs['switch_name']
-            seqs = (lambda event_name = f'{switch}_active':
-                    [x for x in self.active_sequences if x.next_event == event_name])()
+            seqs = [x for x in self.active_sequences if x.next_event == f'{switch}_active']
             self.active_sequences = list(seqs)
         else:
             self.reset_all_sequences()
