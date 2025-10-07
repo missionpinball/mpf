@@ -68,6 +68,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self._sequence_events.append(self.machine.switch_controller.get_active_event_for_switch(switch.name))
 
     def _register_handlers(self):
+        # use "set" to dedupe events. They must be registered once
         for event in set(self._sequence_events):
             self.machine.events.add_handler(event, self._sequence_advance, event_name=event)
 
@@ -106,6 +107,20 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         self.debug_log("Sequence advance: %s", event_name)
 
+       # Get the sequences that have next_event set to this event_name.
+       # This is not a loop because we only want to advance 1 sequence
+       # (the most advanced one, so we sort and select the greater one)
+
+        seqs = (lambda event_name = event_name:
+                [x for x in self.active_sequences if x.next_event == event_name])()
+        seqs.sort(key=lambda _:_.current_position_index)
+        if len(seqs) >= 1:
+            # advance this sequence
+            self._advance_sequence(seqs[-1])
+
+        # create new sequence (this must be done after new sequence creation)
+        # otherwise if the first two elements are same, the sequence will be created
+        # and advanced !
         if event_name == self._sequence_events[0]:
             if len(self._sequence_events) > 1:
                 # start a new sequence
@@ -113,15 +128,6 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             elif not self.active_delays:
                 # if it only has one step it will finish right away
                 self._completed()
-        else:
-            # Get the seq_id of the first sequence this switch is next for.
-            # This is not a loop because we only want to advance 1 sequence
-            seq = next((x for x in self.active_sequences if
-                        x.next_event == event_name), None)
-
-            if seq:
-                # advance this sequence
-                self._advance_sequence(seq)
 
     def _start_new_sequence(self):
         # If the sequence hasn't started, make sure we're not within the
