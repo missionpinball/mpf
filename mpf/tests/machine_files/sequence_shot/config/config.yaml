@@ -48,6 +48,20 @@ sequence_shots:
             - event_1
             - event_3
             - event_1
+    sequence_with_dupes2:
+        event_sequence:
+            - event_4
+            - event_4
+            - event_4
+            - event_5
+            - event_5
+            - event_5
+            - event_4
+            - event_4
+            - event_4
+            - event_5
+            - event_5
+            - event_5
     sequence4:
         debug: True
         switch_sequence:
