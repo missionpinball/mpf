@@ -240,6 +240,27 @@ class TestShots(MpfTestCase):
         self.post_event("event3")
         self.assertEventCalled("sequence1_hit")
 
+    def test_sequence_multiple_disabled(self):
+        self.mock_event("sequence_multiple_disabled_hit")
+        self.post_event("event6")
+        self.machine_run()
+        self.post_event("event7")
+        self.machine_run()
+        self.post_event("event6")
+        self.machine_run()
+        self.assertEventCalled("sequence_multiple_disabled_hit", 0)
+        self.post_event("event7")
+        self.machine_run()
+        self.assertEventCalled("sequence_multiple_disabled_hit", 1)
+        self.post_event("event7")
+        self.machine_run()
+        self.post_event("event6")
+        self.machine_run()
+        self.assertEventCalled("sequence_multiple_disabled_hit", 1)
+        self.post_event("event7")
+        self.machine_run()
+        self.assertEventCalled("sequence_multiple_disabled_hit", 1)
+
     def test_sequence_timeout(self):
         """Ball rolls up a ramp and back down."""
         self.mock_event("sequence1_hit")

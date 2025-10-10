@@ -21,7 +21,8 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     collection = 'sequence_shots'
     class_label = 'sequence_shot'
 
-    __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events", "_start_time"]
+    __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events",
+                 "_allow_multiple_active", "_start_time"]
 
     def __init__(self, machine, name):
         """Initialize sequence shot."""
@@ -33,6 +34,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         self._sequence_events = []      # type: List[str]
         self._delay_events = {}         # type: Dict[str, int]
+        self._allow_multiple_active = None
         self._start_time = None
 
     @property
@@ -63,6 +65,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             raise AssertionError("Sequence shot {} only supports switch_sequence or event_sequence".format(self.name))
 
         self._sequence_events = self.config['event_sequence']
+        self._allow_multiple_active = self.config['allow_multiple_active']
 
         for switch in self.config['switch_sequence']:
             self._sequence_events.append(self.machine.switch_controller.get_active_event_for_switch(switch.name))
@@ -121,12 +124,13 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         # otherwise if the first two elements are same, the sequence will be created
         # and advanced !
         if event_name == self._sequence_events[0]:
-            if len(self._sequence_events) > 1:
-                # start a new sequence
-                self._start_new_sequence()
-            elif not self.active_delays:
-                # if it only has one step it will finish right away
-                self._completed()
+            if len(self.active_sequences) == 0 or self._allow_multiple_active:
+                if len(self._sequence_events) > 1:
+                    # start a new sequence
+                    self._start_new_sequence()
+                elif not self.active_delays:
+                    # if it only has one step it will finish right away
+                    self._completed()
 
     def _start_new_sequence(self):
         # If the sequence hasn't started, make sure we're not within the

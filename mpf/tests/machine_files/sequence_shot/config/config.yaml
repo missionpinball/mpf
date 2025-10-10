@@ -84,6 +84,14 @@ sequence_shots:
         cancel_switches:
             - switch_4
             - switch_5
+    sequence_multiple_disabled:
+        event_sequence:
+            - event6
+            - event7
+            - event6
+            - event7
+        debug: true
+        allow_multiple_active: False
     sequence4:
         debug: True
         switch_sequence:

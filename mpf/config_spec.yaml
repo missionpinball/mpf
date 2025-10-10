@@ -2018,6 +2018,7 @@ sequence_shots:
     delay_event_list: event_handler|event_handler:ms|None
     sequence_timeout: single|ms|0
     playfield: single|machine(playfields)|None
+    allow_multiple_active: single|bool|true
 switches:
     __valid_in__: machine
     __type__: device
