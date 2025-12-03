@@ -431,14 +431,24 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.active_delays.remove(switch)
 
     def _register_control_event_handlers(self):
+        #TODO support priority for either control event type
         for control_event in self.config['control_events']:
             for event in control_event['events']:
-                self.machine.events.add_handler(event, self._control_events,
-                                                control_event_config=control_event)
+                match control_event['action']:
+                    case 'mute':
+                        self.machine.events.add_handler(event, self._control_event_mute, control_event_config=control_event)
+                    case 'set_state' | _:
+                        self.machine.events.add_handler(event, self._control_event_set_state, control_event_config=control_event)
+
+    @event_handler(8)
+    def _control_event_mute(self, control_event_config, **kwargs):
+        """Control event binding for mute action, which temporarily blocks shot from registering hits"""
+        del kwargs
+        self._delay_switch_hit('action_mute', control_event_config['duration'])
 
     @event_handler(7)
-    def _control_events(self, control_event_config, **kwargs):
-        """Takes in a control_event to move the shot to a specific state."""
+    def _control_event_set_state(self, control_event_config, **kwargs):
+        """Control event binding for set_state action, which moves the shot to a specific state."""
         del kwargs
         self.jump(control_event_config['state'],
                   control_event_config['force'],
