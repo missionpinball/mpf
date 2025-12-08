@@ -26,7 +26,9 @@ jobs:
 
       - name: Install MPF
         run: |
-          sudo apt-get install -y libjpeg-dev
+          sudo apt-get update
+          sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libjpeg-dev
+          sudo apt-get install -y qt6-base-dev
           pip install --upgrade pip setuptools wheel build
           pip install -e .
 
