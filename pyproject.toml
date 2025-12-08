@@ -2,7 +2,7 @@
 name = "mpf"
 description = "The Mission Pinball Framework (MPF)"
 readme = "README.md"
-requires-python = ">=3.8,<3.13"
+requires-python = ">=3.8,<3.14"
 license = {text = "MIT"}
 authors = [{ name = "The Mission Pinball Framework Team", email = "brian@missionpinball.org"}]
 keywords = ["pinball"]
@@ -15,6 +15,7 @@ classifiers=[
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Natural Language :: English",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
@@ -33,7 +34,7 @@ dependencies = [
     "setuptools ~= 72.2.0",  # Nov 16, 2024,
     "sortedcontainers == 2.4.0",  # Oct 4 2023, used by platform batch light system
     "terminaltables == 3.1.10",  # Oct 4 2023, used for the service CLI
-    "Pillow == 9.5.0"  # Nov 4 2023. Asciimatics needs Pillow > 2.7, but latest 10.x breaks kivy for now (fix due in 2.3), so we pin to latest working Pillow for now.
+    "Pillow == 10.4.0"  # Dec 7, 2025. Upgrading past broken versions
     ]
 dynamic = ["version"]
 
