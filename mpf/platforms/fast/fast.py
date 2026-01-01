@@ -752,12 +752,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                     result = []
                     for i in range(3):
                         working_parts = parts.copy()
-                        if i + channel > 2:
+                        absolute_channel = channel + i
+                        if absolute_channel > 2:
                             # Channel rolls over, increment the LED number
-                            working_parts[3] = str(int(working_parts[3]) + 1)
-                            working_parts[4] = str((channel + i) % 3)
+                            working_parts[3] = str(int(working_parts[3]) + absolute_channel // 3)
+                            working_parts[4] = str(absolute_channel % 3)
                         else:
-                            working_parts[4] = str(channel + i)
+                            working_parts[4] = str(absolute_channel)
                         result.append({'number': '-'.join(working_parts)})
                     return result
                 raise AssertionError(f"Invalid LED channel: {channel}")
