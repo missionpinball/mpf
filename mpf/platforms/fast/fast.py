@@ -562,12 +562,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             raise AssertionError("Switch needs a number")
 
         if not self.serial_connections['net']:
-            raise AssertionError("A request was made to configure a FAST "
-                                 "switch, but no connection to a NET processor"
-                                 "is available")
+            raise AssertionError("A request was made to configure a FAST switch, "
+                                 "but no connection to a NET processor is available")
 
-        if self.is_retro:
-            # translate switch num to FAST switch
+        if self.is_retro:  # translate switch num to FAST switch
             try:
                 number = fast_defines.RETRO_SWITCH_MAP[str(number).upper()]
             except KeyError:
@@ -584,7 +582,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         return switch
 
-    # pylint: disable-msg=too-many-locals
     def configure_light(self, number, subtype, config, platform_settings) -> LightPlatformInterface:
         """Configure light in platform."""
         del platform_settings
@@ -601,80 +598,86 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             # split into board name, breakout, port, led
             parts = parts.split('-')
 
-            if parts[0] in self.exp_boards_by_name:
-                # this is an expansion board LED in config file format
-                exp_board = self.exp_boards_by_name[parts[0]]
+            if parts[0] in self.exp_boards_by_name:  # this is an expansion board LED in config file format
+                return self._add_exp_led_with_config_format(parts, channel, config.name)
 
-                try:
-                    _, port, led = parts
-                    breakout = '0'
-                except ValueError:
-                    _, breakout, port, led = parts
-                    breakout = breakout.strip('b')
+            if int(parts[0]) > 255:  # EXP LED in int form, which is how "previous:" values are calculated
+                return self._add_exp_led_with_int_format(parts, channel)
 
-                # ports are always 1-4, but some EXP boards have more which are labeled 5-8
-                # Those are really 1-4 of the next breakout board, so if we get a port > 4
-                # then sort it out to the real internal values
-                if int(port) > 4:
-                    # assume 4 LED ports per breakout, could change to a lookup
-                    breakout = str((int(port) - 1) // 4)
-                    port = str((int(port) - 1) % 4 + 1)
+            # else it's a Nano LED
+            return self._add_nano_led(parts, channel)
 
-                try:
-                    brk_board = exp_board.breakouts[breakout]
-                except KeyError:
-                    # TODO change to mpf config exception
-                    raise AssertionError(f'Board {exp_board} does not have a config entry for Breakout {breakout}')
-
-                index = self.port_idx_to_hex(port, led, 32, config.name)
-                this_led_number = f'{brk_board.address}{index}'
-
-                # this code runs once for each channel, so it will be called 3x per LED which
-                # is why we check this here
-                if this_led_number not in self.fast_exp_leds:
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
-                                                                     exp_board.config['led_fade_time'], self)
-
-                fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
-                self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
-
-            elif int(parts[0]) > 255:
-                # EXP LED in int form, which is how "previous:" values are calculated
-
-                raw_hex_string = hex(int(parts[0]))[2:]  # lowercase with 0x prefix stripped"
-                this_led_number = Util.normalize_hex_string(raw_hex_string, len(raw_hex_string))
-
-                exp_board = self.exp_boards_by_address[this_led_number[:2]]
-
-                if this_led_number not in self.fast_exp_leds:
-                    # RGBW LEDs could span multiple FAST LEDs, so make sure it exists
-                    self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
-                                                                     exp_board.config['led_fade_time'], self)
-
-                fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
-                self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
-
-            else:
-                # Nano LED
-
-                try:
-                    number = self.port_idx_to_hex(parts[0], parts[1], 64)
-                except IndexError:
-                    # this is a legacy LED number as an int
-                    number = f'{int(parts[0]):02X}'
-
-                if number not in self.fast_rgb_leds:
-                    try:
-                        self.fast_rgb_leds[number] = FASTRGBLED(number, self)
-                    except KeyError:
-                        # This number is not valid
-                        raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
-
-                fast_led_channel = FASTLEDChannel(self.fast_rgb_leds[number], channel)
-                self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
-
-            return fast_led_channel
         raise AssertionError(f"Unknown light subtype {subtype}")
+
+    def _add_exp_led_with_config_format(self, parts, channel, name):
+        exp_board = self.exp_boards_by_name[parts[0]]
+
+        try:
+            _, port, led = parts
+            breakout = '0'
+        except ValueError:
+            _, breakout, port, led = parts
+            breakout = breakout.strip('b')
+
+        # ports are always 1-4, but some EXP boards have more which are labeled 5-8
+        # Those are really 1-4 of the next breakout board, so if we get a port > 4
+        # then sort it out to the real internal values
+        if int(port) > 4:
+            # assume 4 LED ports per breakout, could change to a lookup
+            breakout = str((int(port) - 1) // 4)
+            port = str((int(port) - 1) % 4 + 1)
+
+        try:
+            brk_board = exp_board.breakouts[breakout]
+        except KeyError:
+            # TODO change to mpf config exception
+            raise AssertionError(f'Board {exp_board} does not have a config entry for Breakout {breakout}')
+
+        index = self.port_idx_to_hex(port, led, 32, name)
+        this_led_number = f'{brk_board.address}{index}'
+
+        # this code runs once for each channel, so it will be called 3x per LED which
+        # is why we check this here
+        if this_led_number not in self.fast_exp_leds:
+            self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
+                                                             exp_board.config['led_fade_time'], self)
+
+        fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
+        self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
+        return fast_led_channel
+
+    def _add_exp_led_with_int_format(self, parts, channel):
+        raw_hex_string = hex(int(parts[0]))[2:]  # lowercase with 0x prefix stripped"
+        this_led_number = Util.normalize_hex_string(raw_hex_string, len(raw_hex_string))
+
+        exp_board = self.exp_boards_by_address[this_led_number[:2]]
+
+        if this_led_number not in self.fast_exp_leds:
+            # RGBW LEDs could span multiple FAST LEDs, so make sure it exists
+            self.fast_exp_leds[this_led_number] = FASTExpLED(this_led_number,
+                                                             exp_board.config['led_fade_time'], self)
+
+        fast_led_channel = FASTLEDChannel(self.fast_exp_leds[this_led_number], channel)
+        self.fast_exp_leds[this_led_number].add_channel(int(channel), fast_led_channel)
+        return fast_led_channel
+
+    def _add_nano_led(self, parts, channel):
+        try:
+            number = self.port_idx_to_hex(parts[0], parts[1], 64)
+        except IndexError:
+            # this is a legacy LED number as an int
+            number = f'{int(parts[0]):02X}'
+
+        if number not in self.fast_rgb_leds:
+            try:
+                self.fast_rgb_leds[number] = FASTRGBLED(number, self)
+            except KeyError:
+                # This number is not valid
+                raise ConfigFileError(f"Invalid LED number: {'_'.join(parts)}", 3, self.log.name)
+
+        fast_led_channel = FASTLEDChannel(self.fast_rgb_leds[number], channel)
+        self.fast_rgb_leds[number].add_channel(int(channel), fast_led_channel)
+        return fast_led_channel
 
     def port_idx_to_hex(self, port, device_num, devices_per_port, name=None):
         """Converts port number and LED index into the proper FAST hex number.
