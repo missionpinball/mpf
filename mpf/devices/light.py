@@ -275,10 +275,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not platform.features['allow_empty_numbers'] and channel['number'] is None:
             self.raise_config_error("Light must have a number.", 1)
 
-        config = LightConfig(
-            name=self.name,
-            color=LightConfigColors[color.upper()]
-        )
+        config = LightConfig(name=self.name, color=LightConfigColors[color.upper()])
 
         try:
             return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
@@ -290,22 +287,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         await super()._initialize()
         try:
             if self.config['previous']:
-                if self.config['previous'].name == self.name:
-                    self.raise_config_error(
-                        "Failed to configure light {} in platform. 'previous' value cannot refer to itself.".
-                        format(self.name), 8)
-
-                # If we are in development mode, do a robust tree traversal to catch infinite light loops
-                if not self.machine.options['production']:
-                    tree = [self.name]
-                    prev = self.config['previous']
-                    while prev:
-                        tree.append(prev.name)
-                        prev = prev.config.get('previous')
-                        if prev is not None and prev.name in tree:
-                            tree.append(prev.name)
-                            self.raise_config_error("Cyclical light chain found: {}".format(" -> ".join(tree)), 9)
-
+                self._detect_previous_reference_loop()
                 await self.config['previous'].wait_for_loaded()
                 start_channel = self.config['previous'].get_successor_number()
                 self._load_hw_driver_sequentially(start_channel)
@@ -313,47 +295,62 @@ class Light(SystemWideDevice, DevicePositionMixin):
                 self._load_hw_driver_sequentially(self.config['start_channel'])
             else:
                 self._load_hw_drivers()
-            self._drivers_loaded.set_result(True)
 
+            self._drivers_loaded.set_result(True)
             self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
 
-            if self.config['color_correction_profile'] is not None:
-                profile_name = self.config['color_correction_profile']
-            elif 'light_settings' in self.machine.config and \
-                    self.machine.config['light_settings']['default_color_correction_profile'] is not None:
-                profile_name = self.machine.config['light_settings']['default_color_correction_profile']
-            else:
-                profile_name = None
+            self._apply_color_correction_profile(self.config['color_correction_profile'])
+            self._apply_fade(self.config['fade_ms'])
+            self._apply_rgbw_style()
 
-            if profile_name:
-                if profile_name in self.machine.light_controller.light_color_correction_profiles:
-                    profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
-
-                    if profile is not None:
-                        self._set_color_correction_profile(profile)
-                else:   # pragma: no cover
-                    error = "Color correction profile '{}' was specified for light '{}'"\
-                            " but the color correction profile does not exist."\
-                            .format(profile_name, self.name)
-                    self.error_log(error)
-                    raise ValueError(error)
-
-            if self.config['fade_ms'] is not None:
-                self.default_fade_ms = self.config['fade_ms']
-            else:
-                self.default_fade_ms = (self.machine.config['light_settings']
-                                        ['default_fade_ms'])
-
-            if len(self.hw_drivers) == 4 and all(channel in self.hw_drivers
-                                                 for channel in ['red', 'green', 'blue', 'white']):
-                self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
-
-            self.debug_log("Initializing Light. CC Profile: %s, "
-                           "Default fade: %sms", self._color_correction_profile,
+            self.debug_log("Initializing Light. CC Profile: %s, Default fade: %sms",
+                           self._color_correction_profile,
                            self.default_fade_ms)
         except Exception:
             self._drivers_loaded.cancel()
             raise
+
+    def _detect_previous_reference_loop(self):
+        if self.config['previous'].name == self.name:
+            self.raise_config_error(
+                "Failed to configure light {} in platform. 'previous' value cannot refer to itself.".
+                format(self.name), 8)
+
+        # If we are in development mode, do a robust tree traversal to catch infinite light loops
+        if not self.machine.options['production']:
+            tree = [self.name]
+            prev = self.config['previous']
+            while prev:
+                tree.append(prev.name)
+                prev = prev.config.get('previous')
+                if prev is not None and prev.name in tree:
+                    tree.append(prev.name)
+                    self.raise_config_error("Cyclical light chain found: {}".format(" -> ".join(tree)), 9)
+
+    def _apply_color_correction_profile(self, profile_value):
+        profile_name = self._determine_color_correction_profile(profile_value)
+        if profile_name:
+            if profile_name in self.machine.light_controller.light_color_correction_profiles:
+                profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
+
+                if profile is not None:
+                    self._set_color_correction_profile(profile)
+            else:  # pragma: no cover
+                error = "Color correction profile '{}' was specified for light '{}'"\
+                        " but the color correction profile does not exist."\
+                        .format(profile_name, self.name)
+                self.error_log(error)
+                raise ValueError(error)
+
+    def _determine_color_correction_profile(self, profile_value):
+        if profile_value is not None:
+            return profile_value
+
+        if 'light_settings' in self.machine.config and \
+                self.machine.config['light_settings']['default_color_correction_profile'] is not None:
+            return self.machine.config['light_settings']['default_color_correction_profile']
+
+        return None
 
     def _set_color_correction_profile(self, profile):
         """Apply a color correction profile to this light.
@@ -364,6 +361,19 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         """
         self._color_correction_profile = profile
+
+    def _apply_fade(self, fade_value):
+        if fade_value is not None:
+            self.default_fade_ms = fade_value
+        else:
+            self.default_fade_ms = self.machine.config['light_settings']['default_fade_ms']
+
+    def _apply_rgbw_style(self):
+        rgbw_all_present = all(channel in self.hw_drivers
+                    for channel in ['red', 'green', 'blue', 'white'])
+
+        if len(self.hw_drivers) == 4 and rgbw_all_present:
+            self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
 
     # pylint: disable-msg=too-many-arguments
     def color(self, color, fade_ms=None, priority=0, key=None, start_time=None):
@@ -392,8 +402,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if self._debug:
             self.debug_log("Received color() command. color: %s, fade_ms: %s "
-                           "priority: %s, key: %s", color, fade_ms, priority,
-                           key)
+                           "priority: %s, key: %s", color, fade_ms, priority, key)
 
         if isinstance(color, str) and color == "on":
             color = self.config['default_on_color']
@@ -440,8 +449,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority,
-                   key=key)
+        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority, key=key)
 
     # pylint: disable-msg=too-many-arguments
     def _add_to_stack(self, color, fade_ms, priority, key, start_time):
@@ -473,12 +481,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if self.stack:
             self._remove_from_stack_by_key(key)
 
-        self.stack.append(LightStackEntry(priority,
-                                          key,
-                                          start_time,
-                                          color_below,
-                                          dest_time,
-                                          color))
+        self.stack.append(LightStackEntry(priority, key, start_time, color_below, dest_time, color))
 
         if len(self.stack) > 1:
             self.stack.sort(reverse=True)
