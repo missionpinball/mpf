@@ -213,13 +213,18 @@ class Light(SystemWideDevice, DevicePositionMixin):
                     tree.append(prev.name)
                     self.raise_config_error("Cyclical light chain found: {}".format(" -> ".join(tree)), 9)
 
-    def _load_hw_driver_sequentially(self, next_channel):
-        if self.config['number'] or self.config['channels']:
-            self.raise_config_error("Cannot use start_channel/previous and number or channels.", 3)
+    def _load_hw_driver_sequentially(self, first_channel):
+        if self.config['number']:
+            self.raise_config_error("Cannot use number with start_channel/previous.", 15)
+
+        if self.config['channels']:
+            self.raise_config_error("Cannot use channels list with start_channel/previous.", 16)
+
         if not self.config['type']:
             self.raise_config_error("Cannot use previous or start_channel without type. "
                                     "Add a type setting to your light.", 2)
 
+        next_channel = first_channel
         for color_letter in self.config['type']:
             full_color_name = self._color_letter_to_name(color_letter)
 
@@ -229,7 +234,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
                        'platform_settings': self.config['platform_settings'], 'number': next_channel}
             channel = self.machine.config_validator.validate_config("light_channels", channel)
             driver = self._load_hw_driver(channel, full_color_name)
-            next_channel = driver.get_successor_number()
+            next_channel = driver.get_successor_number()  # increment for the next loop
             self.hw_drivers[full_color_name].append(driver)
 
     def _load_hw_drivers(self):
