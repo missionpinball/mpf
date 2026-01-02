@@ -138,47 +138,21 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
                     check_set.add(key)
 
-    def _map_channels_to_colors(self, channel_list) -> dict:
-        if self.config['type']:
-            color_channels = self.config['type']
-        else:
-            if len(channel_list) == 1:
-                # for one channel default to a white channel
-                color_channels = "w"
-            elif len(channel_list) == 3:
-                # for three channels default to RGB
-                color_channels = "rgb"
-            else:
-                self.raise_config_error("Please provide a type for light {}. No default for channels {}.".
-                                        format(self.name, channel_list), 11)
+    def _color_letter_to_name(self, letter):
+        if letter == 'r':
+            return 'red'
 
-        if len(channel_list) != len(color_channels):
-            self.raise_config_error("Type {} does not match channels {} for light {}".format(
-                color_channels, channel_list, self.name), 12)
+        if letter == 'g':
+            return 'green'
 
-        channels = {}   # type: Dict[str, List[Any]]
-        for color_name in color_channels:
-            # red channel
-            if color_name == 'r':
-                full_color_name = "red"
-            # green channel
-            elif color_name == 'g':
-                full_color_name = "green"
-            # blue channel
-            elif color_name == 'b':
-                full_color_name = "blue"
-            # simple white channel
-            elif color_name == 'w':
-                full_color_name = "white"
-            else:
-                self.raise_config_error("Invalid element {} in type {} of light {}".format(
-                    color_name, self.config['type'], self.name), 13)
+        if letter == 'b':
+            return 'blue'
 
-            if full_color_name not in channels:
-                channels[full_color_name] = []
-            channels[full_color_name].append(channel_list.pop(0))
+        if letter == 'w':
+            return 'white'
 
-        return channels
+        self.raise_config_error("Invalid element {} in type {} of light {}".format(
+                                letter, self.config['type'], self.name), 14)
 
     def wait_for_loaded(self):
         """Return future."""
@@ -194,94 +168,6 @@ class Light(SystemWideDevice, DevicePositionMixin):
             all_drivers.extend(drivers)
         sorted_channels = sorted(all_drivers)
         return sorted_channels[-1].get_successor_number()
-
-    def _load_hw_driver_sequentially(self, next_channel):
-        if self.config['number'] or self.config['channels']:
-            self.raise_config_error("Cannot use start_channel/previous and number or channels.", 3)
-        if not self.config['type']:
-            self.raise_config_error("Cannot use previous or start_channel without type. "
-                                    "Add a type setting to your light.", 2)
-
-        for color_name in self.config['type']:
-            # red channel
-            if color_name == 'r':
-                full_color_name = "red"
-            # green channel
-            elif color_name == 'g':
-                full_color_name = "green"
-            # blue channel
-            elif color_name == 'b':
-                full_color_name = "blue"
-            # simple white channel
-            elif color_name == 'w':
-                full_color_name = "white"
-            else:
-                self.raise_config_error("Invalid element {} in type {} of light {}".format(
-                    color_name, self.config['type'], self.name), 14)
-
-            if full_color_name not in self.hw_drivers:
-                self.hw_drivers[full_color_name] = []
-            channel = {'subtype': self.config['subtype'], 'platform': self.config['platform'],
-                       'platform_settings': self.config['platform_settings'], 'number': next_channel}
-            channel = self.machine.config_validator.validate_config("light_channels", channel)
-            driver = self._load_hw_driver(channel, full_color_name)
-            next_channel = driver.get_successor_number()
-            self.hw_drivers[full_color_name].append(driver)
-
-    def _load_hw_drivers(self):
-        if not self.config['channels']:
-            # get channels from number + platform
-            platform = self.machine.get_platform_sections('lights', self.config['platform'])
-            platform.assert_has_feature("lights")
-            try:
-                channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
-            except AssertionError as e:
-                self.raise_config_error("Failed to parse light number {} in platform. See error above".
-                                        format(self.name), 4, source_exception=e)
-
-            # copy platform and platform_settings to all channels
-            for channel, _ in enumerate(channel_list):
-                channel_list[channel]['subtype'] = self.config['subtype']
-                channel_list[channel]['platform'] = self.config['platform']
-                channel_list[channel]['platform_settings'] = self.config['platform_settings']
-            # map channels to colors
-            channels = self._map_channels_to_colors(channel_list)
-        else:
-            if self.config['number'] or self.config['platform'] or self.config['platform_settings']:
-                self.raise_config_error("Light {} cannot contain platform/platform_settings/number and channels".
-                                        format(self.name), 5)
-            # alternatively use channels from config
-            channels = self.config['channels']
-            # ensure that we got lists
-            for channel in channels:
-                if not isinstance(channels[channel], list):
-                    channels[channel] = [channels[channel]]
-
-        if not channels:
-            self.raise_config_error("Light {} has no channels.".format(self.name), 6)
-
-        for color, channel_list in channels.items():
-            self.hw_drivers[color] = []
-            for channel in channel_list:
-                channel = self.machine.config_validator.validate_config("light_channels", channel)
-                driver = self._load_hw_driver(channel, color)
-                self.hw_drivers[color].append(driver)
-
-    def _load_hw_driver(self, channel, color):
-        """Load one channel."""
-        platform = self.machine.get_platform_sections('lights', channel['platform'])
-        self.platforms.add(platform)
-
-        if not platform.features['allow_empty_numbers'] and channel['number'] is None:
-            self.raise_config_error("Light must have a number.", 1)
-
-        config = LightConfig(name=self.name, color=LightConfigColors[color.upper()])
-
-        try:
-            return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
-        except AssertionError as e:
-            self.raise_config_error("Failed to configure light {} in platform. See error above".format(self.name), 7,
-                                    source_exception=e)
 
     async def _initialize(self):
         await super()._initialize()
@@ -327,6 +213,120 @@ class Light(SystemWideDevice, DevicePositionMixin):
                     tree.append(prev.name)
                     self.raise_config_error("Cyclical light chain found: {}".format(" -> ".join(tree)), 9)
 
+    def _load_hw_driver_sequentially(self, next_channel):
+        if self.config['number'] or self.config['channels']:
+            self.raise_config_error("Cannot use start_channel/previous and number or channels.", 3)
+        if not self.config['type']:
+            self.raise_config_error("Cannot use previous or start_channel without type. "
+                                    "Add a type setting to your light.", 2)
+
+        for color_letter in self.config['type']:
+            full_color_name = self._color_letter_to_name(color_letter)
+
+            if full_color_name not in self.hw_drivers:
+                self.hw_drivers[full_color_name] = []
+            channel = {'subtype': self.config['subtype'], 'platform': self.config['platform'],
+                       'platform_settings': self.config['platform_settings'], 'number': next_channel}
+            channel = self.machine.config_validator.validate_config("light_channels", channel)
+            driver = self._load_hw_driver(channel, full_color_name)
+            next_channel = driver.get_successor_number()
+            self.hw_drivers[full_color_name].append(driver)
+
+    def _load_hw_drivers(self):
+        if not self.config['channels']:
+            channels = self._derive_platform_channels()
+        else:
+            channels = self._prepare_config_channels()
+
+        if not channels:
+            self.raise_config_error("Light {} has no channels.".format(self.name), 6)
+
+        for color, channel_list in channels.items():
+            self.hw_drivers[color] = []
+            for channel in channel_list:
+                channel = self.machine.config_validator.validate_config("light_channels", channel)
+                driver = self._load_hw_driver(channel, color)
+                self.hw_drivers[color].append(driver)
+
+    def _load_hw_driver(self, channel, color):
+        """Load one channel."""
+        platform = self.machine.get_platform_sections('lights', channel['platform'])
+        self.platforms.add(platform)
+
+        if not platform.features['allow_empty_numbers'] and channel['number'] is None:
+            self.raise_config_error("Light must have a number.", 1)
+
+        config = LightConfig(name=self.name, color=LightConfigColors[color.upper()])
+
+        try:
+            return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
+        except AssertionError as e:
+            self.raise_config_error("Failed to configure light {} in platform. See error above".format(self.name), 7,
+                                    source_exception=e)
+
+    def _prepare_config_channels(self):
+        if self.config['number'] or self.config['platform'] or self.config['platform_settings']:
+            self.raise_config_error("Light {} cannot contain platform/platform_settings/number and channels".
+                                    format(self.name), 5)
+        channels = self.config['channels']
+
+        # ensure that each color's channels are a list, not single value
+        for channel in channels:
+            if not isinstance(channels[channel], list):
+                channels[channel] = [channels[channel]]
+
+        return channels
+
+    def _derive_platform_channels(self):
+        # get channels from number + platform
+        platform = self.machine.get_platform_sections('lights', self.config['platform'])
+        platform.assert_has_feature("lights")
+
+        try:
+            channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+        except AssertionError as e:
+            self.raise_config_error("Failed to parse light number {} in platform. See error above".
+                                    format(self.name), 4, source_exception=e)
+
+        # copy platform and platform_settings to all channels
+        for channel, _ in enumerate(channel_list):
+            channel_list[channel]['subtype'] = self.config['subtype']
+            channel_list[channel]['platform'] = self.config['platform']
+            channel_list[channel]['platform_settings'] = self.config['platform_settings']
+        # map channels to colors
+        return self._map_channels_to_colors(channel_list)
+
+    def _map_channels_to_colors(self, channel_list) -> dict:
+        if self.config['type']:
+            color_channels = self.config['type']
+        else:
+            if len(channel_list) == 1:
+                # for one channel default to a white channel
+                color_channels = "w"
+            elif len(channel_list) == 3:
+                # TODO this seems like a bug waiting to happen -- what if the channel list ISNT R G B ordered?
+                # -- the blind .pop(0) down below combined with the "for letter in 'rgb'" seems risky
+
+                # for three channels default to RGB
+                color_channels = "rgb"
+            else:
+                self.raise_config_error("Please provide a type for light {}. No default for channels {}.".
+                                        format(self.name, channel_list), 11)
+
+        if len(channel_list) != len(color_channels):
+            self.raise_config_error("Type {} does not match channels {} for light {}".format(
+                color_channels, channel_list, self.name), 12)
+
+        channels = {}   # type: Dict[str, List[Any]]
+        for color_letter in color_channels:
+            full_color_name = self._color_letter_to_name(color_letter)
+            if full_color_name not in channels:
+                channels[full_color_name] = []
+
+            channels[full_color_name].append(channel_list.pop(0))
+
+        return channels
+
     def _apply_color_correction_profile(self, profile_value):
         profile_name = self._determine_color_correction_profile(profile_value)
         if profile_name:
@@ -370,7 +370,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     def _apply_rgbw_style(self):
         rgbw_all_present = all(channel in self.hw_drivers
-                    for channel in ['red', 'green', 'blue', 'white'])
+                               for channel in ['red', 'green', 'blue', 'white'])
 
         if len(self.hw_drivers) == 4 and rgbw_all_present:
             self._rbgw_style = self.machine.config['mpf']['rgbw_white_behavior']
