@@ -143,7 +143,11 @@ class FASTLEDChannel(LightPlatformInterface):
 
     def is_successor_of(self, other):
         """Return true if the other light has the previous number."""
-        return self.led.number_int * 3 + self.channel == other.led.number_int * 3 + other.channel + 1
+        return self.absolute_channel() == other.absolute_channel() + 1
+
+    def absolute_channel(self):
+        """Returns channel offset from 0-0 as a single number."""
+        return self.led.number_int * 3 + self.channel
 
     def get_successor_number(self):
         """Return next number. We want this in the config format."""
