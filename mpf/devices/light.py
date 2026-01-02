@@ -293,10 +293,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             channel_list[channel]['subtype'] = self.config['subtype']
             channel_list[channel]['platform'] = self.config['platform']
             channel_list[channel]['platform_settings'] = self.config['platform_settings']
-        # map channels to colors
-        return self._map_channels_to_colors(channel_list)
 
-    def _map_channels_to_colors(self, channel_list) -> dict:
+        # map channels to colors
         if self.config['type']:
             color_channels = self.config['type']
         else:
@@ -306,6 +304,8 @@ class Light(SystemWideDevice, DevicePositionMixin):
             elif len(channel_list) == 3:
                 # TODO this seems like a bug waiting to happen -- what if the channel list ISNT R G B ordered?
                 # -- the blind .pop(0) down below combined with the "for letter in 'rgb'" seems risky
+                # and the channel list order is up to the platform to provide, which doesnt seem clear in the
+                # parse_light_number_to_channels interface definition at all
 
                 # for three channels default to RGB
                 color_channels = "rgb"
