@@ -275,10 +275,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if not platform.features['allow_empty_numbers'] and channel['number'] is None:
             self.raise_config_error("Light must have a number.", 1)
 
-        config = LightConfig(
-            name=self.name,
-            color=LightConfigColors[color.upper()]
-        )
+        config = LightConfig(name=self.name, color=LightConfigColors[color.upper()])
 
         try:
             return platform.configure_light(channel['number'], channel['subtype'], config, channel['platform_settings'])
@@ -405,8 +402,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         """
         if self._debug:
             self.debug_log("Received color() command. color: %s, fade_ms: %s "
-                           "priority: %s, key: %s", color, fade_ms, priority,
-                           key)
+                           "priority: %s, key: %s", color, fade_ms, priority, key)
 
         if isinstance(color, str) and color == "on":
             color = self.config['default_on_color']
@@ -453,8 +449,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority,
-                   key=key)
+        self.color(color=self._off_color, fade_ms=fade_ms, priority=priority, key=key)
 
     # pylint: disable-msg=too-many-arguments
     def _add_to_stack(self, color, fade_ms, priority, key, start_time):
@@ -486,12 +481,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
         if self.stack:
             self._remove_from_stack_by_key(key)
 
-        self.stack.append(LightStackEntry(priority,
-                                          key,
-                                          start_time,
-                                          color_below,
-                                          dest_time,
-                                          color))
+        self.stack.append(LightStackEntry(priority, key, start_time, color_below, dest_time, color))
 
         if len(self.stack) > 1:
             self.stack.sort(reverse=True)
