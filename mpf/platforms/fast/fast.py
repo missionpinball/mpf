@@ -740,34 +740,45 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         if parts[0] in self.exp_boards_by_name:
             # This is an expansion board LED
-            if not parts[1].startswith('b'):
-                # No breakout specified, so we insert a b0
-                parts.insert(1, 'b0')
+            return self._parse_expansion_board_light_number(number, parts)
 
-            if len(parts) == 4:
-                # No channel specified, so we return 3 channels 0,1,2
-                return [{'number': '-'.join(parts) + f'-{i}'} for i in range(3)]
+        # Nano LEDs do not have expansion board names
+        return self._parse_nano_light_number(number, parts)
 
-            if len(parts) == 5:
-                # We have a channel specified
-                channel = int(parts[4])
-                if 0 <= channel <= 2:
-                    result = []
-                    for i in range(3):
-                        working_parts = parts.copy()
-                        absolute_channel = channel + i
-                        if absolute_channel > 2:
-                            # Channel rolls over, increment the LED number
-                            working_parts[3] = str(int(working_parts[3]) + absolute_channel // 3)
-                            working_parts[4] = str(absolute_channel % 3)
-                        else:
-                            working_parts[4] = str(absolute_channel)
-                        result.append({'number': '-'.join(working_parts)})
-                    return result
-                raise AssertionError(f"Invalid LED channel: {channel}")
-            raise AssertionError(f"Invalid LED number: {number}")
+    def _parse_expansion_board_light_number(self, number, parts):
+        if not parts[1].startswith('b'):
+            # No breakout specified, so we insert a b0
+            parts.insert(1, 'b0')
 
-        # This is a Nano LED
+        if len(parts) == 4:
+            # No channel specified, so we return 3 channels 0,1,2
+            return [{'number': '-'.join(parts) + f'-{i}'} for i in range(3)]
+
+        if len(parts) == 5:
+            # We have a channel specified
+            channel = int(parts[4])
+            if 0 <= channel <= 2:
+                result = []
+                for i in range(3):
+                    working_parts = parts.copy()
+                    absolute_channel = channel + i
+                    if absolute_channel > 2:
+                        # Channel rolls over, increment the LED number
+                        working_parts[3] = str(int(working_parts[3]) + absolute_channel // 3)
+                        working_parts[4] = str(absolute_channel % 3)
+                    else:
+                        working_parts[4] = str(absolute_channel)
+                    result.append({'number': '-'.join(working_parts)})
+
+                return result
+
+            # channel out of bounds
+            raise AssertionError(f"Invalid LED channel: {channel}")
+
+        # wrong number of parts
+        raise AssertionError(f"Invalid LED number: {number}")
+
+    def _parse_nano_light_number(self, number, parts):
         if '-' in str(number):
             # num = list(map(int, str(number).split('-')))
             # index = num[0] * 64 + num[1]
