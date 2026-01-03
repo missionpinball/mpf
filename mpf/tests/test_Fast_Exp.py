@@ -17,29 +17,49 @@ class TestFastExp(TestFastBase):
         # These are all the defaults based on the config file for this test.
         # Individual tests can override / add as needed
 
-        self.serial_connections['exp'].expected_commands = {'RA@880:000000': '',
-                                                            'RA@881:000000': '',
-                                                            'RA@882:000000': '',
-                                                            'RA@890:000000': '',
-                                                            'RA@892:000000': '',
-                                                            'RA@B40:000000': '',
-                                                            'RA@840:000000': '',
-                                                            'RA@841:000000': '',
-                                                            'RA@480:000000': '',
-                                                            'RA@481:000000': '',
-                                                            'RA@482:000000': '',
-                                                            'RF@89:5DC': '',
-                                                            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
-                                                            'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
-                                                            'EM@882:7,1,7D0,3E8,7D0,5DC': '',
-                                                            'MP@B40:0,7F,7D0': '',
-                                                            'MP@B40:1,7F,7D0': '',
-                                                            'MP@882:7,7F,7D0': '',}
+        self.serial_connections['exp'].expected_commands = {
+            # set all lights off on 0091
+            'RA@880:000000': '',
+            'RA@881:000000': '',
+            'RA@882:000000': '',
+
+            # set all lights off on secondary 0091
+            'RA@890:000000': '',
+            'RA@892:000000': '',
+
+            # set all lights off on 0081
+            'RA@B40:000000': '',
+            'RA@840:000000': '',
+            'RA@841:000000': '',
+
+            # set all lights off on neuron
+            'RA@480:000000': '',
+            'RA@481:000000': '',
+            'RA@482:000000': '',
+
+            # set fade rate on secondary 0091
+            'RF@89:5DC': '',
+
+            # configure motors on 0081
+            'EM@B40:0,1,7D0,1F4,9C4,5DC': '',
+            'EM@B40:1,1,7D0,3E8,7D0,5DC': '',
+
+            # configure motor on 0091
+            'EM@882:7,1,7D0,3E8,7D0,5DC': '',
+
+            # set motor position on 0071
+            'MP@B40:0,7F,7D0': '',
+            'MP@B40:1,7F,7D0': '',
+
+            # set motor position on 0091
+            'MP@882:7,7F,7D0': '',
+        }
 
     def test_servo(self):
         # go to min position
         self.exp_cpu.expected_commands = {
-                "MP@B40:0,00,7D0": ""                    # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
+            # MP:<INDEX>,<POSITION>,<TIME_MS><CR>
+            "MP@B40:0,00,7D0": ""  # motor position on 0071
         }
         self.machine.servos["servo1"].go_to_position(0)
         self.advance_time_and_run(1)
@@ -47,14 +67,13 @@ class TestFastExp(TestFastBase):
 
         # go to max position
         self.exp_cpu.expected_commands = {
-                "MP@B40:0,FF,7D0": ""
+            "MP@B40:0,FF,7D0": ""  # motor position on 0071
         }
         self.machine.servos["servo1"].go_to_position(1)
         self.advance_time_and_run(.1)
         self.assertFalse(self.exp_cpu.expected_commands)
 
     def test_leds(self):
-
         # create local references to all the lights so they can be accessed like `led1.on()`
         for led_name, led_obj in self.machine.lights.items():
             setattr(self, led_name, led_obj)
@@ -71,7 +90,6 @@ class TestFastExp(TestFastBase):
         self._test_lew_hardware_fade()
 
     def _test_led_internals(self):
-
         # Make sure the internal LED map is correct
         self.assertIn("88100", self.fast_exp_leds)
         self.assertIn("88001", self.fast_exp_leds)
@@ -81,61 +99,39 @@ class TestFastExp(TestFastBase):
         self.assertIn("89200", self.fast_exp_leds)
 
         # Make sure explicit offset declarations work
-        self.assertEqual(self.led4.hw_drivers['red'][0].number, '88120-0')
-        self.assertEqual(self.led4.hw_drivers['green'][0].number, '88120-1')
-        self.assertEqual(self.led4.hw_drivers['blue'][0].number, '88120-2')
-        self.assertEqual(self.led5.hw_drivers['red'][0].number, '88121-1')
-        self.assertEqual(self.led5.hw_drivers['green'][0].number, '88121-2')
-        self.assertEqual(self.led5.hw_drivers['blue'][0].number, '88122-0')
-        self.assertEqual(self.led6.hw_drivers['red'][0].number, '89200-2')
-        self.assertEqual(self.led6.hw_drivers['green'][0].number, '89201-0')
-        self.assertEqual(self.led6.hw_drivers['blue'][0].number, '89201-1')
-
+        self._test_led_drivers(self.led4, '88120-0', '88120-1', '88120-2', None)
+        self._test_led_drivers(self.led5, '88121-1', '88121-2', '88122-0', None)
+        self._test_led_drivers(self.led6, '89200-2', '89201-0', '89201-1', None)
 
         # Make sure all the RGBW, channels, previous, and start_channels are working
-        self.assertEqual(self.led22.hw_drivers['red'][0].number, '48002-0')
-        self.assertEqual(self.led22.hw_drivers['green'][0].number, '48002-1')
-        self.assertEqual(self.led22.hw_drivers['blue'][0].number, '48002-2')
-        self.assertEqual(self.led23.hw_drivers['red'][0].number, '48003-0')
-        self.assertEqual(self.led23.hw_drivers['green'][0].number, '48003-1')
-        self.assertEqual(self.led23.hw_drivers['blue'][0].number, '48003-2')
-        self.assertEqual(self.led24.hw_drivers['red'][0].number, '48004-0')
-        self.assertEqual(self.led24.hw_drivers['green'][0].number, '48004-1')
-        self.assertEqual(self.led24.hw_drivers['blue'][0].number, '48004-2')
-        self.assertEqual(self.led24.hw_drivers['white'][0].number, '48005-0')
-        self.assertEqual(self.led25.hw_drivers['red'][0].number, '48005-1')
-        self.assertEqual(self.led25.hw_drivers['green'][0].number, '48005-2')
-        self.assertEqual(self.led25.hw_drivers['blue'][0].number, '48006-0')
-        self.assertEqual(self.led25.hw_drivers['white'][0].number, '48006-1')
-        self.assertEqual(self.led26.hw_drivers['red'][0].number, '48006-2')
-        self.assertEqual(self.led26.hw_drivers['green'][0].number, '48007-0')
-        self.assertEqual(self.led26.hw_drivers['blue'][0].number, '48007-1')
-        self.assertEqual(self.led26.hw_drivers['white'][0].number, '48007-2')
-        self.assertEqual(self.led27.hw_drivers['red'][0].number, '48008-0')
-        self.assertEqual(self.led27.hw_drivers['green'][0].number, '48008-1')
-        self.assertEqual(self.led27.hw_drivers['blue'][0].number, '48008-2')
-        self.assertEqual(self.led28.hw_drivers['red'][0].number, '88222-0')
-        self.assertEqual(self.led28.hw_drivers['green'][0].number, '88222-1')
-        self.assertEqual(self.led28.hw_drivers['blue'][0].number, '88222-2')
-        self.assertEqual(self.led28.hw_drivers['white'][0].number, '88223-0')
-        self.assertEqual(self.led29.hw_drivers['red'][0].number, '48009-0')
-        self.assertEqual(self.led29.hw_drivers['green'][0].number, '48009-2')
-        self.assertEqual(self.led29.hw_drivers['blue'][0].number, '48009-1')
-        self.assertEqual(self.led29.hw_drivers['white'][0].number, '4800A-2')
-        self.assertEqual(self.led30.hw_drivers['red'][0].number, 'B406B-0')
-        self.assertEqual(self.led30.hw_drivers['green'][0].number, 'B406B-1')
-        self.assertEqual(self.led30.hw_drivers['blue'][0].number, 'B406B-2')
-        self.assertEqual(self.led31.hw_drivers['red'][0].number, 'B406C-0')
-        self.assertEqual(self.led31.hw_drivers['green'][0].number, 'B406C-1')
-        self.assertEqual(self.led31.hw_drivers['blue'][0].number, 'B406C-2')
+        self._test_led_drivers(self.led22, '48002-0', '48002-1', '48002-2', None)
+        self._test_led_drivers(self.led23, '48003-0', '48003-1', '48003-2', None)
+        self._test_led_drivers(self.led24, '48004-0', '48004-1', '48004-2', '48005-0')
+        self._test_led_drivers(self.led25, '48005-1', '48005-2', '48006-0', '48006-1')
+        self._test_led_drivers(self.led26, '48006-2', '48007-0', '48007-1', '48007-2')
+        self._test_led_drivers(self.led27, '48008-0', '48008-1', '48008-2', None)
+        self._test_led_drivers(self.led28, '88222-0', '88222-1', '88222-2', '88223-0')
+        self._test_led_drivers(self.led29, '48009-0', '48009-2', '48009-1', '4800A-2')
+        self._test_led_drivers(self.led30, 'B406B-0', 'B406B-1', 'B406B-2', None)
+        self._test_led_drivers(self.led31, 'B406C-0', 'B406C-1', 'B406C-2', None)
 
+    def _test_led_drivers(self, led, red, green, blue, white):
+        drivers = led.hw_drivers
+        if red:
+            self.assertEqual(drivers['red'][0].number, red)
+        if green:
+            self.assertEqual(drivers['green'][0].number, green)
+        if blue:
+            self.assertEqual(drivers['blue'][0].number, blue)
+        if white:
+            self.assertEqual(drivers['white'][0].number, white)
 
     def _test_led_colors(self):
-
         self.exp_cpu.expected_commands = {
-            'RD@880:0201ff123402121212': '',
-            'RD@881:0100ffffff': '',
-            'RD@841:0160ffffff': ','}
+            'RD@880:0201ff123402121212': '',  # set individual lights on 0091
+            'RD@881:0100ffffff': '',  # set individual lights on 0091
+            'RD@841:0160ffffff': ','  # set individual lights on 0081
+        }
 
         self.led1.on()
         self.led2.color("ff1234")
@@ -149,19 +145,25 @@ class TestFastExp(TestFastBase):
         self.assertFalse(self.exp_cpu.expected_commands)
 
         # turn on a LED on a different board that has a hex index too
-        self.exp_cpu.expected_commands = {'RD@B40:016affffff': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@B40:016affffff': '',  # set individual lights on 0071
+        }
         self.led18.on()
         self.advance_time_and_run()
         self.assertEqual("FFFFFF", self.exp_cpu.leds['led18'])
 
         # # test led off
-        self.exp_cpu.expected_commands = {'RD@881:0100000000': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@881:0100000000': '',  # set individual lights on 0091
+        }
         self.led1.off()
         self.advance_time_and_run()
         self.assertEqual("000000", self.exp_cpu.leds['led1'])
 
         # # test led color
-        self.exp_cpu.expected_commands = {'RD@890:010002172a': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@890:010002172a': '',  # set individual lights on second 0091
+        }
         self.led7.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
         self.assertEqual("02172A", self.exp_cpu.leds['led7'])
@@ -170,35 +172,44 @@ class TestFastExp(TestFastBase):
         # verify a board reset turns off the LEDs only on the board addresses
 
         self.exp_cpu.expected_commands = {
+            # set individual lights on 0091
             'RD@881:0100ff1234': '',
             'RD@880:0102467fff': '',
-            'RD@B40:016a6a6a6a': '',}
+            # set individual lights on 0071
+            'RD@B40:016a6a6a6a': '',
+        }
 
         self.led1.color("ff1234")
         self.led3.color("467fff")
         self.led18.color("6a6a6a")
         self.advance_time_and_run()
 
-        self.exp_cpu.write(b'BR@B40:')
+        self.exp_cpu.write(b'BR@B40:')  # board reset command on 0071
         self.advance_time_and_run()
 
         self.assertEqual("000000", self.exp_cpu.leds['led18'])  # this is on the active board and should be off
-        self.assertEqual("FF1234", self.exp_cpu.leds['led1'])  # this is on a non-active board ans should still be on
+        self.assertEqual("FF1234", self.exp_cpu.leds['led1'])   # this is on a non-active board ans should still be on
         self.assertEqual("467FFF", self.exp_cpu.leds['led3'])
 
     def _test_grb_led(self):
         # test led10 grb
-        self.exp_cpu.expected_commands = {'RD@B40:014212ff34': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@B40:014212ff34': '',  # set leds on 0071
+        }
         self.led10.color("ff1234")
         self.advance_time_and_run()
         self.assertEqual("12FF34", self.exp_cpu.leds['led10'])  # ensure the hardware received the colors in RGB order
 
     def _test_rgbw_leds(self):
-        self.exp_cpu.expected_commands = {'RD@480:02050000000600ff00': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@480:02050000000600ff00': '',  # set leds on neuron
+        }
         self.led25.color("ffffff")
         self.advance_time_and_run()
 
-        self.exp_cpu.expected_commands = {'RD@882:022200112223110000': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@882:022200112223110000': '',  # set leds on 0091
+        }
         self.led28.color("112233")
         self.advance_time_and_run()
 
@@ -208,21 +219,27 @@ class TestFastExp(TestFastBase):
 
         # white = 00 00 00 FF which becomes
         # 09 [00 00 00] 0A [00 00 FF]
-        self.exp_cpu.expected_commands = {'RD@480:02090000000a0000ff': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@480:02090000000a0000ff': '',  # set LED on neuron
+        }
         self.led29.color("ffffff")
         self.advance_time_and_run()
 
-        self.exp_cpu.expected_commands = {'RD@480:02090022110a000022': '',}
+        self.exp_cpu.expected_commands = {
+            'RD@480:02090022110a000022': '',  # set LED on neuron
+        }
         self.led29.color("223344")  # -> 00112222
         self.advance_time_and_run()
 
     def _test_led_software_fade(self):
-
-        self.exp_cpu.expected_commands = {'RD@B40:0169151515': '',
-                                          'RD@B40:01692b2b2b': '',
-                                          'RD@B40:0169424242': '',
-                                          'RD@B40:0169585858': '',
-                                          'RD@B40:0169646464': '',}
+        self.exp_cpu.expected_commands = {
+            # set LEDs on 0071
+            'RD@B40:0169151515': '',
+            'RD@B40:01692b2b2b': '',
+            'RD@B40:0169424242': '',
+            'RD@B40:0169585858': '',
+            'RD@B40:0169646464': '',
+        }
 
         self.led17.color(RGBColor((100, 100, 100)), fade_ms=150)
         self.advance_time_and_run(.04)
@@ -236,6 +253,8 @@ class TestFastExp(TestFastBase):
 
     def _test_lew_hardware_fade(self):
         # This is also tested via the config file and the expected commands
-        self.exp_cpu.expected_commands = {'RF@88:3E8': '',}
+        self.exp_cpu.expected_commands = {
+            'RF@88:3E8': '',  # set fade rate on 0091
+        }
         self.machine.default_platform.exp_boards_by_name["brian"].set_led_fade(1000)
         self.advance_time_and_run()
