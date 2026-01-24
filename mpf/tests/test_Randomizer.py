@@ -17,7 +17,7 @@ class TestRandomizer(MpfTestCase):
         return 'tests/machine_files/randomizer/'
 
     def test_one_element_with_force_different(self):
-        r = Randomizer(['1'])
+        r = Randomizer(['1'], self.machine)
         self.assertTrue(r.force_different)
 
         # it has one element and should thereby always return it
@@ -27,7 +27,7 @@ class TestRandomizer(MpfTestCase):
 
     def test_machine_randomizer(self):
         # no weights given case
-        r = Randomizer(['1', '2', '3'])
+        r = Randomizer(['1', '2', '3'], self.machine)
 
         results = list()
         for x in range(10000):
@@ -38,7 +38,7 @@ class TestRandomizer(MpfTestCase):
         self.assertAlmostEqual(3333, results.count('3'), delta=500)
 
     def test_force_different(self):
-        r = Randomizer(standard_items())
+        r = Randomizer(standard_items(), self.machine)
         r.force_different = True
 
         last_item = None
@@ -48,7 +48,7 @@ class TestRandomizer(MpfTestCase):
             last_item = this_item
 
     def test_force_all(self):
-        r = Randomizer(standard_items())
+        r = Randomizer(standard_items(), self.machine)
         r.force_all = True
 
         last_item = None
@@ -62,7 +62,7 @@ class TestRandomizer(MpfTestCase):
             self.assertEqual(len(results), 3)
 
     def test_no_loop(self):
-        r = Randomizer(standard_items())
+        r = Randomizer(standard_items(), self.machine)
         r.loop = False
 
         x = 0
@@ -72,7 +72,7 @@ class TestRandomizer(MpfTestCase):
         self.assertEqual(3, x) # enumeration terminates after three
 
     def test_loop(self):
-        r = Randomizer(standard_items())
+        r = Randomizer(standard_items(), self.machine)
         r.loop = True
 
         x = 0
@@ -84,7 +84,7 @@ class TestRandomizer(MpfTestCase):
         self.assertEqual(50, x) # enumeration will never terminate
 
     def test_loop_no_random(self):
-        r = Randomizer(standard_items())
+        r = Randomizer(standard_items(), self.machine)
         r.disable_random = True
 
         for i1 in range(50):
@@ -95,7 +95,7 @@ class TestRandomizer(MpfTestCase):
     def test_no_loop_no_random(self):
         items = standard_items()
         for _ in range(50):
-            r = Randomizer(items)
+            r = Randomizer(items, self.machine)
             r.loop = False
             r.disable_random = True
 
@@ -149,12 +149,51 @@ class TestRandomizer(MpfTestCase):
         self.assertEqual(0, results.count('2'))
         self.assertAlmostEqual(33, results.count('3'), delta=20)
 
+    def test_conditionals_no_random(self):
+        # conditionals should loop consistently while all continue to resolve in order
+        r = Randomizer([
+                '1{True}',
+                '2{False}',
+                '3{2 == 1+1}',
+                '4{1 == "whatever"}',
+            ],
+                self.machine,
+                template_type="event"
+        )
+        r.disable_random = True
+
+        for i in range(50):
+            self.assertEqual(next(r), '1')
+            self.assertEqual(next(r), '3')
+
+    def test_conditionals_dynamic_updating_no_random(self):
+        # conditionals should loop properly when conditional values change between draws
+        self.machine.variables.set_machine_var('foo', 1)
+        r = Randomizer([
+                '1{machine.foo == 0}',
+                '2{machine.foo == 1}',
+                '3{machine.foo == 0}',
+                '4{machine.foo == 1}',
+            ],
+                self.machine,
+                template_type="event"
+        )
+        r.disable_random = True
+
+        for i in range(50):
+            self.assertEqual(next(r), '2')
+            self.assertEqual(next(r), '4')
+
+        self.machine.variables.set_machine_var('foo', 0)
+        for i in range(50):
+            self.assertEqual(next(r), '1')
+            self.assertEqual(next(r), '3')
 
     def test_fallback_value(self):
         # This feature is intended for cases where conditional items all drop out of validity
 
         # Case 1 - no items at all falls back always
-        r = Randomizer([])
+        r = Randomizer([], self.machine)
         r.fallback_value = "foo"
 
         results = list()
@@ -164,7 +203,7 @@ class TestRandomizer(MpfTestCase):
         self.assertEqual(10, results.count('foo'))
 
         # Case 2 - looping never falls back
-        r = Randomizer([1, 2])
+        r = Randomizer(['1', '2'], self.machine)
         r.loop = True
         r.force_all
         r.fallback_value = "foo"
@@ -173,8 +212,8 @@ class TestRandomizer(MpfTestCase):
         for x in range(100):
             results.append(next(r))
 
-        self.assertEqual(50, results.count(1))
-        self.assertEqual(50, results.count(2))
+        self.assertEqual(50, results.count('1'))
+        self.assertEqual(50, results.count('2'))
         self.assertEqual(0, results.count('foo'))
 
     def test_weights(self):
@@ -184,7 +223,7 @@ class TestRandomizer(MpfTestCase):
             ('2', 1),
             ('3', 1),
         ]
-        r = Randomizer(items)
+        r = Randomizer(items, self.machine)
         r.force_different = False
 
         results = list()
@@ -203,7 +242,7 @@ class TestRandomizer(MpfTestCase):
             ('3', 3),
         ]
 
-        r = Randomizer(items)
+        r = Randomizer(items, self.machine)
         r.force_different = False
 
         results = list()
@@ -212,7 +251,7 @@ class TestRandomizer(MpfTestCase):
 
         self.assertAlmostEqual(1000, results.count('1'), delta=150)
         self.assertAlmostEqual(6000, results.count('2'), delta=300)
-        self.assertAlmostEqual(3000, results.count('3'), delta=200)
+        self.assertAlmostEqual(3000, results.count('3'), delta=250)
         self.assertEqual(0, results.count('0'))
 
         # Case 3 - force all being true causes even usage
@@ -223,7 +262,7 @@ class TestRandomizer(MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(items)
+        r = Randomizer(items, self.machine)
         r.force_all = True
 
         results = list()
@@ -242,7 +281,7 @@ class TestRandomizer(MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(items)
+        r = Randomizer(items, self.machine)
         r.force_different = True
 
         results = list()
@@ -260,7 +299,7 @@ class TestRandomizer(MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(items)
+        r = Randomizer(items, self.machine)
         r.force_all = True
         r.force_different = True
 

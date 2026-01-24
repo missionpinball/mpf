@@ -6,7 +6,7 @@ class Randomizer:
 
     """Generic list randomizer."""
 
-    def __init__(self, items, machine=None, template_type=None):
+    def __init__(self, items, machine=None, template_type='event'):
         """Initialize Randomizer."""
         self.fallback_value = None
         self.force_different = True
@@ -107,25 +107,37 @@ class Randomizer:
             self.force_all = True
 
     def _next_not_random(self, conditional_args):
-        if self.data['current_item_index'] == len(self.items):
+        total_items = len(self.items)
+        current_item_index = self.data['current_item_index']
+        if current_item_index >= total_items:
             if not self.loop:
                 raise StopIteration
 
-            self.data['current_item_index'] = 0
+            current_item_index %= total_items  # or we could just go to 0
 
-        self.data['current_item'] = (
-            self._get_items(conditional_args)[self.data['current_item_index']][0])
+        next_item_index = current_item_index
 
-        self.data['current_item_index'] += 1
+        rotated_option_list = self.items[next_item_index:] + self.items[:next_item_index]
+        while len(rotated_option_list):
+            next_item = rotated_option_list.pop(0)
+            next_item_index += 1
+            event = next_item[0]
+            if not event.condition or (self._template_type and event.condition.evaluate(conditional_args)):
+                break
 
-        return self.data['current_item']
+        self.data['current_item'] = next_item
+        self.data['current_item_index'] = next_item_index
+
+        return next_item[0].name
 
     @staticmethod
     def _init_data(data_dict):
         """Initialize dict."""
         data_dict['current_item'] = None
         data_dict['items_sent'] = set()
-        data_dict['current_item_index'] = 0  # only used with disable random
+
+        # only used with disable random, represents the index in the list _before_ conditional evaluation check
+        data_dict['current_item_index'] = 0
 
     def get_current(self):
         """Return current item."""
@@ -140,13 +152,13 @@ class Randomizer:
 
     def _get_items(self, conditional_args):
         if self._template_type:
-            conditional_items = list()
+            valid_items = list()
             for event, weight in self.items:
                 if not event.condition:
-                    conditional_items.append((event.name or event, weight))
+                    valid_items.append((event.name or event, weight))
                 elif event.condition.evaluate(conditional_args):
-                    conditional_items.append((event.name, weight))
-            return conditional_items
+                    valid_items.append((event.name, weight))
+            return valid_items
         return self.items
 
     @staticmethod
