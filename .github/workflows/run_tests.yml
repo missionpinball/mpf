@@ -84,6 +84,7 @@ jobs:
           if [ "${{ runner.os }}" == "Windows" ]; then
             python3 -m unittest discover -s mpf/tests
           else
+            pip install uvloop
             python3 -m coverage run -m unittest discover -s mpf/tests
           fi
 
