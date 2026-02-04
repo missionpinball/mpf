@@ -74,6 +74,7 @@ class ClockBase(LogMixin):
         try:
             # pylint: disable-msg=import-outside-toplevel
             import uvloop
+            print("IMPORTED UVLOOP, SUCKAS")
         except ImportError:
             pass
         else:
