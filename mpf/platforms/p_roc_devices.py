@@ -117,7 +117,7 @@ class PROCDriver(DriverPlatformInterface):
             self.platform.run_proc_cmd_no_wait("driver_patter", self.number, pwm_on, pwm_off,
                                                pulse_settings.duration, True)
         else:
-            self.log.debug('Enabling at 100%')
+            self.log.debug("Enabling at 100 percent!")
 
             self.platform.run_proc_cmd_no_wait("driver_schedule", self.number, 0xffffffff, 0, True)
 
