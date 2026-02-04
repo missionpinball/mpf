@@ -2276,6 +2276,8 @@ widgets:
         start_frame: single|int_or_token|0
         rotation: single|int_or_token|0
         scale: single|float_or_token|1.0
+        mag_filter: single|enum(linear,nearest)|nearest
+        min_filter: single|enum(linear,nearest)|nearest
     line:
         points: list|num_or_token|
         thickness: single|float_or_token|1.0
