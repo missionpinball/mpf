@@ -30,6 +30,8 @@ jobs:
           python-version: 3.12
         - os: windows-latest
           python-version: 3.13
+        - os: windows-latest
+          python-version: 3.14
         - os: ubuntu-latest
           python-version: 3.8
         - os: ubuntu-latest
@@ -42,6 +44,8 @@ jobs:
           python-version: 3.12
         - os: ubuntu-latest
           python-version: 3.13
+        - os: ubuntu-latest
+          python-version: 3.14
         - os: macos-latest
           python-version: 3.8
         - os: macos-latest
@@ -54,6 +58,8 @@ jobs:
           python-version: 3.12
         - os: macos-latest
           python-version: 3.13
+        - os: macos-latest
+          python-version: 3.14
 
     steps:
       - name: Checkout MPF
@@ -64,9 +70,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y libjpeg-dev
+      - name: Install jpeg support for pillow
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            choco install libjpeg-turbo
+          elif [ "${{ runner.os }}" == "Linux" ]; then
+            # do nothing, Linux works without additional install
+            sudo apt-get install -y libjpeg-dev
+          else #must be mac!
+            brew install libjpeg-turbo
+          fi
 
       - name: Install MPF
         run: |

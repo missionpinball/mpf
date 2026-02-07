@@ -2,7 +2,7 @@
 name = "mpf"
 description = "The Mission Pinball Framework (MPF)"
 readme = "README.md"
-requires-python = ">=3.8,<3.14"
+requires-python = ">=3.8,<3.15"
 license = {text = "MIT"}
 authors = [{ name = "The Mission Pinball Framework Team", email = "brian@missionpinball.org"}]
 keywords = ["pinball"]
@@ -16,6 +16,7 @@ classifiers=[
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Natural Language :: English",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
