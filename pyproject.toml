@@ -35,7 +35,7 @@ dependencies = [
     "setuptools ~= 72.2.0",  # Nov 16, 2024,
     "sortedcontainers == 2.4.0",  # Oct 4 2023, used by platform batch light system
     "terminaltables == 3.1.10",  # Oct 4 2023, used for the service CLI
-    "Pillow == 10.4.0"  # Dec 7, 2025. Upgrading past broken versions
+    "Pillow >= 10.4.0"  # Dec 7, 2025. Upgrading past broken versions
     ]
 dynamic = ["version"]
 
