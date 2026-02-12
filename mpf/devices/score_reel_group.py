@@ -52,7 +52,7 @@ class ScoreReelGroup(SystemWideDevice):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
-        self.chimes_enabled = False 
+        self.chimes_enabled = False
         # Boolean attribute that is True when chimes should play when reels advance.
 
         self._tick_task = None
@@ -85,7 +85,7 @@ class ScoreReelGroup(SystemWideDevice):
     def enable_chimes(self, **kwargs):
         self.chimes_enabled = True
         self.machine.events.post('========== CHIMES ENABLED ==========')
-    
+
     def disable_chimes(self, **kwargs):
         self.chimes_enabled = False
         self.machine.events.post('========== CHIMES DISABLED =========')
