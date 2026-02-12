@@ -52,12 +52,18 @@ class ScoreReelGroup(SystemWideDevice):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
+        self.chimes_enabled = False 
+        # Boolean attribute that is True when chimes should play when reels advance.
+
         self._tick_task = None
 
     async def _initialize(self):
         await super()._initialize()
         self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
+
+        self.machine.events.add_handler(event='ball_started', handler=self.enable_chimes)
+        self.machine.events.add_handler(event='game_ended', handler=self.disable_chimes)
 
         self.config['chimes'].reverse()
         for i in range(len(self.config['chimes'])):
@@ -70,10 +76,19 @@ class ScoreReelGroup(SystemWideDevice):
                                                 chime=self.config['chimes'][i])
 
     @classmethod
-    def chime(cls, chime, **kwargs):
-        """Pulse chime."""
+    def chime(self, chime, **kwargs):
+        """Pulse chime if chimes are enabled."""
         del kwargs
-        chime.pulse()
+        if self.chimes_enabled:
+            chime.pulse()
+
+    def enable_chimes(self, **kwargs):
+        self.chimes_enabled = True
+        self.machine.events.post('========== CHIMES ENABLED ==========')
+    
+    def disable_chimes(self, **kwargs):
+        self.chimes_enabled = False
+        self.machine.events.post('========== CHIMES DISABLED =========')
 
     def set_value(self, value):
         """Reset the score reel group to display the value passed.
