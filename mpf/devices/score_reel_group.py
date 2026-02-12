@@ -3,7 +3,7 @@ from collections import deque
 
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
-
+from mpf.core.events import event_handler
 
 class ScoreReelGroup(SystemWideDevice):
 
@@ -62,9 +62,6 @@ class ScoreReelGroup(SystemWideDevice):
         self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
-        self.machine.events.add_handler(event='ball_started', handler=self.enable_chimes)
-        self.machine.events.add_handler(event='game_ended', handler=self.disable_chimes)
-
         self.config['chimes'].reverse()
         for i in range(len(self.config['chimes'])):
 
@@ -75,18 +72,21 @@ class ScoreReelGroup(SystemWideDevice):
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
 
-    @classmethod
-    def chime(self, chime, **kwargs):
+    def chime(cls, chime, **kwargs):
         """Pulse chime if chimes are enabled."""
         del kwargs
-        if self.chimes_enabled:
+        if cls.chimes_enabled:
             chime.pulse()
 
-    def enable_chimes(self, **kwargs):
+    @event_handler(1)
+    def event_enable_chimes(self, **kwargs):
+        """Event handler to enable chimes."""
         self.chimes_enabled = True
         self.log.info('Chimes enabled.')
 
-    def disable_chimes(self, **kwargs):
+    @event_handler(2)
+    def event_disable_chimes(self, **kwargs):
+        """Event handler to disable chimes."""
         self.chimes_enabled = False
         self.log.info('Chimes disabled.')
 
