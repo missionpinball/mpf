@@ -1478,6 +1478,8 @@ score_reel_groups:
     __type__: device
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
+    enable_chimes_events: event_handler|event_handler:ms|ball_started
+    disable_chimes_events: event_handler|event_handler:ms|game_ended
     lights_tag: single|str|None
 segment_displays:
     __valid_in__: machine
