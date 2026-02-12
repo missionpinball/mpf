@@ -84,11 +84,11 @@ class ScoreReelGroup(SystemWideDevice):
 
     def enable_chimes(self, **kwargs):
         self.chimes_enabled = True
-        self.machine.events.post('========== CHIMES ENABLED ==========')
+        self.log.info('Chimes enabled.')
 
     def disable_chimes(self, **kwargs):
         self.chimes_enabled = False
-        self.machine.events.post('========== CHIMES DISABLED =========')
+        self.log.info('Chimes disabled.')
 
     def set_value(self, value):
         """Reset the score reel group to display the value passed.
