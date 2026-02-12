@@ -73,11 +73,10 @@ class ScoreReelGroup(SystemWideDevice):
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
 
-    @classmethod
-    def chime(cls, chime, **kwargs):
+    def chime(self, chime, **kwargs):
         """Pulse chime if chimes are enabled."""
         del kwargs
-        if cls.chimes_enabled:
+        if self.chimes_enabled:
             chime.pulse()
 
     @event_handler(1)
