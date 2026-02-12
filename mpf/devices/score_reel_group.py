@@ -5,6 +5,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
 from mpf.core.events import event_handler
 
+
 class ScoreReelGroup(SystemWideDevice):
 
     """Represents a logical grouping of score reels in a pinball machine.
@@ -72,21 +73,23 @@ class ScoreReelGroup(SystemWideDevice):
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
 
-    def chime(cls, chime, **kwargs):
+    def chime(self, chime, **kwargs):
         """Pulse chime if chimes are enabled."""
         del kwargs
-        if cls.chimes_enabled:
+        if self.chimes_enabled:
             chime.pulse()
 
     @event_handler(1)
     def event_enable_chimes(self, **kwargs):
         """Event handler to enable chimes."""
+        del kwargs
         self.chimes_enabled = True
         self.log.info('Chimes enabled.')
 
     @event_handler(2)
     def event_disable_chimes(self, **kwargs):
         """Event handler to disable chimes."""
+        del kwargs
         self.chimes_enabled = False
         self.log.info('Chimes disabled.')
 
