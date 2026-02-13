@@ -98,6 +98,8 @@ score_reel_groups:
         reels: score_2p_10, None
         tags: player2
         chimes: chime3, None
+        enable_chimes_events: enable_reel_chimes
+        disable_chimes_events: disable_reel_chimes
         lights_tag: player2
         debug: True
 
