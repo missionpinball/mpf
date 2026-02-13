@@ -900,7 +900,31 @@ class QueuedEvent:
 
 
 def event_handler(relative_priority):
-    """Decorate an event handler."""
+    """Decorate an event handler.
+
+    Priority order is important for a complex device management reason -
+    handler resolution across multiple devices, especially of the same type.
+
+    Say you have two flipper definitions on the same switch and coil pairing, for
+    example with a "weak flipper" mode. Flippers are managed through enable and
+    disable events that are bound through create_machinewide_device_control_events
+    reading their enable_events and disable_events configs.
+
+    There is no way to provide priority adjustment to these events, so if the
+    normal flipper uses "start_weak_flippers" as its disable event, and the
+    weak flipper uses that as its enable event, then you have a tie and thus
+    ambiguous resolution order to the two handlers that will manage the current
+    rule on the coil.
+
+    What would generally be expected is that the weak flipper would win there,
+    meaning the enable-weak must win. But to do that, it must go _last_. So
+    therefore the _disable_ event handler needs a higher priority than the
+    enable handler.
+
+    Therefore the best practice with choosing event_handler relative_priority
+    is to put destructive/cleanup handlers at higher priority, and
+    positive/enabling handlers at lower priority.
+    """
     def decorator(func):
         """Decorate a function with relative priority."""
         func.relative_priority = relative_priority
