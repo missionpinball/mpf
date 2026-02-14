@@ -94,6 +94,8 @@ score_reel_groups:
         chimes: None, chime1, chime2, chime3, None
         lights_tag: player1
         debug: True
+        enable_chimes_events: enable_srg_player1_chimes, ball_started
+        disable_chimes_events: disable_srg_player1_chimes, game_ended
     player2:
         reels: score_2p_10, None
         tags: player2
