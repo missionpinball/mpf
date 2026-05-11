@@ -7,6 +7,7 @@ service MpfHardwareService {
   rpc GetMachineDescription(EmptyRequest) returns (MachineDescription);
   rpc SendSwitchChanges(stream SwitchChanges) returns (EmptyResponse);
   rpc Quit(QuitRequest) returns (EmptyResponse);
+  rpc Ping(EmptyRequest) returns (PingResponse);
 }
 
 message EmptyRequest {}
@@ -143,4 +144,8 @@ message ConfigureHardwareRuleRequest {
 message RemoveHardwareRuleRequest {
   string coil_number = 1;
   string switch_number = 2;
+}
+
+message PingResponse {
+  string mpf_version = 1;
 }

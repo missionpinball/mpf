@@ -57,11 +57,12 @@ class Carousel(Mode):
             elif not item.condition or item.condition.evaluate({}):
                 self._items.append(item.name)
         if not self._items:
-            self.machine.events.post("{}_items_empty".format(self.name))
-            '''event (carousel_name)_items_empty
+            self.machine.events.post("carousel_items_empty", carousel=self.name)
+            '''event carousel_items_empty
                 desc: A carousel's items are all conditional and all evaluated false.
-                    If this event is posted, the carousel mode will not be started.
-                '''
+                    If this event is posted, the carousel mode will also stop itself
+                    instead of continuing to start and run.
+            '''
             self.stop()
             return
 
@@ -97,13 +98,17 @@ class Carousel(Mode):
     def _update_highlighted_item(self, direction):
         self.debug_log("Highlighted item: " + self._get_highlighted_item())
 
-        self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()),
-                                 direction=direction)
-        '''event (carousel_name)_(item)_highlighted
+        self.machine.events.post("carousel_item_highlighted",
+                                 carousel=self.name,
+                                 direction=direction,
+                                 item=self._get_highlighted_item())
+        '''event carousel_item_highlighted
             desc: Player highlighted an item in a carousel. Mostly used to play shows or trigger slides.
             args:
+               carousel: The name of the carousel that posted this event.
                direction: The direction the carousel is moving. Either forwards or backwards. None on mode start.
-            '''
+               item: The name of the item that is now highlighted.
+        '''
 
     def _get_available_items(self):
         # Return the default items
@@ -141,13 +146,13 @@ class Carousel(Mode):
         self.debug_log("Selected mode: " + str(self._get_highlighted_item()))
         self._done = True
 
-        self.machine.events.post("{}_{}_selected".format(self.name, self._get_highlighted_item()))
-        '''event (carousel_name)_(item)_selected
-            desc: Player selected an item in a carousel. Can be used to trigger modes. '''
-        self.machine.events.post("{}_item_selected".format(self.name))
-        '''event (carousel_name)_item_selected
-            desc: Player selected any item in a carousel. Used to stop mode. '''
-
+        self.machine.events.post("carousel_item_selected", carousel=self.name, item=self._get_highlighted_item())
+        '''event carousel_item_selected
+            desc: Player selected an item in a carousel.
+            args:
+               carousel: The name of the carousel that posted this event.
+               item: The name of the item that is being selected.
+        '''
     def _block_enable(self, **kwargs):
         del kwargs
         self._is_blocking = True

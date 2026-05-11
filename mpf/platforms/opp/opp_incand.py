@@ -53,6 +53,8 @@ class OPPIncand(LightPlatformSoftwareFade):
         super().__init__(number, loop, hardware_fade_ms)
         self.incand_card = incand_card  # type: OPPIncandCard
         self.index = int(number)
+        self.number = incand_card.chain_serial + "-" + \
+            incand_card.card_num + '-' + str(number)
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver.

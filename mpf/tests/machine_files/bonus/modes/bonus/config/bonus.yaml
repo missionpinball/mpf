@@ -3,18 +3,18 @@
 mode_settings:
   keep_multiplier: True
   bonus_entries:
-      - event: bonus_ramps
+      - entry: bonus_ramps
         score: 1000
         player_score_entry: ramps
         reset_player_score_entry: True
         skip_if_zero: false
-      - event: bonus_modes
+      - entry: bonus_modes
         score: 5000
         player_score_entry: modes
         reset_player_score_entry: False
-      - event: bonus_undefined_var
+      - entry: bonus_undefined_var
         score: 5000
         skip_if_zero: false
         player_score_entry: undefined_var
-      - event: bonus_static
+      - entry: bonus_static
         score: 2000

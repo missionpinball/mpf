@@ -149,14 +149,24 @@ class ConfigProcessor:
     def _check_sections(self, config_spec, config, config_type, filename, ignore_unknown_sections):
         if not isinstance(config, dict):
             raise ConfigFileError("Config should be a dict: {}".format(config), 1, self.log.name, filename)
+
+        deprecated_080 = ["sound_pools"]
+        invalid_080 = ["playlists", "playlist_player", "slides", "sounds", "sound_loop_player",
+                       "sound_loop_sets", "sound_system", "track_player", "widgets"]
         for k in config.keys():
             if k in config_spec:
+                if k in deprecated_080:
+                    self.log.warning("Config section '%s' is deprecated in MPF 0.80 and will be unsupported "
+                                     "in future versions. Please migrate this config to GMC.", k)
                 if config_type not in config_spec[k]['__valid_in__']:
                     raise ConfigFileError('Found a "{}:" section in config file {}, '
                                           'but that section is not valid in {} config '
                                           'files (only in {}).'.format(k, filename, config_type,
                                                                        config_spec[k]['__valid_in__']),
                                           2, self.log.name, filename)
+            elif k in invalid_080:
+                # MPF 0.80 DEPRECATION
+                self.log.error("Config section '%s' is removed in MPF 0.80 and will be ignored.", k)
             elif not ignore_unknown_sections:
                 suggestion = self._find_similar_key(k, config_spec, config_type)
 

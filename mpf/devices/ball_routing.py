@@ -17,7 +17,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController   # pylint: disable-msg=cyclic-import,unused-import
 
 
-@DeviceMonitor("balls_routing")
+@DeviceMonitor("balls_routing", "enabled")
 class BallRouting(EnableDisableMixin, ModeDevice):
 
     """Route balls from one device to another when captured."""

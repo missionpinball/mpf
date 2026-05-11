@@ -6,7 +6,7 @@ import asyncio
 
 from typing import Tuple
 
-from mpf._version import __version__, __bcp_version__
+from mpf._version import __version__, __bcp_version__, __gmc_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
 BYTE_MARKER = b'&bytes='
@@ -348,7 +348,9 @@ class BCPClientSocket(BaseBcpClient):
         """Send BCP 'hello' command."""
         self.send('hello', {"version": __bcp_version__,
                             "controller_name": 'Mission Pinball Framework',
-                            "controller_version": __version__})
+                            "controller_version": __version__,
+                            "gmc_version": __gmc_version__,
+                            })
 
     def send_goodbye(self):
         """Send BCP 'goodbye' command."""

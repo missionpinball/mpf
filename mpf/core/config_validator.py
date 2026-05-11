@@ -327,6 +327,16 @@ class ConfigValidator:
                                          'not a valid setting name.',
                                          path_string)
 
+                    elif k == "track":
+                        # MPF 0.80 DEPRECATED
+                        self.log.error('Your config contains a value for "track" in '
+                                       'setting "%s", but "track" has been replaced '
+                                       'with "bus" in MPF 0.80.', path_string)
+
+                        raise ConfigFileError('Your config contains a value for "track" in '
+                                              'setting "' + path_string + '", but "track" has '
+                                              'been replaced with "bus" in MPF 0.80.', 20, self.log.name)
+
                     else:
                         self.log.error('Your config contains a value for the '
                                        'setting "%s", but this is not a valid '
@@ -343,7 +353,10 @@ class ConfigValidator:
                     validation_failure_info.parent.item, config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
-        if item is None:
+        # The inclusion of sound_pools causes a nested ducking subconfig that
+        # fails due to missing required properties. Check for an empty dict
+        # as subconfig and ignore it.
+        if item is None or (item is Dict and len(item) == 0):
             return {}
         try:
             attribute, base_spec_str = param.split(",", 1)

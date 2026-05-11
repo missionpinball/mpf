@@ -19,30 +19,22 @@ tilt:
   tilt_warnings_player_var: tilt_warnings
 
 slide_player:
-  tilt_warning_1: tilt_warning_1
-  tilt_warning_2: tilt_warning_2
-  tilt: tilt
+  tilt_warning_1:
+    tilt:
+      expire: 1s
+      tokens:
+        text: WARNING
+  tilt_warning_2:
+    tilt:
+      expire: 1s
+      tokens:
+        text: DANGER
+  tilt:
+    tilt:
+      action: play
+      tokens:
+        text: TILT
+
   tilt_clear:
     tilt:
       action: remove
-slides:
-  tilt_warning_1:
-    widgets:
-    - type: text
-      text: WARNING
-    expire: 1s
-  tilt_warning_2:
-    widgets:
-    - type: text
-      text: WARNING
-      y: top-2
-      anchor_y: top
-    - type: text
-      text: WARNING
-      y: top-18
-      anchor_y: top
-      expire: 1s
-    expire: 2s
-  tilt:
-  - type: text
-    text: TILT

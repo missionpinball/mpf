@@ -5,6 +5,7 @@ This is separated from the platform because we need to catch a syntax error in p
 import asyncio
 from mpf.platforms.visual_pinball_engine import platform_pb2_grpc
 from mpf.platforms.visual_pinball_engine import platform_pb2
+from mpf._version import __version__
 
 
 class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
@@ -110,3 +111,6 @@ class MpfHardwareService(platform_pb2_grpc.MpfHardwareServiceServicer):
         """Stop MPF."""
         self.machine.stop(reason="VPE exited.")
         return platform_pb2.EmptyResponse()
+
+    async def Ping(self, request, context):
+        return platform_pb2.PingResponse(mpf_version=__version__)

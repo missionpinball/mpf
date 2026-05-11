@@ -25,7 +25,8 @@ venv/
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
+# AVW: Going to include the spec at least for reference
+.spec
 
 # Installer logs
 pip-log.txt

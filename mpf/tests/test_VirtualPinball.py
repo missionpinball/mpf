@@ -130,3 +130,45 @@ class TestVirtualPinball(MpfTestCase):
         self._encode_and_send(client, "switch", name="s_test_nc", state=1)
         self.advance_time_and_run()
         self.assertSwitchState("s_test_nc", 1)
+
+        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
+        self.assertEqual("device", cmd)
+        self.assertEqual("switch", args['type'])
+        self.assertEqual("s_test_nc", args['name'])
+        self.assertEqual(["state", 0, 1], args['changes'])
+        self.assertEqual({'state': 1, 'recycle_jitter_count': 0}, args['state'])
+
+        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
+        self.assertEqual("switch", cmd)
+        self.assertEqual("s_test_nc", args['name'])
+        self.assertEqual(1, args['state'])
+
+        # Prove that virtual supports delayed kickbacks
+        self.post_event("enable_kickback_test")
+
+        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
+        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
+        # Yes you do it twice for some reason (they are the same)
+        self.assertEqual("device", cmd)
+        self.assertEqual("kickback", args['type'])
+        self.assertEqual("kickback_test", args['name'])
+        self.assertEqual(["enabled", False, True], args['changes'])
+        self.assertEqual({"enabled": True}, args['state'])
+
+        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
+        self.assertEqual("driver_event", cmd)
+        self.assertEqual(args, {
+                'action': 'delayed_pulse_on_hit',
+                'enable_switch_number': '0-9',
+                'enable_switch_name': 's_kickback',
+                'enable_switch_invert': False,
+                'enable_switch_debounce': False,
+                'coil_number': '1-13',
+                'coil_name': 'c_kickback',
+                'coil_pulse_power': 1.0,
+                'coil_pulse_ms': 20,
+                'coil_hold_power': 0,
+                'coil_recycle': True,
+                'delay_ms': 10
+            })
+

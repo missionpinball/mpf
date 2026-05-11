@@ -27,7 +27,7 @@ class TestHighScoreMode(MpfBcpTestCase):
     def test_high_score_one_var(self):
         self.advance_time_and_run()
         self.mock_event("high_score_enter_initials")
-        self.mock_event("loops_award_display")
+        self.mock_event("high_score_award_display")
         # tests loop award with additional variables
         self.machine.modes["high_score"].high_scores = dict()
         self.machine.modes["high_score"].high_scores['loops'] = [('BIL', 2)]
@@ -45,7 +45,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
         self.advance_time_and_run(.5)
 
-        self.assertEventCalledWith("loops_award_display", award='LOOP CHAMP', player_name='NEW', value=50,
+        self.assertEventCalledWith("high_score_award_display", award='LOOP CHAMP', player_name='NEW', value=50,
                                    player_num=1, category_name='loops')
         self.advance_time_and_run(4)
 
@@ -56,14 +56,13 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         new_score_data = {'score': [], 'loops': [['NEW', 50, {'player_number': 1}]], 'hits': []}
 
-        self.assertEqual(new_score_data,
-                         self.machine.modes["high_score"].high_scores)
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)
 
     def test_high_score_multiple_vars(self):
         self.advance_time_and_run()
         self.mock_event("high_score_enter_initials")
-        self.mock_event("hits_award_display")
+        self.mock_event("high_score_award_display")
         # tests loop award with additional variables
         self.machine.modes["high_score"].high_scores = dict()
         self.machine.modes["high_score"].high_scores['hits'] = [['AAA', 2]]
@@ -81,7 +80,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
         self.advance_time_and_run(.5)
 
-        self.assertEventCalledWith("hits_award_display", award='MOST HITS', player_name='NEW', value=50,
+        self.assertEventCalledWith("high_score_award_display", award='MOST HITS', player_name='NEW', value=50,
                                    player_num=1, category_name='hits')
         self.advance_time_and_run(4)
 
@@ -94,6 +93,5 @@ class TestHighScoreMode(MpfBcpTestCase):
                           'loops': [],
                           'hits': [['NEW', 50, {'player_number': 1, 'machine_credits_string': 'FREE PLAY'}]]}
 
-        self.assertEqual(new_score_data,
-                         self.machine.modes["high_score"].high_scores)
+        self.assertEqual(new_score_data, self.machine.modes["high_score"].high_scores)
         self.assertEqual(new_score_data, self.machine.modes["high_score"].data_manager.written_data)

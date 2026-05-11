@@ -13,7 +13,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
 
-@DeviceMonitor("locked_balls")
+@DeviceMonitor("locked_balls", "enabled")
 class MultiballLock(EnableDisableMixin, ModeDevice):
 
     """Ball lock device which locks balls for a multiball."""

@@ -4,11 +4,17 @@ on:
   push:
     branches:
       - dev
+      - 0.57.x
+      - 0.58.x
       - 0.80.x
+      - 0.81.x
   pull_request:
     branches:
       - dev
+      - 0.57.x
+      - 0.58.x
       - 0.80.x
+      - 0.81.x
 
 jobs:
   tests:
@@ -19,10 +25,6 @@ jobs:
       matrix:
         include:
         - os: windows-latest
-          python-version: 3.8
-        - os: windows-latest
-          python-version: 3.9
-        - os: windows-latest
           python-version: "3.10"
         - os: windows-latest
           python-version: 3.11
@@ -32,10 +34,7 @@ jobs:
           python-version: 3.13
         - os: windows-latest
           python-version: 3.14
-        - os: ubuntu-latest
-          python-version: 3.8
-        - os: ubuntu-latest
-          python-version: 3.9
+
         - os: ubuntu-latest
           python-version: "3.10"
         - os: ubuntu-latest
@@ -46,10 +45,7 @@ jobs:
           python-version: 3.13
         - os: ubuntu-latest
           python-version: 3.14
-        - os: macos-latest
-          python-version: 3.8
-        - os: macos-latest
-          python-version: 3.9
+
         - os: macos-latest
           python-version: "3.10"
         - os: macos-latest
@@ -63,10 +59,10 @@ jobs:
 
     steps:
       - name: Checkout MPF
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 

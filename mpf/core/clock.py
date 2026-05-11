@@ -64,21 +64,27 @@ class ClockBase(LogMixin):
 
         self.debug_log("Starting tickless clock")
         if not loop:
-            self.loop = self._create_event_loop()   # type: asyncio.AbstractEventLoop
+            self.loop = self._get_or_create_loop()  # type: asyncio.AbstractEventLoop
         else:
             self.loop = loop                        # type: asyncio.AbstractEventLoop
 
         asyncio.set_event_loop(self.loop)
 
-    def _create_event_loop(self):
+    def _get_or_create_loop(self):
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError:
+            return self._create_loop()
+
+    def _create_loop(self):
         try:
             # pylint: disable-msg=import-outside-toplevel
             import uvloop
         except ImportError:
             pass
         else:
-            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        return asyncio.get_event_loop()
+            return uvloop.new_event_loop()
+        return asyncio.new_event_loop()
 
     def run(self, stop_future):
         """Run the clock."""

@@ -168,17 +168,17 @@ class Pin2DmdDevice(DmdPlatformInterface):
                 target_idx += elements
 
         if self.resolution == "256x64":
-            dest_idx = 4
-            tmp_idx = 4
+            target_idx = 4
+            idx = 4
             temp_buffer = output_buffer.copy()
 
             for _ in range(0, elements * 3):
-                temp_buffer[dest_idx] = output_buffer[tmp_idx + 128]
-                temp_buffer[dest_idx + 1] = output_buffer[tmp_idx] << 1
-                dest_idx += 2
-                tmp_idx += 1
-                if (dest_idx - 4) % 256 == 0:
-                    tmp_idx += 128
+                temp_buffer[target_idx] = output_buffer[idx + 128]
+                temp_buffer[target_idx + 1] = output_buffer[idx] << 1
+                target_idx += 2
+                idx += 1
+                if (target_idx - 4) % 256 == 0:
+                    idx += 128
 
             output_buffer = temp_buffer
 

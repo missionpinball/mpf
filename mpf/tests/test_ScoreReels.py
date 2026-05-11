@@ -213,7 +213,7 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(10, player1_10.pulse.call_count)
         self.assertEqual(1, chime1.pulse.call_count)
 
-    def testAdvanceingFailure(self):
+    def testAdvancingFailure(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver
         player1_1k = self.machine.coils["player1_1k"].hw_driver
         player1_100 = self.machine.coils["player1_100"].hw_driver
@@ -256,6 +256,89 @@ class TestScoreReels(MpfFakeGameTestCase):
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(3, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
+
+    def testEnableDisableChimes(self):
+        player1_10k = self.machine.coils["player1_10k"].hw_driver
+        player1_1k = self.machine.coils["player1_1k"].hw_driver
+        player1_100 = self.machine.coils["player1_100"].hw_driver
+        player1_10 = self.machine.coils["player1_10"].hw_driver
+        chime1 = self.machine.coils["chime1"].hw_driver
+        chime2 = self.machine.coils["chime2"].hw_driver
+        chime3 = self.machine.coils["chime3"].hw_driver
+        player1_10k.pulse = MagicMock(return_value=10)
+        player1_1k.pulse = MagicMock(return_value=10)
+        player1_100.pulse = MagicMock(return_value=10)
+        player1_10.pulse = MagicMock(return_value=10)
+        chime1.pulse = MagicMock(return_value=10)
+        chime2.pulse = MagicMock(return_value=10)
+        chime3.pulse = MagicMock(return_value=10)
+        self.start_game()
+        self.assertEqual(0, self.machine.game.player.score)
+
+        self._synchronise_to_reel()
+
+        self.machine.game.player.score += 110
+        self.hit_switch_and_run("score_1p_10k_0", 0)
+        self.hit_switch_and_run("score_1p_1k_0", 0)
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.release_switch_and_run("score_1p_10_0", 0)
+        self.advance_time_and_run(10)
+
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(1, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(0, chime1.pulse.call_count)
+        self.assertEqual(1, chime2.pulse.call_count)
+        self.assertEqual(1, chime3.pulse.call_count)
+
+        self.machine.game.player.score += 100
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(2, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(0, chime1.pulse.call_count)
+        self.assertEqual(2, chime2.pulse.call_count)
+        self.assertEqual(1, chime3.pulse.call_count)
+
+        self.machine.game.player.score += 1000
+        self.release_switch_and_run("score_1p_1k_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(1, player1_1k.pulse.call_count)
+        self.assertEqual(2, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(1, chime1.pulse.call_count)
+        self.assertEqual(2, chime2.pulse.call_count)
+        self.assertEqual(1, chime3.pulse.call_count)
+
+        self.post_event("disable_srg_player1_chimes")
+        self.machine.game.player.score += 1100
+        self.release_switch_and_run("score_1p_1k_0", 0)
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(2, player1_1k.pulse.call_count)
+        self.assertEqual(3, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(1, chime1.pulse.call_count)
+        self.assertEqual(2, chime2.pulse.call_count)
+        self.assertEqual(1, chime3.pulse.call_count)
+
+        self.post_event("enable_srg_player1_chimes")
+        self.machine.game.player.score += 1100
+        self.release_switch_and_run("score_1p_1k_0", 0)
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(3, player1_1k.pulse.call_count)
+        self.assertEqual(4, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(2, chime1.pulse.call_count)
+        self.assertEqual(3, chime2.pulse.call_count)
+        self.assertEqual(1, chime3.pulse.call_count)
 
     def testThreePlayers(self):
         player1_10k = self.machine.coils["player1_10k"].hw_driver

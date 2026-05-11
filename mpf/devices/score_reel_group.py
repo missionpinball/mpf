@@ -3,6 +3,7 @@ from collections import deque
 
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
+from mpf.core.events import event_handler
 
 
 class ScoreReelGroup(SystemWideDevice):
@@ -52,6 +53,9 @@ class ScoreReelGroup(SystemWideDevice):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
+        self.chimes_enabled = False
+        # Boolean attribute that is True when chimes should play when reels advance.
+
         self._tick_task = None
 
     async def _initialize(self):
@@ -69,11 +73,25 @@ class ScoreReelGroup(SystemWideDevice):
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
 
-    @classmethod
-    def chime(cls, chime, **kwargs):
-        """Pulse chime."""
+    def chime(self, chime, **kwargs):
+        """Pulse chime if chimes are enabled."""
         del kwargs
-        chime.pulse()
+        if self.chimes_enabled:
+            chime.pulse()
+
+    @event_handler(1)
+    def event_enable_chimes(self, **kwargs):
+        """Event handler to enable chimes."""
+        del kwargs
+        self.chimes_enabled = True
+        self.log.info('Chimes enabled.')
+
+    @event_handler(2)
+    def event_disable_chimes(self, **kwargs):
+        """Event handler to disable chimes."""
+        del kwargs
+        self.chimes_enabled = False
+        self.log.info('Chimes disabled.')
 
     def set_value(self, value):
         """Reset the score reel group to display the value passed.

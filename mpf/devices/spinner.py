@@ -13,7 +13,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
-@DeviceMonitor(_active="active", _idle="idle")
+@DeviceMonitor(_active="active", _idle="idle", enabled="enabled")
 class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
     """Represents a spinner or spinner group in a pinball machine."""

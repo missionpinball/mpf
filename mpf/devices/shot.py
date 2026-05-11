@@ -10,7 +10,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 
 
-@DeviceMonitor("state", "state_name")
+@DeviceMonitor("state", "state_name", "enabled")
 class Shot(EnableDisableMixin, ModeDevice):
 
     """A device which represents a generic shot."""

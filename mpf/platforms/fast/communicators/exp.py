@@ -31,6 +31,7 @@ class FastExpCommunicator(FastSerialCommunicator):
         self.active_board = None
 
         self.message_processors['BR:'] = self._process_br
+        self.message_processors['ER:'] = self._process_er
 
     async def init(self):
         """Query the expansion boards."""
@@ -89,6 +90,10 @@ class FastExpCommunicator(FastSerialCommunicator):
     def _process_br(self, msg):
         del msg
         self.active_board = None
+        self.done_processing_msg_response()
+
+    def _process_er(self, msg):
+        del msg
         self.done_processing_msg_response()
 
     def set_led_fade_rate(self, board_address: str, rate: int) -> None:

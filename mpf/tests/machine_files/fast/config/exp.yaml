@@ -16,11 +16,17 @@ fast:
             model: FP-DRV-0800
         led_ports:
           - port: 1
-            leds: 32
+            count: 32
             type: ws2812
           - port: 2
-            leds: 32
+            count: 32
             type: apa-102
+          - port: 3
+            count: 16
+            type: sk6812
+          - port: 4
+            count: 48
+            type: mixed
         led_hz: 30
       aaron:
         model: FP-EXP-0091-2  # test hw revision number included
@@ -31,22 +37,34 @@ fast:
             model: FP-BRK-0001
         led_ports:
           - port: 1
-            leds: 32
+            count: 32
             type: ws2812
           - port: 2
-            leds: 32
+            count: 32
             type: apa-102
       dave:
         model: FP-EXP-0071
         led_ports:
           - port: 1
-            leds: 32
+            count: 32
             type: ws2812
           - port: 2
-            leds: 32
+            count: 32
             type: apa-102
       eli:
         model: FP-EXP-0081-1  # test including hw revision number
+        led_ports:
+          - port: 5
+            count: 1
+            type: ws2812
+            rgbw_numbers: 1, 999  # should be ignored as not a mixed type
+          - port: 7
+            count: 0
+            type: mixed
+          - port: 8
+            count: 95
+            type: mixed
+            rgbw_numbers: 1, 16, 17
       neuron:
         model: FP-EXP-2000
         breakouts:
@@ -66,6 +84,8 @@ lights:
     number: brian-b1-2-1-0
   led5:
     number: brian-b1-2-2-1
+  ledb448:
+    number: brian-4-48
   led6:
     number: aaron-b2-1-1-2
   led7:
@@ -94,7 +114,7 @@ lights:
   led18:
     number: dave-4-11
   led19:
-    number: eli-8-1  # 84160
+    number: eli-8-1  # 84121
   led20:
     number: neuron-1-1
   led21:

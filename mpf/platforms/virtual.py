@@ -303,6 +303,11 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
         self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "pulse_on_hit"
 
+    def set_delayed_pulse_on_hit_rule(self, enable_switch, coil, delay_ms):
+        """Set pulse on hit after delay rule, typical of kickbacks."""
+        self._assert_rule_does_not_exist(enable_switch.hw_switch, coil.hw_driver)
+        self.rules[(enable_switch.hw_switch, coil.hw_driver)] = "delayed_pulse_on_hit"
+
     def configure_dmd(self):
         """Configure DMD."""
         return VirtualDmd()

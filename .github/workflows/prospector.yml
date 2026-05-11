@@ -4,12 +4,17 @@ on:
   push:
     branches:
       - dev
+      - 0.57.x
+      - 0.58.x
       - 0.80.x
+      - 0.81.x
   pull_request:
     branches:
       - dev
+      - 0.57.x
+      - 0.58.x
       - 0.80.x
-
+      - 0.81.x
 
 jobs:
   prospector:
@@ -18,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
 

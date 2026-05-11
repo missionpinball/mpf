@@ -16,6 +16,8 @@ switches:
         number: 0-3
     s_test_card2:
         number: 0-8
+    s_kickback:
+        number: 0-9
 
 coils:
     c_test:
@@ -37,6 +39,9 @@ coils:
     c_holdpower_16:
         number: 1-12
         default_hold_power: 0.0625
+    c_kickback:
+        number: 1-13
+        default_pulse_ms: 20
 
 lights:
   test_light1:
@@ -58,6 +63,13 @@ autofire_coils:
     ac_slingshot_test2:
         coil: c_test_allow_enable
         switch: s_test_no_debounce
+
+kickbacks:
+    kickback_test:
+        enable_events: enable_kickback_test
+        coil_pulse_delay: 10ms
+        coil: c_kickback
+        switch: s_kickback
 
 flippers:
     f_test_single:

@@ -1,0 +1,7 @@
+#config_version=6
+
+# Attract mode that starts when the machine boots up, stops
+# whenever a game is started, and re-starts after the game ends.
+
+slide_player:
+  mode_attract_started: attract

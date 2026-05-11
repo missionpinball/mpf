@@ -63,20 +63,20 @@ lights:
       number: 5
       label: Light Five
 
-sound_system:
-  tracks:
-    sfx: []
-  enabled: true
-
-keyboard:
-    right:
-        switch: s_service_enter
-    left:
-        switch: s_service_esc
-    up:
-        switch: s_service_up
-    down:
-        switch: s_service_down
-    enter:
-        switch: s_door_open
-        toggle: true
+# sound_system:
+#   tracks:
+#     sfx: []
+#   enabled: true
+# 
+# keyboard:
+#     right:
+#         switch: s_service_enter
+#     left:
+#         switch: s_service_esc
+#     up:
+#         switch: s_service_up
+#     down:
+#         switch: s_service_down
+#     enter:
+#         switch: s_door_open
+#         toggle: true

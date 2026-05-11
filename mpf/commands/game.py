@@ -140,17 +140,6 @@ class Command:
                                  "used for all"
                                  " devices")
 
-        # The following are just included for full compatibility with mc
-        # which is needed when using "mpf both".
-
-        parser.add_argument("-L",
-                            action="store", dest="mc_file_name",
-                            metavar='mc_file_name',
-                            default=None, help=argparse.SUPPRESS)
-
-        parser.add_argument("--no-sound",
-                            action="store_true", dest="no_sound", default=False)
-
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
@@ -160,10 +149,10 @@ class Command:
             if exception.errno != errno.EEXIST:
                 raise
 
-        full_logfile_path = os.path.join(machine_path, self.args.logfile)
+        self.args.full_logfile_path = os.path.join(machine_path, self.args.logfile)
 
         try:
-            os.remove(full_logfile_path)
+            os.remove(self.args.full_logfile_path)
         except OSError:
             pass
 
@@ -188,7 +177,7 @@ class Command:
         self.console_queue_listener.start()
 
         # initialize file log
-        file_log = logging.FileHandler(full_logfile_path)
+        file_log = logging.FileHandler(self.args.full_logfile_path)
         if self.args.jsonlogging:
             formatter = JSONFormatter()
         else:
@@ -273,8 +262,12 @@ class Command:
             logging.exception(exception)
 
         logging.shutdown()
-        self.console_queue_listener.stop()
-        self.file_queue_listener.stop()
+        if self.console_queue_listener:
+            self.console_queue_listener.stop()
+            self.console_queue_listener = None
+        if self.file_queue_listener:
+            self.file_queue_listener.stop()
+            self.file_queue_listener = None
 
         if self.args.pause:
             input('Press ENTER to continue...')     # nosec

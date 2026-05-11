@@ -34,37 +34,37 @@ EXPANSION_BOARD_FEATURES = {
         'default_address': '30'
     },
     'FP-EXP-0051': {
-        'min_fw': '0.31',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-EXP-0051'],
         'breakout_ports': 0,
         'default_address': 'D0'
     },
     'FP-EXP-0061': {
-        'min_fw': '0.31',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-EXP-0061'],
         'breakout_ports': 0,
         'default_address': '90'
     },
     'FP-EXP-0071': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-EXP-0071'],
         'breakout_ports': 0,
         'default_address': 'B4'
     },
     'FP-EXP-0081': {
-        'min_fw': '0.12',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-EXP-0081', 'FP-EXP-0081'],
         'breakout_ports': 0,
         'default_address': '84'
     },
     'FP-EXP-0091': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-EXP-0091'],
         'breakout_ports': 2,
         'default_address': '88'
     },
     'FP-EXP-2000': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'local_breakouts': ['FP-BRK-0001'],
         'breakout_ports': 3,
         'default_address': '48'
@@ -77,21 +77,21 @@ BREAKOUT_FEATURES = {
         'shaker_ports': 1
     },
     'FP-EXP-0061': {
-        'min_fw': '0.33',
+        'min_fw': '0.48',
         'led_ports': 4,
         'stepper_ports': 2
     },
     'FP-EXP-0071': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'led_ports': 4,
         'servo_ports': 4,
     },
     'FP-EXP-0081': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'led_ports': 4,
     },
     'FP-EXP-0091': {
-        'min_fw': '0.11',
+        'min_fw': '0.48',
         'led_ports': 4,
     },
     'FP-BRK-0001': {  # Neuron

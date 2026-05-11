@@ -9,7 +9,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor(_active="active", _release_in_progress="release_in_progress")
+@DeviceMonitor(_active="active", _release_in_progress="release_in_progress", enabled="enabled")
 class Magnet(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
     """Controls a playfield magnet in a pinball machine."""

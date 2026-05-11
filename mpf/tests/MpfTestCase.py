@@ -133,7 +133,7 @@ class TestMachineController(MachineController):
         return self._test_clock
 
     def __del__(self):
-        if self._test_clock:
+        if self._test_clock and self._test_clock.loop.is_running():
             self._test_clock.loop.close()
 
     def _register_plugin_config_players(self):
