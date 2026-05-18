@@ -344,6 +344,27 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 (or balls).
         '''
 
+        # Defensive reconciliation: if an eject failed, the target may have
+        # had its `available_balls` incremented earlier when the eject was
+        # scheduled. Ensure we decrement it to avoid stale counts that block
+        # end-of-game logic.
+        try:
+            target = eject_request.target
+            if hasattr(target, 'available_balls') and target.available_balls > 0:
+                self.debug_log('Decrementing available_balls on %s due to failed eject (was %s)',
+                               target.name, target.available_balls)
+                target.available_balls -= 1
+            else:
+                self.debug_log('No available_balls to decrement on %s (value: %s)',
+                               target.name, getattr(target, 'available_balls', None))
+        except Exception:
+            # Don't let cleanup raise an exception
+            try:
+                self.exception_log('Error while reconciling available_balls on failed eject for %s',
+                                    eject_request.target)
+            except Exception:
+                pass
+
     async def _post_ejecting_event(self, eject_request: OutgoingBall, eject_try: int):
         await self.machine.events.post_async(
             'balldevice_{}_ejecting_ball'.format(self.ball_device.name),
@@ -410,6 +431,21 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             except asyncio.TimeoutError:
                 # timeout. ball did not leave. failed
                 await self.ball_device.ball_count_handler.end_eject(ball_eject_process, False)
+                # Reconcile target.available_balls if it was incremented when the
+                # eject was scheduled. This prevents stale available_balls from
+                # persisting after timeouts.
+                try:
+                    target = eject_request.target
+                    if hasattr(target, 'available_balls') and target.available_balls > 0:
+                        self.debug_log('Decrementing available_balls on %s due to eject timeout (was %s)',
+                                       target.name, target.available_balls)
+                        target.available_balls -= 1
+                except Exception:
+                    try:
+                        self.exception_log('Error while reconciling available_balls after eject timeout for %s',
+                                            eject_request.target)
+                    except Exception:
+                        pass
                 return False
 
             if (trigger and trigger.done()) or (tilt and tilt.done()):
