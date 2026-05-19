@@ -357,12 +357,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             else:
                 self.debug_log('No available_balls to decrement on %s (value: %s)',
                                target.name, getattr(target, 'available_balls', None))
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             # Don't let cleanup raise an exception
             try:
                 self.exception_log('Error while reconciling available_balls on failed eject for %s',
-                                    eject_request.target)
-            except Exception:
+                                   eject_request.target)
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
     async def _post_ejecting_event(self, eject_request: OutgoingBall, eject_try: int):
@@ -388,6 +388,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         num_attempts: How many eject attempts have been tried so far.
         '''
 
+    # pylint: disable-msg=too-many-statements
     async def _eject_ball(self, eject_request: OutgoingBall, eject_try: int) -> bool:
         # inform the counter that we are ejecting now
         self.info_log("Ejecting ball to %s", eject_request.target)
@@ -440,11 +441,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                         self.debug_log('Decrementing available_balls on %s due to eject timeout (was %s)',
                                        target.name, target.available_balls)
                         target.available_balls -= 1
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     try:
                         self.exception_log('Error while reconciling available_balls after eject timeout for %s',
-                                            eject_request.target)
-                    except Exception:
+                                           eject_request.target)
+                    except Exception:  # pylint: disable=broad-exception-caught
                         pass
                 return False
 

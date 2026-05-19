@@ -189,7 +189,7 @@ class TestBallDevice(MpfTestCase):
         target = self.machine.ball_devices['test_target1']
 
         # Ensure clean start
-        target.balls = 0
+        target.ball_count_handler._set_ball_count(0)  # pylint: disable=protected-access
         target.available_balls = 0
 
         # Trigger an eject from the launcher
