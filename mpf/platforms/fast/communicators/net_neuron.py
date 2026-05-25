@@ -22,7 +22,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     MAX_IO_BOARDS = 9
     MAX_SWITCHES = 104
     MAX_DRIVERS = 48
-    IGNORED_MESSAGES = ['WD:P', 'TL:P']
+    IGNORED_MESSAGES = ['TL:P']
     TRIGGER_CMD = 'TL'
     DRIVER_CMD = 'DL'
     SWITCH_CMD = 'SL'
@@ -37,6 +37,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switches = list()
         self.drivers = list()
 
+        self.message_processors['WD:'] = self._process_wd
+        self.message_processors['WP:'] = self._process_wp
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['CH:'] = self._process_ch
         self.message_processors['!B:'] = self._process_boot_message
@@ -267,6 +269,12 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     async def update_switches_from_hardware(self):
         """Process an SA: message and update switch states."""
         await self.send_and_wait_for_response_processed('SA:', 'SA:')
+
+    def _process_wp(self, msg):
+        return
+
+    def _process_wd(self, msg):
+        return
 
     def _process_sa(self, msg):
         if not self.platform.switches_initialized:

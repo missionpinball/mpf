@@ -573,7 +573,7 @@ fast_net:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     controller: single|enum(neuron,nano,sys11,wpc89,wpc95)|
-    watchdog: single|ms|1000
+    watchdog: single|ms|500
     default_quick_debounce_open: single|ms|2
     default_quick_debounce_close: single|ms|2
     default_normal_debounce_open: single|ms|4
