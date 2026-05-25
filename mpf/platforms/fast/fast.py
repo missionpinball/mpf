@@ -45,7 +45,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
                  "exp_boards_by_address", "exp_boards_by_name", "exp_breakout_boards",
                  "exp_breakouts_with_leds", "hw_switch_data", "new_switch_data",
                  "io_boards", "io_boards_by_name", "switches_initialized",
-                 "drivers_initialized", "audio_interface"]
+                 "drivers_initialized", "audio_interface", "soft_power_held_time",
+                 "soft_power_hold_ms", "soft_power_down_final_delay_ms"]
 
     port_types = ['net', 'exp', 'exp_int', 'aud', 'dmd', 'rgb', 'seg', 'emu']
 
@@ -104,6 +105,13 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         self.switches_initialized = False
         self.drivers_initialized = False
         self.audio_interface = None
+        self.soft_power_held_time = None  # type: Optional[float]
+
+        self.soft_power_hold_ms = 1
+        self.soft_power_down_final_delay_ms = None
+        if self.machine_type == 'neuron':
+            self.soft_power_hold_ms = self.config['net']['soft_power_hold_ms']  # type: int
+            self.soft_power_down_final_delay_ms = self.config['net']['soft_power_powerdown_delay']  # milliseconds
 
     def get_info_string(self):
         """Dump info strings about attached FAST hardware."""
@@ -1007,3 +1015,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         # TODO: check that the rule is switch + coil and not another switch + this coil
         driver = coil.hw_driver
         driver.clear_autofire()
+
+    def report_soft_power_down_request(self):
+        """Neuron soft power requesting shutdown."""
+        self.warning_log("Neuron soft power down requested.")
+        self.machine.request_soft_shutdown()

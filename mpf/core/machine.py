@@ -2,6 +2,7 @@
 """Contains the MachineController base class."""
 import asyncio
 import logging
+import subprocess
 import sys
 import threading
 from typing import Any, Callable, Dict, List, Set, Optional, TYPE_CHECKING
@@ -106,7 +107,8 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
+                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down",
+                 "soft_power_down_active"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, options: dict, config: MpfConfig) -> None:
@@ -116,6 +118,7 @@ class MachineController(LogMixin):
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
         self._crash_handlers = []   # type: List[Callable]
         self.is_shutting_down = False
+        self.soft_power_down_active = False
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
@@ -396,6 +399,7 @@ class MachineController(LogMixin):
     def _register_system_events(self) -> None:
         """Register default event handlers."""
         self.events.add_handler('quit', self.stop)
+        self.events.add_handler('request_soft_shutdown', self.request_soft_shutdown)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.stop)
 
@@ -790,6 +794,56 @@ class MachineController(LogMixin):
         self.clock.loop.stop()
         self.clock.loop.run_forever()
         self.clock.loop.close()
+
+        if self.soft_power_down_active:
+            self._execute_soft_shutdown_command()
+
+    def _execute_soft_shutdown_command(self) -> None:
+        cmd = self.config['machine'].get('soft_shutdown_exit_command')
+        if not cmd:
+            return
+
+        self.info_log('Executing exit command %s', cmd)
+        try:
+            # pylint: disable=consider-using-with
+            subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        except (subprocess.SubprocessError, OSError) as e:
+            self.error_log("Failed to execute exit command: %s", e)
+
+    def request_soft_shutdown(self, **_kwargs) -> None:
+        """Attempt to soft shut down, allowing hooks to deny the request."""
+        self.warning_log("Attempting soft shutdown")
+        self.events.post_boolean('machine_request_shutdown', callback=self._result_of_shutdown_request)
+
+    def _result_of_shutdown_request(self, ev_result=True):
+        """Handle the result of the shutdown request.
+
+        Called after the *machine_request_shutdown* event is posted.
+
+        If the boolean result is True, the stop future will be resolved (ending the run loop)
+        and the event 'machine_will_shutdown' is posted. If the result is False,
+        the event 'machine_abort_shutdown' is posted.
+
+        Args:
+        ----
+            ev_result : Bool result of the boolean event
+                *machine_request_shutdown.* If any registered event handler did not
+                want the machine to shut down, this will be False, else it's True.
+        """
+        if ev_result is False:
+            self.warning_log('Soft shutdown was denied')
+            self.events.post('machine_abort_shutdown')
+        else:
+            self.warning_log('Soft shutdown proceeding...')
+            self.events.post('machine_will_shutdown')
+            self.soft_power_down_active = True
+            self.stop('Soft shutdown')
 
     def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface

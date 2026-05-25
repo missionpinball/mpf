@@ -581,6 +581,8 @@ fast_net:
     mute_unconfigured_switches: single|bool|false
     gi_hz: single|int|30
     lamp_hz: single|int|30
+    soft_power_hold_ms: single|ms|2500
+    soft_power_powerdown_delay: single|ms|4000
 fast_io_loop:
     model: single|str|  # FP-I/O-0804, etc.
     order: single|enum(1,2,3,4,5,6,7,8,9)|
@@ -942,6 +944,7 @@ machine:
     __type__: config
     balls_installed: single|int|1
     min_balls: single|int|1
+    soft_shutdown_exit_command: single|str|None
 machine_vars:
     __valid_in__: machine
     __type__: config_dict
