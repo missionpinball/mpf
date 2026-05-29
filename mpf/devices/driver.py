@@ -127,8 +127,9 @@ class Driver(SystemWideDevice):
         if pulse_power is None:
             pulse_power = self.config['default_pulse_power'] if self.config['default_pulse_power'] is not None else 1.0
 
-        if pulse_power and 0 > pulse_power > 1:
-            raise AssertionError("Pulse power has to be between 0 and 1 but is {}".format(pulse_power))
+        if pulse_power and not 0 <= pulse_power <= 1:
+            raise AssertionError("Pulse power for driver {} has to be between 0 and 1 but is {}".
+                                 format(self.name, pulse_power))
 
         max_pulse_power = 0
         if self.config['max_pulse_power']:
@@ -137,7 +138,7 @@ class Driver(SystemWideDevice):
             max_pulse_power = self.config['default_pulse_power']
 
         if pulse_power > max_pulse_power:
-            raise DriverLimitsError("Driver may {} not be pulsed with pulse_power {} because max_pulse_power is {}".
+            raise DriverLimitsError("Driver {} may not be pulsed with pulse_power {} because max_pulse_power is {}".
                                     format(self.name, pulse_power, max_pulse_power))
         return pulse_power
 
@@ -158,8 +159,9 @@ class Driver(SystemWideDevice):
         if hold_power is None:
             hold_power = 0.0
 
-        if hold_power and 0 > hold_power > 1:
-            raise AssertionError("Hold_power has to be between 0 and 1 but is {}".format(hold_power))
+        if hold_power and not 0 <= hold_power <= 1:
+            raise AssertionError("Hold_power for driver {} has to be between 0 and 1 but is {}".
+                                 format(self.name, hold_power))
 
         max_hold_power = 0      # type: float
         if self.config['max_hold_power']:
@@ -186,8 +188,8 @@ class Driver(SystemWideDevice):
         if not isinstance(pulse_ms, int):
             raise AssertionError("Wrong type {}".format(pulse_ms))
 
-        if 0 > pulse_ms > self.platform.features['max_pulse']:
-            raise AssertionError("Pulse_ms {} is not valid.".format(pulse_ms))
+        if pulse_ms < 0:
+            raise AssertionError("Negative pulse_ms {} is not valid for driver {}.".format(pulse_ms, self.name))
 
         if self.config['max_pulse_ms'] and pulse_ms > self.config['max_pulse_ms']:
             raise DriverLimitsError("Driver {} may not be pulsed with pulse_ms {} because max_pulse_ms is {}".
@@ -205,7 +207,7 @@ class Driver(SystemWideDevice):
             timed_enable_ms = self._timed_enable_ms
 
         if not isinstance(timed_enable_ms, int):
-            raise AssertionError("Wrong type {}".format(timed_enable_ms))
+            raise AssertionError("Wrong type {} for driver {} timed_enable_ms".format(timed_enable_ms, self.name))
 
         if self.config['max_hold_duration'] and timed_enable_ms > self.config['max_hold_duration']:
             raise DriverLimitsError("Driver {} may not be held with timed_enable_ms {} because max_hold_duration is {}".
@@ -250,7 +252,7 @@ class Driver(SystemWideDevice):
         hold_power = self.get_and_verify_hold_power(hold_power)
 
         if hold_power == 0.0:
-            raise DriverLimitsError("Cannot enable driver with hold_power 0.0")
+            raise DriverLimitsError(f"Cannot enable driver {self.name} with hold_power 0.0")
 
         if wait_ms > 0:
             self.debug_log("Delaying enable by %sms pulse_ms: %sms (%s pulse_power %s hold_power)",
@@ -275,7 +277,7 @@ class Driver(SystemWideDevice):
 
     def _enable_limit_reached(self):
         """Disable driver and report service alert if max_hold_duration has been reached."""
-        self.log.warning("Reached max_hold_duration for this coil. Will disable driver now to prevent damage!")
+        self.warning_log("Reached max_hold_duration for this coil. Will disable driver now to prevent damage!")
         self.disable()
         self.machine.service.add_technical_alert(self, "Reached max_hold_duration. Driver disabled to prevent damage!")
 

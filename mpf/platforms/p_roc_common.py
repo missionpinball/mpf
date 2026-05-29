@@ -808,7 +808,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             board, index = number.split("-")
         except ValueError:
             self.raise_config_error("Servo number should be board-number but is {}".format(number), 1)
-        if 0 > int(index) >= 12:
+        if not 0 <= int(index) < 12:
             self.raise_config_error("PD-LED only supports 12 servos {}".format(number), 5)
 
         pd_led_obj = self.config['pd_led_boards'].get(int(board), {})
@@ -832,7 +832,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoPlat
             board, number = number.split("-")
         except ValueError:
             self.raise_config_error("Stepper number should be board-number but is {}".format(number), 3)
-        if 0 > int(number) >= 2:
+        if not 0 <= int(number) < 2:
             self.raise_config_error("PD-LED only supports two steppers {}".format(number), 4)
 
         pd_led = self.config['pd_led_boards'].get(board, {})

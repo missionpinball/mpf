@@ -109,7 +109,7 @@ class PololuServo(ServoPlatformInterface):
             value = self.config['servo_min']
 
         # if Max is defined and Target is above, force to Max
-        if 0 < self.config['servo_max'] < value:
+        if self.config['servo_max'] > 0 and value > self.config['servo_max']:
             value = self.config['servo_max']
 
         lsb = value & 0x7f  # 7 bits for least significant byte

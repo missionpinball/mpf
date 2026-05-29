@@ -81,7 +81,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         del platform_settings
         del display_size
         number_int = int(number)
-        if 1 > number_int > 6:
+        if not 1 <= number_int <= 6:
             raise AssertionError("Number {} invalid for mypinballs display. 1-6 are valid.".format(number))
 
         return MyPinballsSegmentDisplay(number_int, self)

@@ -754,7 +754,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             elif start_time < lower_dest_time < dest_time:
                 # fade below is shorter than fade out. removing the fade will trigger a new fade in this case
                 ratio = (dest_time - lower_dest_time) / (dest_time - start_time)
-                dest_color = RGBColor.blend(color_settings.start_color, dest_color, ratio)
+                dest_color = RGBColor.blend(color_settings.start_color, lower_dest_color, ratio)
                 dest_time = lower_dest_time
             else:
                 # upper fade is longer. use color target below. this might be slightly inaccurate
