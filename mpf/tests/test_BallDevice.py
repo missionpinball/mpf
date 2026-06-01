@@ -181,6 +181,33 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._missing)
         self.assertEqual(1, self._captured)
 
+    def test_eject_timeout_cleans_available_balls(self):
+        """Repro: scheduling an eject increments target.available_balls; timeout should clean it."""
+        coil2 = self.machine.coils['eject_coil2']
+        coil2.pulse = MagicMock()
+
+        target = self.machine.ball_devices['test_target1']
+
+        # Ensure clean start
+        target.ball_count_handler._set_ball_count(0)  # pylint: disable=protected-access
+        target.available_balls = 0
+
+        # Trigger an eject from the launcher
+        self.machine.events.add_handler('balldevice_ball_missing', self._missing_ball)
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        # Let eject be processed
+        self.advance_time_and_run(1)
+        self.assertTrue(coil2.pulse.called)
+
+        # After scheduling, the outgoing handler or route may increment available_balls
+        self.assertGreaterEqual(target.available_balls, 0)
+
+        # Advance time beyond eject timeout to force timeout handling
+        self.advance_time_and_run(15)
+
+        # After our defensive fixes, available_balls should match authoritative balls
+        self.assertEqual(target.available_balls, target.balls)
+
     def test_eject_retry(self):
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.hit_switch_and_run("s_ball_switch2", 1)
