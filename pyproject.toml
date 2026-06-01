@@ -48,13 +48,13 @@ rpi = ['apigpio-mpf==0.0.4']
 # uvloop must be optional, because non-Cython derivatives don't support it.
 uvloop = ['uvloop==0.19.0']  # Oct 4 2023, msin asyncio loop
 vpe = ['grpcio_tools==1.69.0',
-       'grpcio==1.69.0',
+       'grpcio==1.81.0',
        'protobuf==5.29.3',]
 all = [  # currently no way to just use the names from above afaik?
     'prompt_toolkit==3.0.43', 'asciimatics==1.15.0', 'terminaltables==3.1.10',
     'requests==2.28.2', 'irc==19.0.1', 'smbus2_asyncio==0.0.5',
     'python-osc==1.8.3', 'pyusb==1.1.0', 'apigpio-mpf==0.0.4',
-    'grpcio_tools==1.69.0', 'grpcio==1.69.0', 'protobuf==5.29.3',
+    'grpcio_tools==1.69.0', 'grpcio==1.81.0', 'protobuf==5.29.3',
     'uvloop==0.19.0'
     ]
 
