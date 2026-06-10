@@ -121,8 +121,6 @@ class DataManager(MpfController):
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
-            while FileManager.is_busy:
-                time.sleep(0.2)
             self._dirty.clear()
 
             data = copy.deepcopy(self.data)
@@ -139,6 +137,4 @@ class DataManager(MpfController):
 
         # if dirty write data one last time during shutdown
         if data and self._dirty.is_set():
-            while FileManager.is_busy:
-                time.sleep(0.2)
             FileManager.save(self.filename, data)
