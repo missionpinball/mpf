@@ -1,5 +1,6 @@
 """Contains the YamlInterface class for reading & writing YAML files."""
 import copy
+import os
 import threading
 from typing import Any, Iterable, Dict
 
@@ -101,3 +102,11 @@ class YamlInterface(FileInterface):
             _yaml_instance.default_flow_style = False
             _yaml_instance.line_break = ''
             _yaml_instance.dump(data, output_file)
+
+            try:
+                fd = output_file.fileno()
+                if isinstance(fd, int):  # True on real files, False on MagicMocks
+                    output_file.flush()
+                    os.fsync(fd)
+            except OSError as e:
+                self.log.error("Hardware disk sync failed for %s: %s", filename, e)
