@@ -98,8 +98,8 @@ auditor:
     audit: list|str|None
     autosave: single|bool|true
     autosave_events: single|bool|true
-    events: list|event_handler|None
-    player: list|str|None
+    events: set|event_handler|None
+    player: set|str|None
     audit_shots: single|bool|true
     missing_switch_min_games: single|int|10
     num_player_top_records: single|int|1
