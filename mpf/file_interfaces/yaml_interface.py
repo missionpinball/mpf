@@ -17,6 +17,7 @@ def _get_yaml():
     if not hasattr(_thread_local, 'yaml'):
         _yaml_instance = yaml.YAML(typ='safe')
         _yaml_instance.default_flow_style = False
+        _yaml_instance.line_break = ''
         _thread_local.yaml = _yaml_instance
     return _thread_local.yaml
 
@@ -98,15 +99,10 @@ class YamlInterface(FileInterface):
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
-            _yaml_instance = _get_yaml()
-            _yaml_instance.default_flow_style = False
-            _yaml_instance.line_break = ''
-            _yaml_instance.dump(data, output_file)
+            _get_yaml().dump(data, output_file)
 
             try:
-                fd = output_file.fileno()
-                if isinstance(fd, int):  # True on real files, False on MagicMocks
-                    output_file.flush()
-                    os.fsync(fd)
-            except OSError as e:
-                self.log.error("Hardware disk sync failed for %s: %s", filename, e)
+                output_file.flush()
+                os.fsync(output_file.fileno())
+            except (OSError, TypeError) as e:
+                self.log.error("Disk sync failed for %s - %s", filename, e)

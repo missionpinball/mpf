@@ -123,3 +123,12 @@ class FileManager:
 
         # move temp file
         os.replace(temp_file, filename)
+
+        try:
+            directory = os.open(os.path.dirname(os.path.abspath(filename)), os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        except (OSError, TypeError) as e:
+            FileManager.log.debug("Directory fsync failed for file %s - %s", filename, e)
