@@ -11,6 +11,16 @@ from mpf.core.utility_functions import Util
 
 MIN_FW = version.parse('0.00')  # override in subclass
 
+# After a response wait_for() times out, drain at most this many event-loop
+# passes (re-checking done_waiting) before treating it as a real timeout. Under
+# cooperative scheduling the timeout timer and the inbound response bytes can
+# become ready in the same pass, so wait_for() raises while the reply is still a
+# few parse callbacks from being handled; draining lets it land instead of
+# triggering a spurious resend. Sized well above the observed worst case (a
+# board's full init parse chain); only a genuinely lost response runs the full
+# count.
+RESPONSE_DRAIN_PASSES = 50
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class FastSerialCommunicator(LogMixin):
@@ -269,7 +279,7 @@ class FastSerialCommunicator(LogMixin):
 
     # pylint: disable-msg=too-many-arguments
     async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1,
-                                                   max_retries=0, log_msg=None):
+                                                   max_retries=3, log_msg=None):
         """Send a message and wait for the response to be processed.
 
         Unlike send_and_wait_for_response(), this method will not release the wait when the response is received.
@@ -285,7 +295,9 @@ class FastSerialCommunicator(LogMixin):
                 If a response is not received by then (based on the pause_sending_until), the message will be resent.
                 Defaults to 1.
             max_retries (int, optional): How many times the message will be resent if the response is not
-                received by the timeout. -1 means unlimited retries. Defaults to 0.
+                received by the timeout. -1 means unlimited retries. Defaults to 3. Commands on this path
+                should be idempotent, since a retry resends them; when retries are exhausted an
+                AssertionError is raised rather than hanging.
             log_msg (_type_, optional): Optional version of the message that will be used in logs.
                 Typically used with binary messages so the longs can contain human readable versions.
                 Defaults to None which means the actual msg will be used in the logs.
@@ -295,15 +307,45 @@ class FastSerialCommunicator(LogMixin):
         retries = 0
 
         while max_retries == -1 or retries <= max_retries:
-            try:
-                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until,
-                                                                       log_msg), timeout=timeout)
-                break
-            except asyncio.TimeoutError:
-                self.log.error("Timeout waiting for response to %s. Retrying...", msg)
-                retries += 1
+            await self.send_and_wait_for_response(msg, pause_sending_until, log_msg)
+            # done_waiting is set by done_processing_msg_response() once the
+            # reply has been handled; wait for it with a timeout so a lost
+            # response can't hang here forever.
+            if await self._wait_for_processed(timeout):
+                return
 
-        await self.done_waiting.wait()
+            self.log.error("Timeout waiting for response to %s. Retrying...", msg)
+            # Timing out means the writer is stuck paused but we don't expect any
+            # more response. To avoid deadlocking, release no_response_waiting and
+            # clear pause_sending_flag/until.
+            self._resume_sending()
+            self.no_response_waiting.set()
+            retries += 1
+
+        raise AssertionError(
+            f"FAST board on {self.config['port']} never responded to '{msg}' after {retries} attempt(s)")
+
+    async def _wait_for_processed(self, timeout):
+        """Wait up to ``timeout`` seconds for the response to be processed.
+
+        Returns True if done_processing_msg_response() fired, False on timeout.
+
+        A response delivered right at the deadline can still be a couple of
+        callbacks short of being processed when wait_for() times out (under
+        cooperative scheduling the timeout and the inbound bytes can become
+        ready in the same loop pass). Let those pending callbacks drain and
+        re-check before declaring a real timeout, so we don't resend — and
+        double-process — a response that actually arrived.
+        """
+        try:
+            await asyncio.wait_for(self.done_waiting.wait(), timeout)
+            return True
+        except asyncio.TimeoutError:
+            for _ in range(RESPONSE_DRAIN_PASSES):
+                await asyncio.sleep(0)
+                if self.done_waiting.is_set():
+                    return True
+            return False
 
     def done_processing_msg_response(self):
         """Releases the wait for the response to be processed.
