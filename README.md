@@ -11,7 +11,7 @@ What is Mission Pinball Framework?
 Mission Pinball Framework (MPF) is open source, cross-platform software for powering real pinball
 machines. MPF is a community-developed project released under the MIT license. It's supported by volunteers in their spare time.
 
-[![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
+[![Coverage Status](https://coveralls.io/repos/github/missionpinball/mpf/badge.svg?branch=dev)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Test Status](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml/badge.svg)](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
