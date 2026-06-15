@@ -3,6 +3,7 @@
 import copy
 import os
 import errno
+import sys
 import threading
 import time
 import _thread
@@ -17,7 +18,7 @@ class DataManager(MpfController):
 
     config_name = "data_manager"
 
-    __slots__ = ["name", "min_wait_secs", "filename", "data", "_dirty"]
+    __slots__ = ["config", "name", "min_wait_secs", "filename", "data", "_dirty", "use_fsync"]
 
     def __init__(self, machine, name, min_wait_secs=1):
         """Initialize data manger.
@@ -47,6 +48,14 @@ class DataManager(MpfController):
                                          self.machine.config['mpf']['paths'][name])
         else:
             raise AssertionError("Invalid path {} for {}".format(config_path, name))
+
+        self.config = self.machine.config_validator.validate_config(
+            "data_manager", self.machine.config.get('data_manager'))
+
+        maybe_use_fsync = self.config.get('use_fsync', None)
+        if maybe_use_fsync is None:
+            maybe_use_fsync = sys.platform != 'win32'
+        self.use_fsync = maybe_use_fsync
 
         self.data = dict()
         self._dirty = threading.Event()
@@ -126,7 +135,7 @@ class DataManager(MpfController):
             data = copy.deepcopy(self.data)
             # save data
             try:
-                FileManager.save(self.filename, data)
+                FileManager.save(self.filename, data, self.use_fsync)
             except Exception as e:  # pylint: disable=broad-exception-caught
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
@@ -137,4 +146,4 @@ class DataManager(MpfController):
 
         # if dirty write data one last time during shutdown
         if data and self._dirty.is_set():
-            FileManager.save(self.filename, data)
+            FileManager.save(self.filename, data, self.use_fsync)

@@ -48,6 +48,6 @@ class FileInterface:
         """Load file."""
         raise NotImplementedError
 
-    def save(self, filename, data):
+    def save(self, filename, data, use_fsync):
         """Save file."""
         raise NotImplementedError

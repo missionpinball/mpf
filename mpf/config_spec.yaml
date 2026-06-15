@@ -1026,6 +1026,10 @@ mpf:
     paths: ignore
     report_crashes: single|enum(ask,never,always)|never
     rgbw_white_behavior: single|enum(white_only,min_rgb,duck_rgb)|duck_rgb
+data_manager:
+    __valid_in__: machine
+    __type__: config
+    use_fsync: single|bool|None
 multiballs:
     __valid_in__: machine, mode
     __type__: device

@@ -96,13 +96,14 @@ class YamlInterface(FileInterface):
         """Parse yaml from a string."""
         return _get_yaml().load(data_string)
 
-    def save(self, filename: str, data: dict) -> None:   # pragma: no cover
+    def save(self, filename: str, data: dict, use_fsync: bool) -> None:   # pragma: no cover
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
             _get_yaml().dump(data, output_file)
 
-            try:
-                output_file.flush()
-                os.fsync(output_file.fileno())
-            except (OSError, TypeError) as e:
-                self.log.error("Disk sync failed for %s - %s", filename, e)
+            if use_fsync:
+                try:
+                    output_file.flush()
+                    os.fsync(output_file.fileno())
+                except (OSError, TypeError) as e:
+                    self.log.error("Disk sync failed for %s - %s", filename, e)

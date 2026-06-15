@@ -20,7 +20,7 @@ class TestFileManager(unittest.TestCase):
         """If an invalid extension is supplied, it must throw an AssertionError."""
         if not FileManager.initialized:
             FileManager.init()
-            
+
         with self.assertRaises(AssertionError):
             FileManager.save("test.invalid_ext", {}, False)
 

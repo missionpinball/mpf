@@ -106,7 +106,7 @@ class FileManager:
         return interface.load(file, verify_version, halt_on_error)
 
     @staticmethod
-    def save(filename, data):
+    def save(filename, data, use_fsync):
         """Save data to file."""
         if not FileManager.initialized:
             FileManager.init()
@@ -117,18 +117,19 @@ class FileManager:
         temp_file = os.path.dirname(filename) + os.sep + "_" + os.path.basename(filename)
 
         try:
-            FileManager.file_interfaces[ext].save(temp_file, data)
+            FileManager.file_interfaces[ext].save(temp_file, data, use_fsync)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
         # move temp file
         os.replace(temp_file, filename)
 
-        try:
-            directory = os.open(os.path.dirname(os.path.abspath(filename)), os.O_RDONLY)
+        if use_fsync:
             try:
-                os.fsync(directory)
-            finally:
-                os.close(directory)
-        except (OSError, TypeError) as e:
-            FileManager.log.debug("Directory fsync failed for file %s - %s", filename, e)
+                directory = os.open(os.path.dirname(os.path.abspath(filename)), os.O_RDONLY)
+                try:
+                    os.fsync(directory)
+                finally:
+                    os.close(directory)
+            except (OSError, TypeError) as e:
+                FileManager.log.debug("Directory fsync failed for file %s - %s", filename, e)

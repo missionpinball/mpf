@@ -5,3 +5,6 @@ mpf:
         absolute_test: /data/test_dir/test_file.yaml
         relative_test: subdir/subdir2/test.yaml
         disabled_test: False
+
+data_manager:
+    use_fsync: True
