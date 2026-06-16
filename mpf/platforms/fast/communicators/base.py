@@ -146,6 +146,13 @@ class FastSerialCommunicator(LogMixin):
 
         await self.clear_board_serial_buffer()
 
+        # reset_input_buffer() above only flushes what was buffered at that
+        # instant. After an unclean shutdown the board can still be clocking out
+        # leftover bytes (often un-terminated binary LED data) that arrive just
+        # afterwards. Drain until the stream goes quiet so the first handshake
+        # response isn't fused onto the tail of that garbage.
+        await self._drain_serial()
+
         self.ignore_decode_errors = False
 
         self.write_task = asyncio.create_task(self._socket_writer())
@@ -157,6 +164,33 @@ class FastSerialCommunicator(LogMixin):
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
         self.write_to_port(b'\r\r\r\r')
+
+    async def _drain_serial(self, quiet_period=0.1, max_drain_time=2.0):
+        """Read and discard inbound bytes until the serial stream goes quiet.
+
+        After an unclean shutdown (e.g. Ctrl-C mid LED-blast) the board or OS
+        buffer can still hold a burst of leftover bytes with no trailing <CR>.
+        If that reaches the parser it fuses onto the front of the next real
+        message (``<junk>ID:exp ...``), so the response is dropped or raises a
+        decode error. This runs before the read loop starts, so it can read the
+        stream directly: keep reading until nothing has arrived for
+        ``quiet_period`` seconds, bounded by ``max_drain_time`` total.
+        """
+        deadline = self.machine.clock.loop.time() + max_drain_time
+        while True:
+            try:
+                chunk = await asyncio.wait_for(self.reader.read(1024), quiet_period)
+            except asyncio.TimeoutError:
+                return  # nothing for quiet_period -> stream is drained
+            if not chunk:
+                return  # port closed; the normal read path will report it
+            if self.port_debug:
+                self.log.info("Drained %s leftover serial byte(s): %s", len(chunk), chunk)
+            if self.machine.clock.loop.time() >= deadline:
+                self.log.warning(
+                    "Serial port still producing data after %ss; proceeding with handshake anyway.",
+                    max_drain_time)
+                return
 
     async def init(self):
         """Initialize the communicator with any board-specific logic."""
@@ -407,14 +441,46 @@ class FastSerialCommunicator(LogMixin):
                 if self.machine.is_shutting_down:
                     return
 
-                self.log.warning("Interference / bad data received: %s", msg)
-                if not self.ignore_decode_errors:
-                    raise
+                # Un-terminated leftover junk fuses onto the front of the next
+                # real message. Try to resync to a known header before treating
+                # this as bad data, so we don't drop (or crash on) a response
+                # sitting at the tail of the garbage.
+                recovered = self._resync_segment(msg)
+                if recovered is not None:
+                    self.log.warning("Recovered '%s' after discarding leading junk bytes", recovered)
+                    msg = recovered
+                else:
+                    self.log.warning("Interference / bad data received: %s", msg)
+                    if not self.ignore_decode_errors:
+                        raise
+                    continue
 
             if self.port_debug:
                 self.log.info("<<<< %s", msg)
 
             self._dispatch_incoming_msg(msg)
+
+    def _resync_segment(self, raw):
+        """Recover a valid message from a segment polluted with leading junk.
+
+        Un-terminated leftover binary has no <CR> of its own, so it fuses onto
+        the front of the following message. Rather than dropping the whole
+        segment (or raising on the un-decodable junk), find the earliest
+        registered message header in the segment and return the message from
+        there. Returns the decoded string, or None if no known header is found
+        or the recovered remainder still won't decode.
+        """
+        earliest = None
+        for header in self.message_processors:
+            idx = raw.find(header.encode())
+            if idx != -1 and (earliest is None or idx < earliest):
+                earliest = idx
+        if earliest is None:
+            return None
+        try:
+            return raw[earliest:].decode()
+        except UnicodeDecodeError:
+            return None
 
     def _dispatch_incoming_msg(self, msg):
         # Figures out what to do with incoming messages
