@@ -1,5 +1,5 @@
 # mpf.tests.test_Fast_Communicator
-"""Unit tests for FastSerialCommunicator's response and inbound-parse paths.
+"""Unit tests for FastSerialCommunicator's response and connect/parse paths.
 
 Two related FAST startup failures are covered here:
 
@@ -7,11 +7,11 @@ Two related FAST startup failures are covered here:
   MPF init forever, because the asyncio timeout was wrapped around
   send_and_wait_for_response() (which only queues the message and returns
   immediately) while the real wait on done_waiting had no timeout.
-* Inbound resync: after an unclean shutdown the board can clock out leftover,
-  un-terminated bytes that fuse onto the front of the next real message
-  (``<junk>ID:exp ...``). The parser must recover the real message instead of
-  dropping it or crashing on the un-decodable prefix, and connect() must drain
-  that leftover burst before the handshake.
+* Connect-time drain: after an unclean shutdown the board can clock out
+  leftover, un-terminated bytes that would otherwise fuse onto the front of the
+  next real message. connect() drains that burst before the handshake; the
+  parser itself still raises (or drops, when decode errors are ignored) on
+  undecodable data rather than guessing at it.
 
 These drive the relevant methods directly with a stubbed I/O surface so the
 paths are exercised deterministically without a real serial port.
@@ -146,44 +146,20 @@ class TestFastCommunicatorRetry(unittest.TestCase):
         asyncio.run(scenario())
 
 
-class TestFastCommunicatorResync(unittest.TestCase):
+class TestFastCommunicatorInbound(unittest.TestCase):
 
-    def test_resync_segment_recovers_message_after_junk(self):
-        """A real message fused onto the tail of un-decodable junk is recovered
-        from the earliest known header."""
-        comm = _make_comm()
-        comm.message_processors = {'ID:': None, 'XX:': None}
-        self.assertEqual(
-            comm._resync_segment(b'\x81\xb5\xc1ID:exp fp-exp-0081 0.48'),
-            'ID:exp fp-exp-0081 0.48')
-
-    def test_resync_segment_returns_none_without_known_header(self):
-        """Pure junk with no recognizable header can't be recovered."""
-        comm = _make_comm()
-        comm.message_processors = {'ID:': None}
-        self.assertIsNone(comm._resync_segment(b'\x81\xb5\xc1\x00\xff'))
-
-    def test_parse_recovers_id_response_fused_to_junk(self):
-        """The franken-string case: leftover bytes with no <CR> fuse onto the
-        ID: reply. The processor must still fire with the real payload."""
-        comm = _make_comm()
-        received = []
-        comm.message_processors = {'ID:': received.append}
-        comm.parse_incoming_raw_bytes(b'\x81\xb5\xc1ID:exp fp-exp-0081 0.48\r')
-        self.assertEqual(received, ['exp fp-exp-0081 0.48'])
-
-    def test_parse_raises_on_unrecoverable_junk(self):
-        """Un-decodable data with no known header still raises during init
-        (ignore_decode_errors False), preserving the original safety net."""
+    def test_parse_raises_on_undecodable_data(self):
+        """Un-decodable data raises during init (ignore_decode_errors False), so
+        a board in a bad state surfaces loudly instead of being guessed at."""
         comm = _make_comm()
         comm.ignore_decode_errors = False
         comm.message_processors = {'ID:': lambda m: None}
         with self.assertRaises(UnicodeDecodeError):
             comm.parse_incoming_raw_bytes(b'\x81\xb5\xc1\r')
 
-    def test_parse_drops_unrecoverable_junk_when_ignoring(self):
-        """With ignore_decode_errors set (e.g. during connect), unrecoverable
-        junk is dropped rather than raised."""
+    def test_parse_drops_undecodable_data_when_ignoring(self):
+        """With ignore_decode_errors set (e.g. during connect), undecodable
+        data is dropped rather than raised."""
         comm = _make_comm()
         comm.ignore_decode_errors = True
         comm.message_processors = {'ID:': lambda m: None}

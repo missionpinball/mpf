@@ -11,15 +11,15 @@ from mpf.core.utility_functions import Util
 
 MIN_FW = version.parse('0.00')  # override in subclass
 
-# After a response wait_for() times out, drain at most this many event-loop
+# After a response wait_for() times out, yield the event loop at most this many
 # passes (re-checking done_waiting) before treating it as a real timeout. Under
 # cooperative scheduling the timeout timer and the inbound response bytes can
 # become ready in the same pass, so wait_for() raises while the reply is still a
-# few parse callbacks from being handled; draining lets it land instead of
-# triggering a spurious resend. Sized well above the observed worst case (a
-# board's full init parse chain); only a genuinely lost response runs the full
-# count.
-RESPONSE_DRAIN_PASSES = 50
+# few parse callbacks from being handled; letting the loop settle lets it land
+# instead of triggering a spurious resend. The observed worst case (a board's
+# full init parse chain) was ~6 passes; 20 leaves margin. Each pass is just an
+# asyncio.sleep(0) yield, so only a genuinely lost response runs the full count.
+RESPONSE_SETTLE_PASSES = 20
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -367,15 +367,15 @@ class FastSerialCommunicator(LogMixin):
         A response delivered right at the deadline can still be a couple of
         callbacks short of being processed when wait_for() times out (under
         cooperative scheduling the timeout and the inbound bytes can become
-        ready in the same loop pass). Let those pending callbacks drain and
-        re-check before declaring a real timeout, so we don't resend — and
-        double-process — a response that actually arrived.
+        ready in the same loop pass). Let the loop settle and re-check before
+        declaring a real timeout, so we don't resend — and double-process — a
+        response that actually arrived.
         """
         try:
             await asyncio.wait_for(self.done_waiting.wait(), timeout)
             return True
         except asyncio.TimeoutError:
-            for _ in range(RESPONSE_DRAIN_PASSES):
+            for _ in range(RESPONSE_SETTLE_PASSES):
                 await asyncio.sleep(0)
                 if self.done_waiting.is_set():
                     return True
@@ -441,46 +441,14 @@ class FastSerialCommunicator(LogMixin):
                 if self.machine.is_shutting_down:
                     return
 
-                # Un-terminated leftover junk fuses onto the front of the next
-                # real message. Try to resync to a known header before treating
-                # this as bad data, so we don't drop (or crash on) a response
-                # sitting at the tail of the garbage.
-                recovered = self._resync_segment(msg)
-                if recovered is not None:
-                    self.log.warning("Recovered '%s' after discarding leading junk bytes", recovered)
-                    msg = recovered
-                else:
-                    self.log.warning("Interference / bad data received: %s", msg)
-                    if not self.ignore_decode_errors:
-                        raise
-                    continue
+                self.log.warning("Interference / bad data received: %s", msg)
+                if not self.ignore_decode_errors:
+                    raise
 
             if self.port_debug:
                 self.log.info("<<<< %s", msg)
 
             self._dispatch_incoming_msg(msg)
-
-    def _resync_segment(self, raw):
-        """Recover a valid message from a segment polluted with leading junk.
-
-        Un-terminated leftover binary has no <CR> of its own, so it fuses onto
-        the front of the following message. Rather than dropping the whole
-        segment (or raising on the un-decodable junk), find the earliest
-        registered message header in the segment and return the message from
-        there. Returns the decoded string, or None if no known header is found
-        or the recovered remainder still won't decode.
-        """
-        earliest = None
-        for header in self.message_processors:
-            idx = raw.find(header.encode())
-            if idx != -1 and (earliest is None or idx < earliest):
-                earliest = idx
-        if earliest is None:
-            return None
-        try:
-            return raw[earliest:].decode()
-        except UnicodeDecodeError:
-            return None
 
     def _dispatch_incoming_msg(self, msg):
         # Figures out what to do with incoming messages
