@@ -21,7 +21,7 @@ class DataManager(MpfController):
     __slots__ = ["config", "name", "min_wait_secs", "filename", "data", "_dirty", "use_fsync"]
 
     def __init__(self, machine, name, min_wait_secs=1):
-        """Initialize data manger.
+        """Initialize data manager.
 
         The DataManager is responsible for reading and writing data to/from a
         file on disk.
@@ -125,25 +125,22 @@ class DataManager(MpfController):
 
     def _writing_thread(self):  # pragma: no cover
         # prevent early writes at start-up
-        data = None
         time.sleep(self.min_wait_secs)
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
             self._dirty.clear()
 
-            data = copy.deepcopy(self.data)
             # save data
             try:
-                FileManager.save(self.filename, data, self.use_fsync)
+                FileManager.save(self.filename, copy.deepcopy(self.data), self.use_fsync)
             except Exception as e:  # pylint: disable=broad-exception-caught
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
                 self.info_log("ERROR writing file %s: %s", self.filename, e)
-            data = None
             # prevent too many writes
             time.sleep(self.min_wait_secs)
 
         # if dirty write data one last time during shutdown
-        if data and self._dirty.is_set():
-            FileManager.save(self.filename, data, self.use_fsync)
+        if self._dirty.is_set():
+            FileManager.save(self.filename, copy.deepcopy(self.data), self.use_fsync)
