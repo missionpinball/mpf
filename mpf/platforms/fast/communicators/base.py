@@ -446,8 +446,8 @@ class FastSerialCommunicator(LogMixin):
                 # a real reply). Drop the corrupted segment and keep reading
                 # rather than raising, which would kill read_task and crash MPF.
                 # The send/confirmation path re-requests anything genuinely lost.
-                if not self.ignore_decode_errors:
-                    self.log.warning("Interference / bad data received, dropping: %s", msg)
+                # Always warn so the underlying noise stays visible for debugging.
+                self.log.warning("Interference / bad data received, dropping: %s", msg)
                 continue
 
             if self.port_debug:
