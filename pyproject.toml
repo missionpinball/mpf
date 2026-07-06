@@ -30,7 +30,7 @@ dependencies = [
     "pyserial == 3.5",  # Oct 4 2023, some older platforms use this
     "pyserial-asyncio == 0.6", # Oct 4 2023, handles all modern serial communication
     "ruamel.yaml == 0.18.6",  # Oct 4, 2023, main config file interface
-    "setuptools ~= 72.2.0",  # Nov 16, 2024,
+    "setuptools >= 72.2,< 83.1",  # Nov 16, 2024,
     "sortedcontainers == 2.4.0",  # Oct 4 2023, used by platform batch light system
     "terminaltables == 3.1.10",  # Oct 4 2023, used for the service CLI
     "Pillow >= 11.3.0"  # Sep 5, 2025, 10.x does not support python 3.14
