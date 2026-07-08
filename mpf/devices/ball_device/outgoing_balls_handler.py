@@ -3,6 +3,7 @@ import asyncio
 
 from typing import List, Optional
 
+from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
@@ -63,7 +64,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         try:
             self._incoming_ball_which_may_skip_obj.remove(incoming_ball)
         except ValueError as e:
-            if self.unit_test:
+            if LogMixin.unit_test:
                 # re-raise this in tests
                 raise e
             self.warning_log("Double remove of incoming ball. This is likely a bug! "
