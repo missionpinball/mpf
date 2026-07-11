@@ -1,5 +1,6 @@
 """OPP serial communicator."""
 import asyncio
+from serial import SerialException
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
@@ -74,8 +75,9 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         self.log.debug("Got ID response: %s", "".join(HEX_FORMAT % b for b in resp))
         if self.chain_serial is None:
-            # get ID from hardware if it is not overwritten
-            self.chain_serial = str(await self._read_id())
+            # get ID from hardware if it is not overwritten by config. If not available defaults to "0"
+            chain_serial = await self._read_id()
+            self.chain_serial = str(chain_serial) if chain_serial != 0xffffffff else "0"
 
         if self.chain_serial in self.platform.opp_connection:
             raise AssertionError("Duplicate chain serial {} on ports: {} and {}. Each OPP board has to have a "
@@ -118,7 +120,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                                         self._create_vers_str(self.platform.min_version[self.chain_serial])))
 
         # get initial value for inputs
-        self.log.debug("Getting initial inputs states for %s", self.chain_serial)
+        self.log.debug("Getting initial inputs states for #%s", self.chain_serial)
         self.send(self.platform.read_input_msg[self.chain_serial])
         cards = len([x for x in self.platform.opp_inputs if x.chain_serial == self.chain_serial])
         while True:
@@ -127,8 +129,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
             if cards <= 0:
                 break
             self.log.debug("Waiting for another %s cards", cards)
-
-        self.log.info("Init of OPP board %s done", self.chain_serial)
+        self.log.info("Init of OPP board #%s done on port %s", self.chain_serial, self.port)
         self.platform.register_processor_connection(self.chain_serial, self)
 
     def send_get_gen2_cfg_cmd(self):
@@ -231,3 +232,13 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 self._lost_synch = True
 
         return message_found
+
+    async def drain_writer(self):
+        """Drain writer buffer."""
+        try:
+            await self.writer.drain()
+        except SerialException as e:
+            self.log.warning("Serial {} error: {}".format(self.port, e))
+            if self.writer.is_closing():
+                self.log.error("Serial {} closed.".format(self.port))
+                self.machine.stop("Serial {} closed.".format(self.port))

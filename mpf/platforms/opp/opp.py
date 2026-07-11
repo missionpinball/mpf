@@ -304,8 +304,6 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
         for port in self.config['ports']:
             # overwrite serial if defined for port
             overwrite_chain_serial = port_chain_serial_map.get(port, None)
-            if overwrite_chain_serial is None and len(self.config['ports']) == 1:
-                overwrite_chain_serial = port
 
             comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'],
                                          overwrite_serial=overwrite_chain_serial)
@@ -955,20 +953,23 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             # there is no point in polling without switches
             return
 
+        poll_timeout = 1 / self.config['poll_hz'] * 25
+        pause_time = 1 / self.config['poll_hz']
         while True:
-            # wait for previous poll response
-            timeout = 1 / self.config['poll_hz'] * 25
-            try:
-                await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout)
-            except asyncio.TimeoutError:
-                self.log.warning("Poll took more than %sms for %s", timeout * 1000, chain_serial)
-            else:
-                self._poll_response_received[chain_serial].clear()
             # send poll
             self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
-            await self.opp_connection[chain_serial].writer.drain()
-            # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
-            await asyncio.sleep(1 / self.config['poll_hz'])
+            await self.opp_connection[chain_serial].drain_writer()
+
+            # wait for previous poll response
+            try:
+                await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), poll_timeout)
+            except asyncio.TimeoutError:
+                self.log.warning("Poll took more than %sms for board #%s", poll_timeout * 1000, chain_serial)
+            else:
+                self._poll_response_received[chain_serial].clear()
+
+            # the line above saturates the link and seems to overwhelm the hardware.
+            await asyncio.sleep(pause_time)
 
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
