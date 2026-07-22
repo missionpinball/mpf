@@ -32,6 +32,20 @@ class FastMotor(MotorPlatformInterface):
 
         self._send_command(base_command, [hex_duration, hex_power])
 
+    def reverse_pulse(self, duration_secs=None, power=None):
+        """Pulse the motor at the specified power for the specified duration in reverse."""
+        if not power or not duration_secs:
+            self.log.debug("Motor reverse pulse called with no power or duration, will not move.")
+            return
+
+        base_command = "MR"
+        hex_power = Util.float_to_hex(power)
+        hex_duration = Util.int_to_hex_string(duration_secs * 1000, True)
+        self.log.debug("Pulsing motor index %s: for %s seconds with power %s in reverse",
+                       self.motor_index, duration_secs, power)
+
+        self._send_command(base_command, [hex_duration, hex_power])
+
     def stop(self):
         """Called during shutdown."""
         self.log.debug("Stopping motor")

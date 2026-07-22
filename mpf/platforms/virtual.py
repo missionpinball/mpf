@@ -701,6 +701,10 @@ class VirtualDCMotor(MotorPlatformInterface):
         """Pulse virtual dc motor."""
         self.log.debug("Pulsing dc motor for %ss at power: %s", duration_secs, power)
 
+    def reverse_pulse(self, duration_secs=None, power=None):
+        """Pulse virtual dc motor in reverse."""
+        self.log.debug("Pulsing dc motor for %ss at power: %s in reverse", duration_secs, power)
+
     def stop(self):
         """Pulse virtual dc motor."""
         self.log.debug("Stopping dc motor")

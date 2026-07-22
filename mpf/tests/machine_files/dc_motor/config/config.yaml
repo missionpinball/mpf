@@ -10,5 +10,9 @@ dc_motors:
         action: pulse
         power: 0.75
         duration: 1.5s
+      trigger_motor_1_reverse_pulse_event:
+        action: reverse_pulse
+        power: 0.5
+        duration: 2.5s
       kill_motor_1_motion_event:
         action: stop

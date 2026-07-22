@@ -44,6 +44,12 @@ class DCMotor(SystemWideDevice):
                                                 power=config.get('power'),
                                                 duration=config['duration'].evaluate({}))
                 continue
+            if config.get('action') == 'reverse_pulse':
+                self.machine.events.add_handler(event,
+                                                self.event_reverse_pulse,
+                                                power=config.get('power'),
+                                                duration=config['duration'].evaluate({}))
+                continue
             # TODO: warn or crash on bad action selection?
 
     @event_handler(1)
@@ -61,6 +67,20 @@ class DCMotor(SystemWideDevice):
         self.hw_motor.pulse(duration, power)
 
     @event_handler(2)
+    def event_reverse_pulse(self, duration=None, power=None, **kwargs):
+        """Event handler for triggering a reverse pulse."""
+        del kwargs
+        self.reverse_pulse(duration, power)
+
+    def reverse_pulse(self, duration=None, power=None):
+        """Pulse the dc motor for the given duration and power level in reverse."""
+        if power is None:
+            power = self.config['default_power']
+        if not duration:
+            raise AssertionError("DC Motor reverse pulse called with no duration value")
+        self.hw_motor.reverse_pulse(duration, power)
+
+    @event_handler(5)
     def event_stop(self, **kwargs):
         """Event handler for stopping the dc motor."""
         del kwargs

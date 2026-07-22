@@ -320,7 +320,7 @@ dc_motors:
     platform: single|str|None
     platform_settings: single|dict|None
 dc_motors_pulse_settings:
-    action: single|enum(pulse,stop)|pulse
+    action: single|enum(pulse,reverse_pulse,stop)|pulse
     power: single|float|None
     duration: single|template_secs|None
 digital_outputs:

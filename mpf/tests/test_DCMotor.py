@@ -24,6 +24,10 @@ class TestDCMotor(MpfTestCase):
         self.advance_time_and_run(0.1)
         mock_hw.pulse.assert_called_once_with(1.5, 0.75)
 
+        self.machine.events.post('trigger_motor_1_reverse_pulse_event')
+        self.advance_time_and_run(0.1)
+        mock_hw.reverse_pulse.assert_called_once_with(2.5, 0.5)
+
     def test_stop_action_cleanup(self):
         motor = self.machine.dc_motors['test_motor_1']
         mock_hw = MagicMock()
