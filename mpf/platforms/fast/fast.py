@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """FAST Pinball hardware platform."""
 
 import asyncio
@@ -1003,9 +1004,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         """
         self.debug_log("Clearing HW Rule for switch: %s, coils: %s",
                        switch.hw_switch.number, coil.hw_driver.number)
-
         # TODO: check that the rule is switch + coil and not another switch + this coil
-
         driver = coil.hw_driver
-
         driver.clear_autofire()

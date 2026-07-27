@@ -12,6 +12,7 @@ from mpf.core.utility_functions import Util
 
 
 if TYPE_CHECKING:
+    from mpf.devices.dc_motor import DCMotor   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shaker import Shaker   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
@@ -454,6 +455,7 @@ class ShakerPlatform(BasePlatform, metaclass=abc.ABCMeta):
             config: Config for this shaker.
         """
         raise NotImplementedError
+
 
 class MotorPlatform(BasePlatform, metaclass=abc.ABCMeta):
 

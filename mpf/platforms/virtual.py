@@ -682,6 +682,7 @@ class VirtualShaker(ShakerPlatformInterface):
         """Pulse virtual shaker."""
         self.log.debug("Stopping shaker")
 
+
 class VirtualDCMotor(MotorPlatformInterface):
 
     """A virtual dc motor object."""

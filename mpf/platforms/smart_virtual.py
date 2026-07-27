@@ -265,6 +265,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             raise AssertionError("Invalid result {}".format(self.result))
 
 
+# pylint: disable=too-many-ancestors
 class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     """Base class for the smart_virtual hardware platform."""

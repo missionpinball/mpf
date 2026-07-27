@@ -20,7 +20,7 @@ class DCMotor(SystemWideDevice):
     collection = 'dc_motors'
     class_label = 'dc_motor'
 
-    __slots__ = ["hw_motor", "platform", "type", "__dict__"]
+    __slots__ = ["hw_motor", "type", "__dict__"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize dc motor."""
@@ -35,22 +35,21 @@ class DCMotor(SystemWideDevice):
         self.platform.assert_has_feature("motors")
         self.hw_motor = await self.platform.configure_dc_motor(self.config['number'], self.config['platform_settings'])
         for event, config in self.config['control_events'].items():
-            if config.get('action') == 'stop':
+            action = config.get('action')
+            if action == 'stop':
                 self.machine.events.add_handler(event, self.event_stop)
-                continue
-            if config.get('action') == 'pulse':
+            elif action == 'pulse':
                 self.machine.events.add_handler(event,
                                                 self.event_pulse,
                                                 power=config.get('power'),
                                                 duration=config['duration'].evaluate({}))
-                continue
-            if config.get('action') == 'reverse_pulse':
+            elif action == 'reverse_pulse':
                 self.machine.events.add_handler(event,
                                                 self.event_reverse_pulse,
                                                 power=config.get('power'),
                                                 duration=config['duration'].evaluate({}))
-                continue
-            # TODO: warn or crash on bad action selection?
+            else:
+                self.raise_config_error("Invalid action in dc_motor entry: {}".format(action), 1)
 
     @event_handler(1)
     def event_pulse(self, duration=None, power=None, **kwargs):
@@ -77,7 +76,7 @@ class DCMotor(SystemWideDevice):
         if power is None:
             power = self.config['default_power']
         if not duration:
-            raise AssertionError("DC Motor reverse pulse called with no duration value")
+            raise AssertionError("DC Motor reverse_pulse called with no duration value")
         self.hw_motor.reverse_pulse(duration, power)
 
     @event_handler(5)

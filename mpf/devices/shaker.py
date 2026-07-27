@@ -21,7 +21,7 @@ class Shaker(SystemWideDevice):
     collection = 'shakers'
     class_label = 'shaker'
 
-    __slots__ = ["hw_shaker", "platform", "type", "__dict__"]
+    __slots__ = ["hw_shaker", "type", "__dict__"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize shaker."""
@@ -36,13 +36,16 @@ class Shaker(SystemWideDevice):
         self.platform.assert_has_feature("shakers")
         self.hw_shaker = await self.platform.configure_shaker(self.config['number'], self.config['platform_settings'])
         for event, config in self.config['control_events'].items():
-            if config.get('action') == 'stop':
+            action = config.get('action')
+            if action == 'stop':
                 self.machine.events.add_handler(event, self.event_stop)
-                continue
-            self.machine.events.add_handler(event,
-                                            self.event_pulse,
-                                            power=config.get('power'),
-                                            duration=config['duration'].evaluate({}))
+            elif action == 'pulse' or action is None:
+                self.machine.events.add_handler(event,
+                                                self.event_pulse,
+                                                power=config.get('power'),
+                                                duration=config['duration'].evaluate({}))
+            else:
+                self.raise_config_error("Invalid action in shaker '{}'".format(action), 1)
 
     @event_handler(1)
     def event_pulse(self, duration=None, power=None, **kwargs):
