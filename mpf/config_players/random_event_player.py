@@ -1,6 +1,6 @@
 """Random event config player."""
 from mpf.core.config_player import ConfigPlayer
-from mpf.core.randomizer import Randomizer
+from mpf.core.randomizer import ListRandomizer
 from mpf.core.utility_functions import Util
 
 
@@ -23,8 +23,9 @@ class RandomEventPlayer(ConfigPlayer):
         """Return true if scope is not player."""
         return settings['scope'] != "player"
 
-    def _build_randomizer(self, settings):
-        randomizer = Randomizer(settings['events'], self.machine, template_type="event")
+    def _build_randomizer(self, settings, name):
+        self.info_log(f"Instantiating ListRandomizer {name}")
+        randomizer = ListRandomizer(settings['events'], name=name, machine=self.machine, template_type="event")
 
         if settings['force_all']:
             randomizer.force_all = True
@@ -38,35 +39,39 @@ class RandomEventPlayer(ConfigPlayer):
         randomizer.fallback_value = settings.get('fallback_event')
         return randomizer
 
-    def _get_randomizer(self, settings, context, calling_context):
-        key = "random_{}.{}".format(context, calling_context)
-        if settings['scope'] == "player":
-            if not self.machine.game.player[key]:
-                self.machine.game.player[key] = self._build_randomizer(settings)
+    def find_or_create_randomizer(self, settings, context, calling_context):
+        """Uses context and calling context to find a randomizer instance or create and register a new one."""
+        '''player_var: random_(x).(y)
 
-            '''player_var: random_(x).(y)
-
-            desc: Holds references to Randomizer settings that need to be
-            tracked on a player basis. There is nothing you need to know
-            or do with this, rather this is just FYI on what the player
-            variables that start with "random_" are.
-            '''
-            return self.machine.game.player[key]
-
-        if key not in self._machine_wide_dict:
-            self._machine_wide_dict[key] = self._build_randomizer(settings)
+        desc: Holds references to ListRandomizer settings that need to be
+        tracked on a player basis. There is nothing you need to know
+        or do with this, rather this is just FYI on what the player
+        variables that start with "random_" are.
+        '''
 
         '''machine_var: random_(x).(y)
 
-        desc: Holds references to Randomizer settings that need to be
+        desc: Holds references to ListRandomizer settings that need to be
         tracked on a machine basis.
         '''
+
+        key = "random_{}.{}".format(context, calling_context)
+
+        if settings['scope'] == "player":
+            if not self.machine.game.player[key]:
+                self.machine.game.player[key] = self._build_randomizer(settings, key)
+
+            return self.machine.game.player[key]
+
+        if key not in self._machine_wide_dict:
+            self._machine_wide_dict[key] = self._build_randomizer(settings, key)
+
         return self._machine_wide_dict[key]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play a random event from list based on config."""
         del priority
-        randomizer = self._get_randomizer(settings, context, calling_context)
+        randomizer = self.find_or_create_randomizer(settings, context, calling_context)
         # With conditional events in randomizer, there may not be a next event
         next_event = randomizer.get_next(kwargs)
         if next_event:

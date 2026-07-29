@@ -2,6 +2,7 @@
 """Contains the MachineController base class."""
 import asyncio
 import logging
+import random
 import sys
 import threading
 from typing import Any, Callable, Dict, List, Set, Optional, TYPE_CHECKING
@@ -21,6 +22,7 @@ from mpf.core.machine_vars import MachineVariables
 from mpf.core.utility_functions import Util
 from mpf.core.config_loader import MpfConfig
 from mpf.core.plugin import MpfPlugin
+from mpf.core.randomizer import Randomizer  # pylint: disable-msg=cyclic-import,unused-import
 
 
 if TYPE_CHECKING:
@@ -106,7 +108,7 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
+                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down", "randomizers"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, options: dict, config: MpfConfig) -> None:
@@ -143,6 +145,7 @@ class MachineController(LogMixin):
         self.mpf_config = config                        # type: MpfConfig
         self.config_validator = ConfigValidator(self, self.mpf_config.get_config_spec())
 
+        self.randomizers = dict()  # type: Dict[str, Randomizer]
         self.variables = MachineVariables(self)  # type: MachineVariables
 
         # add some type hints
@@ -219,6 +222,7 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: Optional[SmartVirtualHardwarePlatform]
 
         self.clock = self._load_clock()
+        self._initialize_randomizers()
         self.stop_future = asyncio.Future()     # type: asyncio.Future
 
     def add_crash_handler(self, handler: Callable):
@@ -437,6 +441,11 @@ class MachineController(LogMixin):
     def _set_machine_path(self) -> None:
         """Add the machine folder to sys.path so we can import modules from it."""
         sys.path.insert(0, self.machine_path)
+
+    def _initialize_randomizers(self) -> None:
+        """Register the root randomizer."""
+        machine_seed = random.random()  # NOSONAR
+        self.randomizers['root'] = Randomizer(machine=self, name='root', seed=machine_seed)
 
     def verify_system_info(self):
         """Dump information about the Python installation to the log.

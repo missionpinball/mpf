@@ -35,6 +35,10 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self._queue_callback_kwargs = dict()
         self._queue_callback_called = 0
 
+        with patch('random.Random') as mock_random_class:
+            mock_instance = mock_random_class.return_value
+            mock_instance.randint.return_value = 1
+
     def get_config_file(self):
         return 'test_event_manager.yaml'
 

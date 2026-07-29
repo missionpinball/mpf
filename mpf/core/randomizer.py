@@ -4,10 +4,35 @@ import random
 
 class Randomizer:
 
+    """Generates randomness with a managed seed."""
+
+    def __init__(self, name=None, machine=None, seed=None):
+        """Initialize Randomizer."""
+        self.name = name
+        self.machine = machine
+        self.set_seed(seed or machine and machine.randomizers['root'].random(10000))
+
+    def set_seed(self, seed):
+        """Reset the random generator to the start of the specified seed."""
+        self.seed = seed
+        self._random = random.Random(seed)
+        if self.machine:
+            self.machine.log.info(f"Randomizer {self.name} seeded with seed: {seed}")
+
+    def random(self, range_value):
+        """Returns number between 0 and Range-1."""
+        return self._random.randrange(range_value)
+
+
+class ListRandomizer(Randomizer):
+
     """Generic list randomizer."""
 
-    def __init__(self, items, machine=None, template_type='event'):
-        """Initialize Randomizer."""
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, items, name=None, machine=None, template_type='event', seed=None):
+        """Initialize ListRandomizer."""
+        super().__init__(name=name, machine=machine, seed=seed)
+
         self.fallback_value = None
         self.force_different = True
         self.force_all = False
@@ -41,7 +66,7 @@ class Randomizer:
                 self.items.append((this_item, int(this_weight)))
                 self.items.sort(key=lambda x: x[0].name or x[0])
         else:
-            raise AssertionError("Invalid input for Randomizer")
+            raise AssertionError("Invalid input for ListRandomizer")
 
         self.data = dict()
         self._init_data(self.data)
@@ -177,8 +202,7 @@ class Randomizer:
         # Add additional template_type support here, as needed
         return value
 
-    @staticmethod
-    def pick_weighted_random(items):
+    def pick_weighted_random(self, items):
         """Pick a random item.
 
         Args:
@@ -186,7 +210,7 @@ class Randomizer:
             items: Items to select from
         """
         total_weights = sum([x[1] for x in items])
-        value = random.randint(1, total_weights)
+        value = self._random.randint(1, total_weights)
         index_value = 0
 
         for item in items:

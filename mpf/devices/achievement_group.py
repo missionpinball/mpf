@@ -221,7 +221,7 @@ class AchievementGroup(ModeDevice):
             self._selected_member.unselect()
 
         try:
-            # todo change this to use our Randomizer class
+            # todo change this to use our ListRandomizer class
             if self.config['disable_random']:
                 ach = self._get_available_achievements_for_selection()[0]
                 self.debug_log("Picked new non-random achievement: %s", ach)

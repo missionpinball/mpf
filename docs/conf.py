@@ -445,6 +445,7 @@ class RstBuilder(object):
             RGBColor='mpf.core.rgb_color.RGBColor',
             RGBAColor='mpf.core.rgba_color.RGBAColor',
             Randomizer='mpf.core.randomizer.Randomizer',
+            ListRandomizer='mpf.core.randomizer.ListRandomizer',
             Timers='mpf.core.timer.Timer',
         )
 
