@@ -3,11 +3,13 @@
 import logging
 import os
 
+from typing import TYPE_CHECKING
+
 from mpf.file_interfaces.pickle_interface import PickleInterface
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import Dict, List  # pylint: disable-msg=cyclic-import,unused-import
 
 

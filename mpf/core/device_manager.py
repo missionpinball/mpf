@@ -1,13 +1,13 @@
 """Contains the DeviceManager base class."""
 import asyncio
 
-from typing import Callable, Tuple, List, Generator, Dict
+from typing import Callable, Tuple, List, Generator, Dict, TYPE_CHECKING
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 

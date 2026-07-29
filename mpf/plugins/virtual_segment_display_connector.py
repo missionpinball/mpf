@@ -1,12 +1,13 @@
 """MPF plugin which connects segment displays to MPF-MC to update segment display emulator widgets."""
+from typing import TYPE_CHECKING
 
 from mpf.core.plugin import MpfPlugin
 from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

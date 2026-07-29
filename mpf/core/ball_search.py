@@ -1,14 +1,14 @@
 """Implements the ball search procedure."""
 from collections import namedtuple
 
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
 BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name", "restore_callback"])

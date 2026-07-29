@@ -1,10 +1,10 @@
 """Interface for config file loaders."""
 import logging
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import List     # pylint: disable-msg=cyclic-import,unused-import
 
 

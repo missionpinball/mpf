@@ -2,14 +2,14 @@
 import logging
 from collections import namedtuple
 
-from typing import Optional, Dict
+from typing import Optional, Dict, TYPE_CHECKING
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.opp.opp import OppHardwarePlatform
 
 SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle", "can_cancel", "delay_ms"])

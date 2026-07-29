@@ -1,5 +1,5 @@
 """A digital output on either a light or driver platform."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
@@ -7,8 +7,8 @@ from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.platform import ShakerPlatform    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.interfaces.shaker_platform_interface import ShakerPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; #noqa
 

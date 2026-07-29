@@ -1,11 +1,13 @@
 """Parse config_spec."""
+from typing import TYPE_CHECKING
+
 from pkg_resources import iter_entry_points
 
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 

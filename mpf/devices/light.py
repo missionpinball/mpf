@@ -3,7 +3,7 @@ import asyncio
 
 from functools import partial
 
-from typing import Set, Dict, List, Tuple, Any
+from typing import Set, Dict, List, Tuple, Any, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 
@@ -16,8 +16,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.device_mixins import DevicePositionMixin
 from mpf.exceptions.config_file_error import ConfigFileError
 
-MYPY = False
-if MYPY:
+
+if TYPE_CHECKING:
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 

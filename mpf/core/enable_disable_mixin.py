@@ -1,5 +1,5 @@
 """Implements enable and disable events for devices."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import abc
 
@@ -12,8 +12,8 @@ from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.machine import MachineController
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.mode import Mode  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.player import Player  # pylint: disable-msg=cyclic-import,unused-import
 

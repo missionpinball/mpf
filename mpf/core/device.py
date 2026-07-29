@@ -1,13 +1,13 @@
 """Contains the Device base class."""
 import abc
 
-from typing import List, Any, Optional
+from typing import List, Any, Optional, TYPE_CHECKING
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.mode import Mode      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.platform import BasePlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 

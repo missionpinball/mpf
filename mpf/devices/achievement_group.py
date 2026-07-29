@@ -1,5 +1,5 @@
 """An achievement group which manages and groups achievements."""
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 
 from random import choice
 
@@ -10,8 +10,8 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.device_monitor import DeviceMonitor
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.achievement import Achievement     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.assets.show import RunningShow     # pylint: disable-msg=cyclic-import,unused-import
 

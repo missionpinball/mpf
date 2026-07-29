@@ -1,12 +1,13 @@
 """OPP serial communicator."""
 import asyncio
+from typing import TYPE_CHECKING
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator, HEX_FORMAT
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.opp.opp import OppHardwarePlatform   # pylint: disable-msg=cyclic-import,unused-import
 
 # Minimum firmware versions needed for this module

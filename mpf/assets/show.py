@@ -2,15 +2,15 @@
 import re
 from collections import namedtuple
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 
 from mpf.core.assets import AssetPool
 from mpf.core.config_validator import RuntimeToken
 from mpf.core.utility_functions import Util
 from mpf.exceptions.config_file_error import ConfigFileError
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
 
 __api__ = ['Show', 'RunningShow', 'ShowPool']

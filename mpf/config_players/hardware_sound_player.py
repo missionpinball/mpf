@@ -1,10 +1,10 @@
 """Config player for sounds on an external sound card."""
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.hardware_sound_system import HardwareSoundSystem   # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 

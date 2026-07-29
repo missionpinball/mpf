@@ -1,5 +1,6 @@
 """IRC Chat Bot for monitoring a Twitch chatroom."""
 from functools import partial
+from typing import TYPE_CHECKING
 
 import logging
 import textwrap
@@ -11,8 +12,7 @@ except ImportError:
     SingleServerIRCBot = object     # prevent class loading error
     IMPORT_SUCCESS = False
 
-MYPY = False
-if MYPY:   # pragma: no cover
+if TYPE_CHECKING:
     import asyncio  # pylint: disable-msg=cyclic-import,unused-import
 
 

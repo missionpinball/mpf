@@ -1,8 +1,8 @@
 """Contains code for the smart_virtual platform."""
 import abc
 import logging
+from typing import List, TYPE_CHECKING
 
-from typing import List
 from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 from mpf.devices.ball_device.enable_coil_ejector import EnableCoilEjector
@@ -15,8 +15,8 @@ from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 

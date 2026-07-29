@@ -1,5 +1,5 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import logging
 import json
@@ -9,8 +9,8 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.openpixel import OpenPixelClient
 from mpf.platforms.openpixel import OpenpixelHardwarePlatform
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

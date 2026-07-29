@@ -5,13 +5,13 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, TYPE_CHECKING
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.shaker import Shaker   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import

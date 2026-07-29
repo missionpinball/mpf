@@ -2,7 +2,7 @@
 
 This is based on the Snux platform to generically support all kinds of System11 platforms.
 """
-from typing import Any, Optional, Set, Tuple, Dict
+from typing import Any, Optional, Set, Tuple, Dict, TYPE_CHECKING
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig, SwitchSettings, DriverSettings, RepulseSettings, \
@@ -12,8 +12,8 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 from mpf.core.delays import DelayManager
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     class SwitchDriverPlatform(DriverPlatform, SwitchPlatform):     # noqa
         pass
 

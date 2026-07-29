@@ -8,6 +8,7 @@ boards.
 import asyncio
 from collections import defaultdict
 from typing import Dict, List, Set, Union, Tuple, Optional  # pylint: disable-msg=cyclic-import,unused-import
+from typing import TYPE_CHECKING
 
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.core.utility_functions import Util
@@ -26,8 +27,8 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, ServoPlatform, \
     SwitchSettings, DriverSettings, DriverConfig, SwitchConfig, RepulseSettings
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.opp.opp_coil import OPPSolenoid  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_incand import OPPIncand  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.opp.opp_switch import OPPSwitch  # pylint: disable-msg=cyclic-import,unused-import

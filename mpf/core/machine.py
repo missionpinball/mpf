@@ -4,7 +4,7 @@ import asyncio
 import logging
 import sys
 import threading
-from typing import Any, Callable, Dict, List, Set, Optional
+from typing import Any, Callable, Dict, List, Set, Optional, TYPE_CHECKING
 
 from packaging import version
 from pkg_resources import iter_entry_points
@@ -22,8 +22,8 @@ from mpf.core.utility_functions import Util
 from mpf.core.config_loader import MpfConfig
 from mpf.core.plugin import MpfPlugin
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.modes.game.code.game import Game   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.events import EventManager    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.switch_controller import SwitchController     # pylint: disable-msg=cyclic-import,unused-import
@@ -146,7 +146,7 @@ class MachineController(LogMixin):
         self.variables = MachineVariables(self)  # type: MachineVariables
 
         # add some type hints
-        if MYPY:   # pragma: no cover
+        if TYPE_CHECKING:
             # controllers
             self.events = self.events                               # type: EventManager
             self.switch_controller = self.switch_controller         # type: SwitchController

@@ -1,13 +1,13 @@
 """A coil/driver in the PKONE platform."""
 import logging
 from collections import namedtuple
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from mpf.core.platform import DriverConfig, SwitchSettings
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
-MYPY = False
-if MYPY:  # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.pkone.pkone import PKONEHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
 PKONECoilNumber = namedtuple("PKONECoilNumber", ["board_address_id", "coil_number"])

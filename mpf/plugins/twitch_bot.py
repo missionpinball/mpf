@@ -1,11 +1,13 @@
 """MPF plugin which adds events from monitoring a Twitch chat room."""
 import threading
+from typing import TYPE_CHECKING
+
 from mpf.core.plugin import MpfPlugin
 
 from .twitch.twitch_client import TwitchClient
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

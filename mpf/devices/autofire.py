@@ -1,4 +1,6 @@
 """Contains the base class for autofire coil devices."""
+from typing import TYPE_CHECKING
+
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
@@ -6,8 +8,8 @@ from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings,
 
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from typing import List, Optional  # pylint: disable-msg=cyclic-import,unused-import
 
