@@ -1851,15 +1851,6 @@ trinamics_steprocker:
     __valid_in__: machine
     __type__: config
     port: single|str|
-twitch_client:
-    __valid_in__: machine
-    __type__: config
-    user: single|str|None
-    password: single|str|None
-    channel: single|str|None
-    user_var: single|str|None
-    password_var: single|str|None
-    channel_var: single|str|None
 variable_player:
     __valid_in__: machine, mode
     __type__: config_player
