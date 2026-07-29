@@ -53,7 +53,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
     async def _read_with_timeout(self, timeout):
         try:
             msg_raw = await asyncio.wait_for(self.readuntil(b'E'), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return ""
         return msg_raw.decode()
 

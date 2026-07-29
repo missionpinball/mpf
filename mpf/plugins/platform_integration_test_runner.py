@@ -160,7 +160,7 @@ class MpfPlatformIntegrationTestRunner(MpfPlugin):
             await asyncio.wait_for(self.machine.events.wait_for_event(event), timeout)
             self.info_log(f"Successfully caught event '{event}'")
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if continue_on_timeout:
                 return False
             self.machine.stop_with_exception({

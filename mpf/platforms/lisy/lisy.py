@@ -411,7 +411,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
                 self.send_byte(LisyDefines.GeneralReset)
                 try:
                     return_code = await asyncio.wait_for(self._read_byte(), timeout=0.5)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     self.warning_log("Reset of LISY failed. Did not get a response in 500ms. Will retry.")
                     continue
                 if return_code != 0:

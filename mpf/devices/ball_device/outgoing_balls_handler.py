@@ -146,7 +146,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         has_timeouted = False
         try:
             await Util.first(futures, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             has_timeouted = True
 
         # if we got an confirm
@@ -408,7 +408,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 timeout = eject_request.eject_timeout
             try:
                 await Util.any(waiters, timeout=timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # timeout. ball did not leave. failed
                 await self.ball_device.ball_count_handler.end_eject(ball_eject_process, False)
                 return False
@@ -469,7 +469,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         confirm_future = incoming_ball_at_target.wait_for_confirm()
         try:
             await Util.first([confirm_future], timeout=timeout, cancel_others=False)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.ball_device.set_eject_state("failed_confirm")
             self.info_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
             return await self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
@@ -530,7 +530,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         try:
             event = await Util.first([ball_return_future, unknown_balls_future, eject_success_future],
                                      timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # handle lost ball
             incoming_ball_at_target.did_not_arrive()
             await self._failed_eject(eject_request, eject_try, True)

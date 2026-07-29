@@ -672,7 +672,7 @@ class MachineController(LogMixin):
             init = asyncio.ensure_future(self.initialize())
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           timeout=timeout))
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._crash_shutdown()
             self.error_log("MPF needed more than %ss for initialization. Aborting!", timeout)
             return False

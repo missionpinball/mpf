@@ -294,10 +294,11 @@ class FastSerialCommunicator(LogMixin):
 
         while max_retries == -1 or retries <= max_retries:
             try:
-                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until,
-                                                                       log_msg), timeout=timeout)
+                await asyncio.wait_for(
+                    self.send_and_wait_for_response(msg, pause_sending_until, log_msg),
+                    timeout=timeout)
                 break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.log.error("Timeout waiting for response to %s. Retrying...", msg)
                 retries += 1
 

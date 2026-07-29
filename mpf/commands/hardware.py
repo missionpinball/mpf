@@ -103,7 +103,7 @@ class Command(MpfCommandLineParser):
                     self.mpf.switch_controller.wait_for_switch(config["switch2"], state=0, only_on_change=False),
                     timeout=.5))
                 switch2_inactive = time.time()
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 print("WARNING: Ran into timeout while waiting. Check your setup!")
                 timeouts += 1
                 continue

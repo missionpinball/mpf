@@ -775,7 +775,7 @@ class Util:
                 future.cancel()
 
         if not done:
-            raise asyncio.TimeoutError()
+            raise TimeoutError()
         # pylint: disable-msg=stop-iteration-return
         return next(iter(done))
 

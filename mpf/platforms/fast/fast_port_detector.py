@@ -81,7 +81,7 @@ class FastPortDetector:
                 # Wait for a response with 1-second timeout
                 try:
                     data = await asyncio.wait_for(reader.read(100), timeout=1.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     data = None
 
                 if data:

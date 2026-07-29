@@ -986,7 +986,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
 
                 try:
                     result = await asyncio.wait_for(self._read_raw(1), 2)
-                except asyncio.TimeoutError:    # pragma: no cover
+                except TimeoutError:    # pragma: no cover
                     self.warning_log("Spike watchdog expired.")
                     # clear buffer
                     # pylint: disable-msg=protected-access
@@ -1116,7 +1116,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
                 await self._send_raw(cmd_str)
             try:
                 response = await asyncio.wait_for(self._read_raw(response_len), 2)    # type: bytearray
-            except asyncio.TimeoutError:    # pragma: no cover
+            except TimeoutError:    # pragma: no cover
                 self.warning_log("Failed to read %s bytes from Spike", response_len)
                 return None
 

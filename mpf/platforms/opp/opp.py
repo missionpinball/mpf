@@ -961,7 +961,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, ServoP
             timeout = 1 / self.config['poll_hz'] * 25
             try:
                 await asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.log.warning("Poll took more than %sms for %s", timeout * 1000, chain_serial)
             else:
                 self._poll_response_received[chain_serial].clear()

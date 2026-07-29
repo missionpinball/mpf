@@ -199,7 +199,7 @@ class HighScore(AsyncMode):
                         try:
                             player.initials = await self._ask_player_for_initials(player.number,
                                                                                   award_names[i], value, category_name)
-                        except asyncio.TimeoutError:
+                        except TimeoutError:
                             del new_list[i]
                             # no entry when the player missed the timeout
                             continue
