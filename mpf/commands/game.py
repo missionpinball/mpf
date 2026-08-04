@@ -169,6 +169,8 @@ class Command:
         console_log.setFormatter(logging.Formatter(
             '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
 
+        console_log.addFilter(ConsoleCustomLevelFilter())
+
         # initialize async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
@@ -183,6 +185,7 @@ class Command:
         else:
             formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         file_log.setFormatter(formatter)
+        file_log.addFilter(FileCustomLevelFilter())
 
         # initialize async handler for file log
         file_log_queue = Queue()
@@ -275,3 +278,25 @@ class Command:
             input('Press ENTER to continue...')     # nosec
 
         sys.exit()
+
+
+class ConsoleCustomLevelFilter(logging.Filter):
+
+    """Filters out custom levels meant strictly for files."""
+
+    def filter(self, record):
+        """Filters: 11 = DEBUG (File Only), 21 = INFO (File Only)."""
+        if record.levelno in (11, 21):
+            return False
+        return True
+
+
+class FileCustomLevelFilter(logging.Filter):
+
+    """Filters out custom levels meant strictly for console."""
+
+    def filter(self, record):
+        """Filters: 12 = DEBUG (Console Only), 22 = INFO (Console Only)."""
+        if record.levelno in (12, 22):
+            return False
+        return True
