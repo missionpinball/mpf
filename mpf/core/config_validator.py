@@ -6,8 +6,7 @@ import re
 from collections import namedtuple
 from copy import deepcopy
 
-from typing import Any
-from typing import Dict
+from typing import Any, Dict, TYPE_CHECKING
 
 from mpf.core.config_spec_loader import ConfigSpecLoader
 from mpf.core.rgb_color import NAMED_RGB_COLORS, RGBColor
@@ -15,8 +14,8 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

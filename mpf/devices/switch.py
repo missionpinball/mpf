@@ -1,5 +1,5 @@
 """Contains the Switch parent class."""
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, TYPE_CHECKING
 
 from functools import partial
 
@@ -11,8 +11,8 @@ from mpf.core.platform import SwitchConfig
 from mpf.devices.device_mixins import DevicePositionMixin
 from mpf.exceptions.config_file_error import ConfigFileError
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.platform import SwitchPlatform    # pylint: disable-msg=cyclic-import,unused-import
 

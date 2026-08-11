@@ -5,8 +5,6 @@ from dataclasses import dataclass
 
 from mpf.core.utility_functions import Util
 
-MYPY = False
-
 
 @dataclass
 class FastSwitchConfig:

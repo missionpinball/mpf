@@ -83,8 +83,8 @@ auditor:
     audit: list|str|None
     autosave: single|bool|true
     autosave_events: single|bool|true
-    events: list|event_handler|None
-    player: list|str|None
+    events: set|event_handler|None
+    player: set|str|None
     audit_shots: single|bool|true
     missing_switch_min_games: single|int|10
     num_player_top_records: single|int|1
@@ -311,6 +311,18 @@ coils:
 custom_code:
     __valid_in__: machine
     __type__: list
+dc_motors:
+    __valid_in__: machine
+    __type__: device
+    default_power: single|float|0.0
+    number: single|str|
+    control_events: dict|str:subconfig(dc_motors_pulse_settings)|None
+    platform: single|str|None
+    platform_settings: single|dict|None
+dc_motors_pulse_settings:
+    action: single|enum(pulse,reverse_pulse,stop)|pulse
+    power: single|float|None
+    duration: single|template_secs|None
 digital_outputs:
     __valid_in__: machine
     __type__: device
@@ -561,7 +573,7 @@ fast_net:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     controller: single|enum(neuron,nano,sys11,wpc89,wpc95)|
-    watchdog: single|ms|1000
+    watchdog: single|ms|500
     default_quick_debounce_open: single|ms|2
     default_quick_debounce_close: single|ms|2
     default_normal_debounce_open: single|ms|4
@@ -569,6 +581,8 @@ fast_net:
     mute_unconfigured_switches: single|bool|false
     gi_hz: single|int|30
     lamp_hz: single|int|30
+    soft_power_hold_ms: single|ms|2500
+    soft_power_powerdown_delay: single|ms|4000
 fast_io_loop:
     model: single|str|  # FP-I/O-0804, etc.
     order: single|enum(1,2,3,4,5,6,7,8,9)|
@@ -736,6 +750,7 @@ hardware:
     i2c: list|str|default
     stepper_controllers: list|str|default
     shaker_controllers: list|str|default
+    motor_controllers: list|str|default
     hardware_sound_system: list|str|default
 hardware_sound_systems:
     __valid_in__: machine
@@ -929,6 +944,7 @@ machine:
     __type__: config
     balls_installed: single|int|1
     min_balls: single|int|1
+    soft_shutdown_exit_command: single|str|None
 machine_vars:
     __valid_in__: machine
     __type__: config_dict
@@ -1013,6 +1029,10 @@ mpf:
     paths: ignore
     report_crashes: single|enum(ask,never,always)|never
     rgbw_white_behavior: single|enum(white_only,min_rgb,duck_rgb)|duck_rgb
+data_manager:
+    __valid_in__: machine
+    __type__: config
+    use_fsync: single|bool|None
 multiballs:
     __valid_in__: machine, mode
     __type__: device
@@ -1831,15 +1851,6 @@ trinamics_steprocker:
     __valid_in__: machine
     __type__: config
     port: single|str|
-twitch_client:
-    __valid_in__: machine
-    __type__: config
-    user: single|str|None
-    password: single|str|None
-    channel: single|str|None
-    user_var: single|str|None
-    password_var: single|str|None
-    channel_var: single|str|None
 variable_player:
     __valid_in__: machine, mode
     __type__: config_player

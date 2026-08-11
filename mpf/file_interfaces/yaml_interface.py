@@ -1,5 +1,7 @@
 """Contains the YamlInterface class for reading & writing YAML files."""
 import copy
+import os
+import threading
 from typing import Any, Iterable, Dict
 
 from ruamel import yaml
@@ -7,8 +9,17 @@ from ruamel.yaml.error import MarkedYAMLError
 
 from mpf.core.file_interface import FileInterface
 
-_yaml = yaml.YAML(typ='safe')
-_yaml.default_flow_style = False
+_thread_local = threading.local()
+
+
+def _get_yaml():
+    """Get or create a thread-isolated YAML instance."""
+    if not hasattr(_thread_local, 'yaml'):
+        _yaml_instance = yaml.YAML(typ='safe')
+        _yaml_instance.default_flow_style = False
+        _yaml_instance.line_break = ''
+        _thread_local.yaml = _yaml_instance
+    return _thread_local.yaml
 
 
 class YamlInterface(FileInterface):
@@ -83,11 +94,16 @@ class YamlInterface(FileInterface):
     @staticmethod
     def process(data_string: Iterable[str]) -> dict:
         """Parse yaml from a string."""
-        return _yaml.load(data_string)
+        return _get_yaml().load(data_string)
 
-    def save(self, filename: str, data: dict) -> None:   # pragma: no cover
+    def save(self, filename: str, data: dict, use_fsync: bool) -> None:   # pragma: no cover
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
-            _yaml.default_flow_style = False
-            _yaml.line_break = ''
-            _yaml.dump(data, output_file)
+            _get_yaml().dump(data, output_file)
+
+            if use_fsync:
+                try:
+                    output_file.flush()
+                    os.fsync(output_file.fileno())
+                except (OSError, TypeError) as e:
+                    self.log.error("Disk sync failed for %s - %s", filename, e)

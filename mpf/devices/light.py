@@ -3,7 +3,7 @@ import asyncio
 
 from functools import partial
 
-from typing import Set, Dict, List, Tuple, Any
+from typing import Set, Dict, List, Tuple, Any, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 
@@ -16,8 +16,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.device_mixins import DevicePositionMixin
 from mpf.exceptions.config_file_error import ConfigFileError
 
-MYPY = False
-if MYPY:
+
+if TYPE_CHECKING:
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 
@@ -754,7 +754,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             elif start_time < lower_dest_time < dest_time:
                 # fade below is shorter than fade out. removing the fade will trigger a new fade in this case
                 ratio = (dest_time - lower_dest_time) / (dest_time - start_time)
-                dest_color = RGBColor.blend(color_settings.start_color, dest_color, ratio)
+                dest_color = RGBColor.blend(color_settings.start_color, lower_dest_color, ratio)
                 dest_time = lower_dest_time
             else:
                 # upper fade is longer. use color target below. this might be slightly inaccurate

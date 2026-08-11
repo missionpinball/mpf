@@ -1,15 +1,16 @@
 """Handles outgoing balls."""
 import asyncio
 
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
+from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -63,7 +64,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         try:
             self._incoming_ball_which_may_skip_obj.remove(incoming_ball)
         except ValueError as e:
-            if self.unit_test:
+            if LogMixin.unit_test:
                 # re-raise this in tests
                 raise e
             self.warning_log("Double remove of incoming ball. This is likely a bug! "

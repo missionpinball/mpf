@@ -1,7 +1,9 @@
 """Baseclass for ball device ejectors."""
 
-MYPY = False
-if MYPY:    # pragma: no cover
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
 

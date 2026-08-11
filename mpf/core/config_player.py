@@ -3,7 +3,7 @@ import abc
 import asyncio
 import re
 from functools import partial
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
@@ -11,8 +11,8 @@ from mpf.core.logging import LogMixin
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.core.placeholder_manager import ConditionalEvent
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.placeholder_manager import BoolTemplate   # pylint: disable-msg=cyclic-import,unused-import
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
 

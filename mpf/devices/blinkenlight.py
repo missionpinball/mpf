@@ -1,13 +1,14 @@
 """Contains the Blinkenlight class."""
 from operator import itemgetter
+from typing import TYPE_CHECKING
 
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import NoReturn     # pylint: disable-msg=cyclic-import,unused-import
 
 

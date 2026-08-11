@@ -1,9 +1,11 @@
 """Base class for MPF controllers."""
 import abc
 
+from typing import TYPE_CHECKING
+
 from mpf.core.logging import LogMixin
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

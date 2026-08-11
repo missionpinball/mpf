@@ -1,11 +1,12 @@
 """A show queue which can will be played sequentially."""
 from collections import deque
+from typing import TYPE_CHECKING
 
 from mpf.assets.show import RunningShow, ShowConfig
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import Tuple, Deque, Optional
 
 

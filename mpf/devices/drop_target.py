@@ -1,7 +1,6 @@
 """Contains the base classes for drop targets and drop target banks."""
 from enum import Enum
-from typing import List, Optional
-from typing import Set
+from typing import List, Optional, Set, TYPE_CHECKING
 
 from mpf.core.mode import Mode
 from mpf.core.player import Player
@@ -12,8 +11,8 @@ from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.driver import Driver           # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 

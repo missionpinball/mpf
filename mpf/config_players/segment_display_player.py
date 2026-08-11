@@ -1,12 +1,14 @@
 """Config player for text on segment displays."""
+from typing import TYPE_CHECKING
+
 from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.devices.segment_display.transition_manager import TransitionManager
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import Dict     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.segment_display.segment_display import \
         SegmentDisplay  # pylint: disable-msg=cyclic-import,unused-import

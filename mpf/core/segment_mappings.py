@@ -10,13 +10,13 @@ them.
 
 BCD were created by us.
 """
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Union, List, Tuple, TYPE_CHECKING
 
 from mpf.core.rgb_color import NAMED_RGB_COLORS
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.rgb_color import RGBColor     # pylint: disable-msg=cyclic-import,unused-import; # noqa
 
 

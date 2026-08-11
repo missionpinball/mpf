@@ -11,6 +11,7 @@ from mpf.platforms.interfaces.segment_display_platform_interface import SegmentD
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.interfaces.motor_platform_interface import MotorPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
@@ -18,7 +19,7 @@ from mpf.platforms.interfaces.shaker_platform_interface import ShakerPlatformInt
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
     DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform, \
-    HardwareSoundPlatform, SwitchSettings, DriverSettings, RepulseSettings, ShakerPlatform
+    HardwareSoundPlatform, SwitchSettings, DriverSettings, RepulseSettings, ShakerPlatform, MotorPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -26,7 +27,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 # pylint: disable=too-many-ancestors,too-many-public-methods
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
                               DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform,
-                              HardwareSoundPlatform, ShakerPlatform):
+                              HardwareSoundPlatform, ShakerPlatform, MotorPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -144,6 +145,11 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure a shaker in platform."""
         del config
         return VirtualShaker(number)
+
+    async def configure_dc_motor(self, number: str, config: Dict):
+        """Configure a dc motor in platform."""
+        del config
+        return VirtualDCMotor(number)
 
     def _get_platforms(self):
         platforms = []
@@ -675,3 +681,31 @@ class VirtualShaker(ShakerPlatformInterface):
     def stop(self):
         """Pulse virtual shaker."""
         self.log.debug("Stopping shaker")
+
+
+class VirtualDCMotor(MotorPlatformInterface):
+
+    """A virtual dc motor object."""
+
+    __slots__ = ["state", "log", "__dict__", "number"]
+
+    def __init__(self, number) -> None:
+        """Initialize virtual dc motor."""
+        self.number = number
+        self.log = logging.getLogger("VirtualDCMotor.{}".format(number))
+
+    def __repr__(self):
+        """Str representation."""
+        return "VirtualDCMotor.{}".format(self.number)
+
+    def pulse(self, duration_secs=None, power=None):
+        """Pulse virtual dc motor."""
+        self.log.debug("Pulsing dc motor for %ss at power: %s", duration_secs, power)
+
+    def reverse_pulse(self, duration_secs=None, power=None):
+        """Pulse virtual dc motor in reverse."""
+        self.log.debug("Pulsing dc motor for %ss at power: %s in reverse", duration_secs, power)
+
+    def stop(self):
+        """Pulse virtual dc motor."""
+        self.log.debug("Stopping dc motor")

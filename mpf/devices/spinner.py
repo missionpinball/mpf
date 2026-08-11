@@ -1,4 +1,5 @@
 """Contains the base classes for spinners."""
+from typing import TYPE_CHECKING
 
 from mpf.core.enable_disable_mixin import EnableDisableMixinSystemWideDevice
 
@@ -8,8 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.exceptions.config_file_error import ConfigFileError
 
 
-MYPY = False
-if MYPY:   # pragma: no cover
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

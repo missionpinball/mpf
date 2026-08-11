@@ -8,8 +8,7 @@ class FastShaker(ShakerPlatformInterface):
 
     """A shaker in the FAST platform connected to a FAST Expansion Board."""
 
-    __slots__ = ["base_address", "config", "exp_connection", "log", "shaker_index",
-                 "_is_moving", "_default_speed"]
+    __slots__ = ["base_address", "config", "exp_connection", "log", "shaker_index"]
 
     def __init__(self, breakout_board, port, config):
         """Initialize servo."""

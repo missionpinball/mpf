@@ -1,10 +1,11 @@
 """OPP servo implementation."""
+from typing import TYPE_CHECKING
 
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
-MYPY = False
-if MYPY:  # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.opp.opp import OppHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
 

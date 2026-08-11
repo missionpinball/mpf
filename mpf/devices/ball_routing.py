@@ -1,6 +1,6 @@
 """Routes balls from one device to another when captured."""
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 
@@ -12,8 +12,8 @@ from mpf.devices.ball_device.ball_device import BallDevice
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController   # pylint: disable-msg=cyclic-import,unused-import
 
 

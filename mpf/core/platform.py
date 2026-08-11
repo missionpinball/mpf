@@ -5,13 +5,14 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, TYPE_CHECKING
 
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
+    from mpf.devices.dc_motor import DCMotor   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.shaker import Shaker   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.switch import Switch   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.stepper import Stepper     # pylint: disable-msg=cyclic-import,unused-import
@@ -19,6 +20,7 @@ if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
+    from mpf.platforms.interfaces.motor_platform_interface import MotorPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.shaker_platform_interface import ShakerPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
@@ -63,6 +65,7 @@ class BasePlatform(LogMixin, metaclass=abc.ABCMeta):
         self.features['has_hardware_sound_systems'] = True
         self.features['has_steppers'] = False
         self.features['has_shakers'] = False
+        self.features['has_motors'] = False
         self.features['allow_empty_numbers'] = False
         self.features['hardware_eos_repulse'] = False
 
@@ -450,6 +453,53 @@ class ShakerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         ----
             number: Number of the shaker
             config: Config for this shaker.
+        """
+        raise NotImplementedError
+
+
+class MotorPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for dc motor platforms in MPF."""
+
+    __slots__ = []  # type: List[str]
+
+    def __init__(self, machine):
+        """Add dc motor feature."""
+        super().__init__(machine)
+        self.features['has_motors'] = True
+
+    @classmethod
+    def get_dc_motor_config_section(cls) -> Optional[str]:
+        """Return config section for additional stepper config items."""
+        return None
+
+    def validate_dc_motor_section(self, dc_motor: "DCMotor", config: dict) -> dict:
+        """Validate a dc motor config for platform.
+
+        Args:
+        ----
+            dc_motor: DC Motor to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
+        if self.get_dc_motor_config_section():
+            spec = self.get_dc_motor_config_section()    # pylint: disable-msg=assignment-from-none
+            config = dc_motor.machine.config_validator.validate_config(spec, config, dc_motor.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for dc motor {}".
+                                 format(config, dc_motor.name))
+
+        return config
+
+    @abc.abstractmethod
+    async def configure_dc_motor(self, number: str, config: dict) -> "MotorPlatformInterface":
+        """Configure a dc motor device in platform.
+
+        Args:
+        ----
+            number: Number of the dc motor
+            config: Config for this dc motor.
         """
         raise NotImplementedError
 

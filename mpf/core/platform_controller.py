@@ -1,7 +1,7 @@
 """Controls the rules on all platforms."""
 from collections import namedtuple
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from mpf.core.mpf_controller import MpfController
 from mpf.core.platform import DriverPlatform, SwitchSettings, DriverSettings, RepulseSettings
@@ -10,8 +10,8 @@ from mpf.devices.driver import Driver
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 SwitchRuleSettings = namedtuple("SwitchRuleSettings", ["switch", "invert", "debounce"])

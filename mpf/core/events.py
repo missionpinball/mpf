@@ -7,12 +7,12 @@ import asyncio
 from functools import partial, lru_cache
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, Tuple, Optional, Callable, List
+from typing import Dict, Any, Tuple, Optional, Callable, List, TYPE_CHECKING
 
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController      # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.placeholder_manager import BaseTemplate   # pylint: disable-msg=cyclic-import,unused-import
     from typing import Deque    # pylint: disable-msg=cyclic-import,unused-import
