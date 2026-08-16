@@ -399,25 +399,34 @@ class MachineController(LogMixin):
     def _register_system_events(self) -> None:
         """Register default event handlers."""
         self.events.add_handler('quit', self.stop)
-        self.events.add_handler('request_soft_shutdown', self.request_soft_shutdown)
-        self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'quit'), self.stop)
+
+        self.events.add_handler(self.config['mpf']['switch_tag_event']. replace('%', 'quit'), self.stop)
+
+        self.events.add_handler('request_soft_shutdown', self._request_soft_shutdown)
+        '''Event: request_soft_shutdown
+        Desc: Trigger a soft shutdown request sequence.
+
+        This event is not itself the boolean event, instead it tells the
+        machine to start its machine_request_shutdown boolean event
+        sequence, which other code can hook onto to deny the request.
+
+        args:
+        reason: Optional, the reason for the shutdown request.
+        '''
 
     def _register_config_players(self) -> None:
         """Register config players."""
-        # todo move this to config_player module
+        # TODO move this to config_player module
         for name, module_class in self.config['mpf']['config_players'].items():
             config_player_class = Util.string_to_class(module_class)
-            setattr(self, '{}_player'.format(name),
-                    config_player_class(self))
+            setattr(self, '{}_player'.format(name), config_player_class(self))
 
         self._register_plugin_config_players()
 
     def _register_plugin_config_players(self):
         """Register plugin config players."""
         self.debug_log("Registering Plugin Config Players")
-        for entry_point in iter_entry_points(group='mpf.config_player',
-                                             name=None):
+        for entry_point in iter_entry_points(group='mpf.config_player', name=None):
             self.debug_log("Registering %s", entry_point)
             name, player = entry_point.load()(self)
             setattr(self, '{}_player'.format(name), player)
@@ -816,10 +825,22 @@ class MachineController(LogMixin):
         except (subprocess.SubprocessError, OSError) as e:
             self.error_log("Failed to execute exit command: %s", e)
 
-    def request_soft_shutdown(self, **_kwargs) -> None:
+    def _request_soft_shutdown(self, reason=None, **_kwargs) -> None:
         """Attempt to soft shut down, allowing hooks to deny the request."""
-        self.warning_log("Attempting soft shutdown")
+        if not reason:
+            self.warning_log("Attempting soft shutdown.")
+        else:
+            self.warning_log("Attempting soft shutdown. Reason: {%s}", reason)
+
         self.events.post_boolean('machine_request_shutdown', callback=self._result_of_shutdown_request)
+        '''event: machine_request_shutdown
+        desc: This event is posted when to something has instructed the machine
+        to attempt to soft power down.
+
+        This is a boolean event. Any handler can return *False* and the
+        soft power down will not continue. Otherwise when this event is
+        done processing, the soft power down will proceed.
+        '''
 
     def _result_of_shutdown_request(self, ev_result=True):
         """Handle the result of the shutdown request.

@@ -1018,5 +1018,4 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
     def report_soft_power_down_request(self):
         """Neuron soft power requesting shutdown."""
-        self.warning_log("Neuron soft power down requested.")
-        self.machine.request_soft_shutdown()
+        self.machine.events.post("request_soft_shutdown", reason="FAST Neuron soft power down button")
