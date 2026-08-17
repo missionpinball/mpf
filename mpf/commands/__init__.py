@@ -1,9 +1,9 @@
 """MPF CLI commands."""
 import argparse
 from importlib import import_module
+import importlib.metadata
 import os
 import sys
-from pkg_resources import iter_entry_points
 
 
 import mpf.core
@@ -137,7 +137,8 @@ class CommandLineUtility(MpfCommandLineParser):
 
         This is used from mpf mc.
         """
-        for entry_point in iter_entry_points(group='mpf.command', name=None):
+        eps = importlib.metadata.entry_points(group='mpf.command')
+        for entry_point in eps:
             command, function_ref = entry_point.load()()
             self.external_commands[command] = function_ref
 

@@ -1,6 +1,7 @@
 # pylint: disable-msg=too-many-lines
 """Contains the MachineController base class."""
 import asyncio
+import importlib.metadata
 import logging
 import subprocess
 import sys
@@ -8,7 +9,6 @@ import threading
 from typing import Any, Callable, Dict, List, Set, Optional, TYPE_CHECKING
 
 from packaging import version
-from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
 from mpf.core.clock import ClockBase
@@ -426,7 +426,8 @@ class MachineController(LogMixin):
     def _register_plugin_config_players(self):
         """Register plugin config players."""
         self.debug_log("Registering Plugin Config Players")
-        for entry_point in iter_entry_points(group='mpf.config_player', name=None):
+        eps = importlib.metadata.entry_points(group='mpf.config_player')
+        for entry_point in eps:
             self.debug_log("Registering %s", entry_point)
             name, player = entry_point.load()(self)
             setattr(self, '{}_player'.format(name), player)
@@ -620,15 +621,14 @@ class MachineController(LogMixin):
 
             else:
                 # check entry points
-                entry_points = list(iter_entry_points(group='mpf.platforms', name=name))
-                if entry_points:
+                eps = list(importlib.metadata.entry_points(group='mpf.platforms', name=name))
+                if eps:
                     # load platform from entry point
                     self.debug_log("Loading platform %s from external entry_point", name)
-                    if len(entry_points) != 1:
-                        raise AssertionError("Got more than one entry point for platform {}: {}".format(name,
-                                                                                                        entry_points))
+                    if len(eps) != 1:
+                        raise AssertionError("Got multiple entry point for platform {}: {}".format(name, eps))
 
-                    hardware_platform = entry_points[0].load()
+                    hardware_platform = eps[0].load()
                 else:
                     raise AssertionError("Unknown platform {}".format(name))
 
