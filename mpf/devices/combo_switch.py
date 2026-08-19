@@ -88,16 +88,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._remove_switch_handlers()
         self._kill_delays()
 
-        # The switches may still be held when the mode stops. This happens
-        # whenever the combo's own event ends the mode that owns it, e.g. a
-        # "hold both buttons to cancel the game" combo defined in a game mode.
-        # With the handlers gone the eventual release is never seen, so any
-        # state left here would latch for the life of the process:
-        # _switch_1_went_active and _switch_2_went_active both return early on
-        # "if self._switches_N_active", and _switch_state returns early on
-        # "if state == self.state". The combo would then fire exactly once and
-        # never again. The device observes nothing while unloaded, so the only
-        # honest state to hold is none at all.
+        # Ensure reset to inactive state when mode ends, in case combo switch event is reason mode ended.
         self._state = 'inactive'
         self._switches_1_active = False
         self._switches_2_active = False
