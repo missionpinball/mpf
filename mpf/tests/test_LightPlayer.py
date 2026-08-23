@@ -60,6 +60,13 @@ class TestLightPlayer(MpfFakeGameTestCase):
         self.assertLightColor("led5", "red")
         self.assertLightColor("led6", "off")
 
+    def test_light_player_in_show_with_tokens(self):
+        self.post_event("play_show_with_tokens")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led1", "770000")
+        self.assertLightColor("led2", "007700")
+        self.assertLightColor("led3", "000077")
+
     def test_config_player_config_processing(self):
         led1 = self.machine.lights["led1"]
         led2 = self.machine.lights["led2"]
