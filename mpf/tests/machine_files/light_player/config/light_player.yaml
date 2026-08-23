@@ -85,6 +85,24 @@ shows:
       led1: red
       led2: red
       led3: red
+  show_with_tokens:
+  - time: 0
+    duration: -1
+    lights:
+      led1:
+        color: (color)
+        fade: (fade)
+      led2: 00EE00-f(fade)
+      (light_token): (color2)-f(fade2)
 
 show_player:
   play_show1: show_ext1
+
+  play_show_with_tokens:
+    show_with_tokens:
+      show_tokens:
+        color: EE0000
+        fade: 200ms
+        light_token: led3
+        color2: '0000EE'
+        fade2: 200

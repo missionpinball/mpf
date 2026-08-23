@@ -98,8 +98,10 @@ class LightPlayer(DeviceConfigPlayer):
         if isinstance(color, str) and color == "stop":
             self._light_remove(light, instance_dict, full_context, fade_ms)
             return
+
         if isinstance(color, str) and color != "on":
             color = self._convert_color(color, context=light)
+
         light.color(color, key=full_context, fade_ms=fade_ms, priority=priority, start_time=start_time)
         instance_dict[(full_context, light)] = light
 
@@ -142,7 +144,11 @@ class LightPlayer(DeviceConfigPlayer):
             # Value contains both a color value and a fade value, parse it into
             # its individual components
             composite_value = value.split('-f')
-            value = composite_value[0]
-            fade = Util.string_to_ms(composite_value[1])
+            value = composite_value[0].strip()
+            fade_value = composite_value[1].strip()
+            if fade_value.startswith('(') and fade_value.endswith(')'):
+                fade = fade_value  # "(string)" passes down to token system and is evaluated later
+            else:
+                fade = Util.string_to_ms(fade_value)
 
         return dict(color=value, fade=fade)
