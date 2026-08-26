@@ -436,7 +436,7 @@ class BallDevice(SystemWideDevice):
                 self.info_log("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
 
                 for _ in range(unclaimed_balls):
-                    self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
+                    self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'].evaluate({}))
 
         # we might have ball requests locally. serve them first
         if self._ball_requests:

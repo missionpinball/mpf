@@ -75,7 +75,7 @@ ball_devices:
     ball_switches: s_underRightRampEject
     eject_coil: c_UpperRightEject
     ball_search_order: 1220 # default 200 so do this last
-    auto_fire_on_unexpected_ball: true
+    auto_fire_on_unexpected_ball: True
     entrance_event_timeout: 1500ms  # default is 5 second
     jam_switch: s_underRightRampJam # only happens if 2 balls in there, one on top of the other
     eject_coil_jam_pulse: 100       # if jammed, pulse harder since 2 balls there (in ms)
@@ -84,7 +84,7 @@ ball_devices:
     ball_switches: s_sandTrap
     eject_coil: c_SandTrapEject
     ball_search_order: 2
-    auto_fire_on_unexpected_ball: true
+    auto_fire_on_unexpected_ball: True
     entrance_event_timeout: 400ms # default is 5 second
 
 virtual_platform_start_active_switches:
