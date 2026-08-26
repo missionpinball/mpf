@@ -188,6 +188,15 @@ class BallController(MpfController):
         while True:
             found_balls = False
             for playfield in playfields:
+                # Reconcile inconsistent playfield state: available_balls may
+                # sometimes be left >0 due to eject/timeout race conditions.
+                # Use the authoritative `balls` count and keep `available_balls`
+                # in sync to avoid waiting forever on stale state.
+                if playfield.available_balls != playfield.balls:
+                    self.debug_log('Reconciling %s: available_balls=%s, balls=%s',
+                                   playfield.name, playfield.available_balls, playfield.balls)
+                    playfield.available_balls = playfield.balls
+
                 if playfield.available_balls > 0:
                     self.info_log('Found %s ball(s) on %s.', playfield.available_balls, playfield.name)
                     found_balls = True
