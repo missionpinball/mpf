@@ -155,6 +155,13 @@ class SegmentDisplay(SystemWideDevice):
             raise ValueError(f"Unknown update_method '{self.config['update_method']}' for segment display {self.name}")
 
         # For the replace-text update method, skip the stack and write straight to the display
+        if flashing is None:
+            flashing = self._current_state.flashing
+        if flash_mask is None:
+            flash_mask = self._current_state.flash_mask
+        if not color:
+            color = self._current_state.text.get_colors()
+
         new_text = TextTemplate(self.machine, text).evaluate({})
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
                                            self.config['integrated_commas'], self.config['use_dots_for_commas'],
@@ -171,7 +178,7 @@ class SegmentDisplay(SystemWideDevice):
     def remove_text_by_key(self, key: Optional[str]):
         """Remove entry from text stack."""
         if self.config['update_method'] != "stack":
-            self.info_log("Segment display 'remove' action is TBD.")
+            self.add_text("")
             return
 
         if key in self._text_stack:
