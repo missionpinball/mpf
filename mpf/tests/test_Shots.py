@@ -222,6 +222,7 @@ class TestShots(MpfTestCase):
     def test_shot_with_delay(self):
         self.mock_event("shot_delay_hit")
         self.mock_event("shot_delay_same_switch_hit")
+        self.mock_event("shot_delay_event_hit")
         self.start_game()
 
         # test delay at the beginning. should not count
@@ -247,6 +248,14 @@ class TestShots(MpfTestCase):
         self.assertEventCalled("shot_delay_same_switch_hit")
         self.mock_event("shot_delay_same_switch_hit")
 
+        # test delay with event. should not count
+        self.post_event("my_delay_event")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_29")
+        self.advance_time_and_run(1)
+        self.assertEventNotCalled("shot_delay_event_hit")
+        self.advance_time_and_run(3)
+
         # test that shot works without delay
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
@@ -256,6 +265,11 @@ class TestShots(MpfTestCase):
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
         self.assertEventCalled("shot_delay_hit")
+
+        self.hit_and_release_switch("switch_29")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_event_hit")
+
         self.mock_event("shot_delay_hit")
         self.hit_and_release_switch("s_delay")
 

@@ -1446,6 +1446,7 @@ shots:
     switches: list|machine(switches)|None
     start_enabled: single|bool|None
     delay_switch: dict|machine(switches):ms|None
+    delay_events: dict|event_handler:ms|None
     persist_enable: single|bool|true
     playfield: single|machine(playfields)|playfield
     priority: single|int|0

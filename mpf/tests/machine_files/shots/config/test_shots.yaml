@@ -60,6 +60,8 @@ switches:
     number:
   switch_28:
     number:
+  switch_29:
+    number:
 
 lights:
   light_1:
