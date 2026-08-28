@@ -1,0 +1,41 @@
+#config_version=6
+
+mode:
+  priority: 100
+
+shot_profiles:
+  pe_profile:
+    advance_on_hit: false
+    states:
+      - name: pe_state_1
+      - name: pe_state_2
+
+shots:
+  pe_test_property_disabled:
+    profile: pe_profile
+    switch: switch_29
+    start_enabled: false
+    persist_enable: false #field under test
+    disable_events: pe_test_disable_all_shots
+    enable_events: pe_test_enable_all_shots
+  pe_test_default:
+    switch: switch_29
+    profile: pe_profile
+    start_enabled: false
+    # persist_enable: default is true #field under test
+    disable_events: pe_test_disable_all_shots
+    enable_events: pe_test_enable_all_shots
+  pe_test_property_enabled:
+    switch: switch_29
+    profile: pe_profile
+    start_enabled: false
+    persist_enable: true #field under test
+    disable_events: pe_test_disable_all_shots
+    enable_events: pe_test_enable_all_shots
+  pe_test_property_enabled_default_enabled:
+    switch: switch_29
+    profile: pe_profile
+    start_enabled: true #field under test
+    persist_enable: true #field under test
+    disable_events: pe_test_disable_all_shots
+    enable_events: pe_test_enable_all_shots

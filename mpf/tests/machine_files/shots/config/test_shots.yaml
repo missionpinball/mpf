@@ -6,6 +6,7 @@ modes:
   - mode1
   - mode2
   - mode3
+  - mode_test_persist_enable
 
 switches:
   switch_1:
@@ -59,6 +60,8 @@ switches:
   switch_27:
     number:
   switch_28:
+    number:
+  switch_29:
     number:
 
 lights:
