@@ -90,7 +90,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self._remove_switch_handlers()
         self._kill_delays()
 
-        # Ensure reset to inactive state when mode ends, in case combo switch event is reason mode ended.
+        # Ensure reset to inactive state when mode ends, in case combo switch event is triggered mode end, or combo switch was partially engaged as mode ended.
         self._reset_state()
 
     def _reset_state(self):
