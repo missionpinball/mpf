@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from mpf.core.platform import SwitchPlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 
-@DeviceMonitor("state", "recycle_jitter_count")
+@DeviceMonitor("state", "recycle_jitter_count", "number")
 class Switch(SystemWideDevice, DevicePositionMixin):
 
     """A switch in a pinball machine."""
@@ -27,12 +27,13 @@ class Switch(SystemWideDevice, DevicePositionMixin):
     class_label = 'switch'
 
     __slots__ = ["hw_switch", "state", "hw_state", "invert", "recycle_secs", "recycle_clear_time",
-                 "recycle_jitter_count",  "last_change", "_events_to_post", "_mutes"]
+                 "recycle_jitter_count",  "last_change", "_events_to_post", "_mutes", "number"]
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize switch."""
         self.hw_switch = None   # type: Optional[SwitchPlatformInterface]
         self.platform = None    # type: Optional[SwitchPlatform]
+        self.number = None
         super().__init__(machine, name)
 
         self.state = 0
@@ -133,6 +134,8 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         await super()._initialize()
         self.platform = self.machine.get_platform_sections(
             'switches', self.config['platform'])
+
+        self.number = self.config.get('number', None)
 
         if self.config['type'].upper() == 'NC':
             self.invert = 1

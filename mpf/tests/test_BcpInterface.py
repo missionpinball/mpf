@@ -89,22 +89,22 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ("device", {"type": "switch",
                         "name": "s_test",
-                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "state": {'state': 1, 'recycle_jitter_count': 0, 'number': '1000'},
                         "changes": False}), queue)
         self.assertNotIn(
             ("device", {"type": "switch",
                         "name": "s_test",
-                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "state": {'state': 0, 'recycle_jitter_count': 0, 'number': '1000'},
                         "changes": False}), queue)
         self.assertIn(
             ("device", {"type": "switch",
                         "name": "s_test2",
-                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "state": {'state': 0, 'recycle_jitter_count': 0, 'number': '1001'},
                         "changes": False}), queue)
         self.assertNotIn(
             ("device", {"type": "switch",
                         "name": "s_test2",
-                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "state": {'state': 1, 'recycle_jitter_count': 0, 'number': '1001'},
                         "changes": False}), queue)
 
         # change switch
@@ -113,7 +113,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ("device", {"type": "switch",
                         "name": "s_test",
-                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "state": {'state': 0, 'recycle_jitter_count': 0, 'number': '1000'},
                         "changes": ('state', 1, 0)}),
             queue)
 
@@ -128,7 +128,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ("device", {"type": "switch",
                         "name": "s_test",
-                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "state": {'state': 1, 'recycle_jitter_count': 0, 'number': '1000'},
                         "changes": ('state', 0, 1)}),
             queue)
 

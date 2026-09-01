@@ -136,7 +136,7 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual("switch", args['type'])
         self.assertEqual("s_test_nc", args['name'])
         self.assertEqual(["state", 0, 1], args['changes'])
-        self.assertEqual({'state': 1, 'recycle_jitter_count': 0}, args['state'])
+        self.assertEqual({'state': 1, 'recycle_jitter_count': 0, 'number': '0-2'}, args['state'])
 
         cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
         self.assertEqual("switch", cmd)
