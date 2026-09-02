@@ -47,7 +47,7 @@ class LightStackEntry:
             self.key, self.start_color, self.start_time, self.dest_color, self.dest_time, self.priority)
 
 
-@DeviceMonitor(_color="color", _do_not_overwrite_setter=True)
+@DeviceMonitor(_color="color", address="address", _do_not_overwrite_setter=True)
 class Light(SystemWideDevice, DevicePositionMixin):
 
     """A light in a pinball machine."""
@@ -57,12 +57,13 @@ class Light(SystemWideDevice, DevicePositionMixin):
     class_label = 'light'
 
     __slots__ = ["hw_drivers", "platforms", "delay", "default_fade_ms", "_color_correction_profile", "stack",
-                 "_off_color", "_drivers_loaded", "_last_fade_target", "_rbgw_style"]
+                 "_off_color", "_drivers_loaded", "_last_fade_target", "_rbgw_style", "address"]
 
     def __init__(self, machine, name):
         """Initialize light."""
         self.hw_drivers = {}        # type: Dict[str, List[LightPlatformInterface]]
         self.platforms = set()      # type: Set[LightsPlatform]
+        self.address = None
         super().__init__(machine, name)
         self.machine.light_controller.initialize_light_subsystem()
         self.delay = DelayManager(self.machine)
@@ -179,13 +180,16 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
     async def _initialize(self):
         await super()._initialize()
+        self.address = None
         try:
             if self.config['previous']:
                 self._detect_previous_reference_loop()
                 await self.config['previous'].wait_for_loaded()
                 start_channel = self.config['previous'].get_successor_number()
+                self.address = f'prev: {start_channel}'
                 self._load_hw_driver_sequentially(start_channel)
             elif self.config['start_channel']:
+                self.address = f'channel: {self.config["start_channel"]}'
                 self._load_hw_driver_sequentially(self.config['start_channel'])
             else:
                 self._load_hw_drivers()
@@ -282,6 +286,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
             self.raise_config_error("Light {} cannot contain platform/platform_settings/number and channels".
                                     format(self.name), 5)
         channels = self.config['channels']
+        self.address = f'channels: {channels}'
 
         # ensure that each color's channels are a list, not single value
         for channel in channels:
@@ -297,6 +302,7 @@ class Light(SystemWideDevice, DevicePositionMixin):
 
         try:
             channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            self.address = f'number: {self.config["number"]}'
         except AssertionError as e:
             self.raise_config_error("Failed to parse light number {} in platform. See error above".
                                     format(self.name), 4, source_exception=e)

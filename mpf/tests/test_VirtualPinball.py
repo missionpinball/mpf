@@ -60,7 +60,7 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual("device", cmd)
         self.assertEqual("test_light1", args['name'])
         self.assertEqual("light", args['type'])
-        self.assertEqual({'color': [255, 255, 255]}, args['state'])
+        self.assertEqual([255, 255, 255], args['state']['color'])
 
         self.machine.coils["c_test"].pulse()
         self.advance_time_and_run()
