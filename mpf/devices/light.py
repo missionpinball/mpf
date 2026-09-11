@@ -127,16 +127,24 @@ class Light(SystemWideDevice, DevicePositionMixin):
     @staticmethod
     def _check_duplicate_light_numbers(machine: MachineController, **kwargs):
         del kwargs
-        check_set = set()
+        driver_registry = {}
+
         for light in machine.lights.values():
             for drivers in light.hw_drivers.values():
                 for driver in drivers:
                     key = (light.config['platform'], driver.number, type(driver))
-                    if key in check_set:
-                        raise ConfigFileError(f"Duplicate number {type(driver)} {driver.number} for light {light}",
-                                              10, "light", key, "light")
 
-                    check_set.add(key)
+                    if key in driver_registry:
+                        existing_light = driver_registry[key]
+
+                        new_light_name = getattr(light, 'name', light)
+                        old_light_name = getattr(existing_light, 'name', existing_light)
+                        raise ConfigFileError(
+                            f"Hardware address conflict! Driver number '{driver.number}' "
+                            f"is assigned to light '{new_light_name}', but it is already "
+                            f"claimed by light '{old_light_name}'.", 10, "light", key, "light")
+
+                    driver_registry[key] = light
 
     def _color_letter_to_name(self, letter):
         if letter == 'r':
