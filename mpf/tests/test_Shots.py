@@ -1021,3 +1021,59 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         self.post_event("state_event2")
         self.assertEqual("None", shot2.state_name)
+
+    def test_persist_enable(self):
+        """Test shot#persist_enable functionality"""
+        self.start_game()
+        test_mode = self.machine.modes["mode_test_persist_enable"]
+        test_mode.start()
+
+        shot_pe_test_property_disabled = self.machine.shots["pe_test_property_disabled"]
+        shot_pe_test_default = self.machine.shots["pe_test_default"]
+        shot_pe_test_property_enabled = self.machine.shots["pe_test_property_enabled"]
+        shot_pe_test_property_enabled_default_enabled = self.machine.shots["pe_test_property_enabled_default_enabled"]
+
+        # Check the configs
+        self.assertFalse(shot_pe_test_property_disabled.config['persist_enable'])
+        self.assertTrue(shot_pe_test_default.config['persist_enable'])
+        self.assertTrue(shot_pe_test_property_enabled.config['persist_enable'])
+        self.assertTrue(shot_pe_test_property_enabled_default_enabled.config['persist_enable'])
+
+        # Test clean start values - all are start_enabled: false
+        self.assertFalse(shot_pe_test_property_disabled.enabled)
+        self.assertFalse(shot_pe_test_default.enabled)
+        self.assertFalse(shot_pe_test_property_enabled.enabled)
+        self.assertTrue(shot_pe_test_property_enabled_default_enabled.enabled)
+
+        self.post_event("pe_test_enable_all_shots")
+
+        # Everything uses the same enable event
+        self.assertTrue(shot_pe_test_property_disabled.enabled)
+        self.assertTrue(shot_pe_test_default.enabled)
+        self.assertTrue(shot_pe_test_property_enabled.enabled)
+        self.assertTrue(shot_pe_test_property_enabled_default_enabled.enabled)
+
+        test_mode.stop()
+        test_mode.start()
+
+        # Default and true should preserve the enable, false should start false again
+        self.assertFalse(shot_pe_test_property_disabled.enabled) #TODO this is failing
+        self.assertTrue(shot_pe_test_default.enabled)
+        self.assertTrue(shot_pe_test_property_enabled.enabled)
+        self.assertTrue(shot_pe_test_property_enabled_default_enabled.enabled)
+
+        self.post_event("pe_test_disable_all_shots")
+
+        # Everything uses the same disable event
+        self.assertFalse(shot_pe_test_property_disabled.enabled)
+        self.assertFalse(shot_pe_test_default.enabled)
+        self.assertFalse(shot_pe_test_property_enabled.enabled)
+        self.assertFalse(shot_pe_test_property_enabled_default_enabled.enabled)
+
+        test_mode.stop()
+        test_mode.start()
+
+        self.assertFalse(shot_pe_test_property_disabled.enabled)
+        self.assertFalse(shot_pe_test_default.enabled)
+        self.assertFalse(shot_pe_test_property_enabled.enabled)
+        self.assertFalse(shot_pe_test_property_enabled_default_enabled.enabled)
