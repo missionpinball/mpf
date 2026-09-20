@@ -1,7 +1,7 @@
 # mpf.tests.test_Fast_Communicator
 """Unit tests for FastSerialCommunicator's response and connect/parse paths.
 
-Two related FAST startup failures are covered here:
+Three related FAST startup failures are covered here:
 
 * Response timeout/retry (#2036): a single lost serial response used to freeze
   MPF init forever, because the asyncio timeout was wrapped around
@@ -9,9 +9,12 @@ Two related FAST startup failures are covered here:
   immediately) while the real wait on done_waiting had no timeout.
 * Connect-time drain: after an unclean shutdown the board can clock out
   leftover, un-terminated bytes that would otherwise fuse onto the front of the
-  next real message. connect() drains that burst before the handshake; the
-  parser itself still raises (or drops, when decode errors are ignored) on
-  undecodable data rather than guessing at it.
+  next real message. connect() drains that burst before the handshake.
+* Undecodable data mid-stream (#2051): a UnicodeDecodeError in
+  parse_incoming_raw_bytes used to be re-raised after connect, which kills
+  read_task via its raise_exceptions done-callback and crashes MPF whenever
+  line noise or leftover binary fuses onto a real reply. The parser now drops
+  the corrupted segment (with a warning) and keeps reading.
 
 These drive the relevant methods directly with a stubbed I/O surface so the
 paths are exercised deterministically without a real serial port.
@@ -148,16 +151,19 @@ class TestFastCommunicatorRetry(unittest.TestCase):
 
 class TestFastCommunicatorInbound(unittest.TestCase):
 
-    def test_parse_raises_on_undecodable_data(self):
-        """Un-decodable data raises during init (ignore_decode_errors False), so
-        a board in a bad state surfaces loudly instead of being guessed at."""
+    def test_drops_undecodable_data_and_keeps_reading(self):
+        """A corrupted segment is dropped rather than raised, so a single noisy
+        read can't kill the read loop (which would crash MPF). A following valid
+        message in the same buffer is still dispatched."""
         comm = _make_comm()
         comm.ignore_decode_errors = False
-        comm.message_processors = {'ID:': lambda m: None}
-        with self.assertRaises(UnicodeDecodeError):
-            comm.parse_incoming_raw_bytes(b'\x81\xb5\xc1\r')
+        received = []
+        comm.message_processors = {'ID:': received.append}
+        # junk fused onto an ER:P reply, then a clean ID: response
+        comm.parse_incoming_raw_bytes(b'\x825\xffER:P\rID:exp fp-exp-0081 0.48\r')
+        self.assertEqual(received, ['exp fp-exp-0081 0.48'])
 
-    def test_parse_drops_undecodable_data_when_ignoring(self):
+    def test_drops_undecodable_data_when_ignoring(self):
         """With ignore_decode_errors set (e.g. during connect), undecodable
         data is dropped rather than raised."""
         comm = _make_comm()

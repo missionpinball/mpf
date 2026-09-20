@@ -441,9 +441,14 @@ class FastSerialCommunicator(LogMixin):
                 if self.machine.is_shutting_down:
                     return
 
-                self.log.warning("Interference / bad data received: %s", msg)
-                if not self.ignore_decode_errors:
-                    raise
+                # Line noise or leftover binary can appear mid-stream (e.g. a
+                # board left mid-message by an unclean shutdown, fusing junk onto
+                # a real reply). Drop the corrupted segment and keep reading
+                # rather than raising, which would kill read_task and crash MPF.
+                # The send/confirmation path re-requests anything genuinely lost.
+                # Always warn so the underlying noise stays visible for debugging.
+                self.log.warning("Interference / bad data received, dropping: %s", msg)
+                continue
 
             if self.port_debug:
                 self.log.info("<<<< %s", msg)
