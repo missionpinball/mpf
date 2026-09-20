@@ -72,7 +72,7 @@ ball_devices:
         eject_timeouts: 6s
         eject_targets: playfield
         mechanical_eject: true
-        auto_fire_on_unexpected_ball: false
+        auto_fire_on_unexpected_ball: False
         confirm_eject_type: target
     test_vuk:
         eject_coil: eject_coil5
@@ -80,5 +80,5 @@ ball_devices:
         debug: true
         eject_timeouts: 3s
         eject_targets: test_launcher
-        auto_fire_on_unexpected_ball: false
+        auto_fire_on_unexpected_ball: False
         confirm_eject_type: target
