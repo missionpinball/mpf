@@ -31,13 +31,11 @@ class Command:
         self.machine = None
         self._sigint_count = 0
 
-        parser = argparse.ArgumentParser(
-            description='Starts the MPF game engine')
+        parser = argparse.ArgumentParser(description='Starts the MPF game engine')
 
         parser.add_argument("-a",
                             action="store_true", dest="no_load_cache",
-                            help="Forces the config to be loaded from files "
-                                 "and not cache")
+                            help="Forces the config to be loaded from files and not cache")
 
         parser.add_argument("-A",
                             action="store_false", dest="create_config_cache",
@@ -45,24 +43,24 @@ class Command:
 
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,
-                            help="Runs MPF without making a connection "
-                                 "attempt to a BCP Server")
+                            help="Runs MPF without making a connection attempt to a BCP Server")
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
                             default="config.yaml", metavar='config_file',
-                            help="The name of a config file to load. Default "
-                                 "is "
-                                 "config.yaml. Multiple files can be used "
-                                 "via a comma-"
+                            help="The name of a config file to load. Default is "
+                                 "config.yaml. Multiple files can be used via a comma-"
                                  "separated list (no spaces between)")
+
+        parser.add_argument("-e",
+                            action="store_false", dest="echo_args", default=True,
+                            help="Stop logging the raw command line arguments on startup.")
 
         parser.add_argument("-f",
                             action="store_true", dest="force_assets_load",
                             default=False,
                             help="Load all assets upon startup.  Useful for "
-                            "ensuring all assets are set up properly "
-                            "during development.")
+                            "ensuring all assets are set up properly during development.")
 
         parser.add_argument("-pit", action="store", dest="platform_integration_test",
                             metavar='pit_file', default=False,
@@ -91,8 +89,8 @@ class Command:
 
         parser.add_argument("-P",
                             action="store_true", dest="production", default=False,
-                            help="Production mode. Will suppress errors, wait for hardware on start and "
-                                 "try to exit when startup fails. Run this inside a loop.")
+                            help="Production mode. Will suppress errors, wait for hardware on start "
+                                 "and try to exit when startup fails. Run this inside a loop.")
 
         parser.add_argument("-t",
                             action="store_false", dest='text_ui', default=True,
@@ -102,43 +100,35 @@ class Command:
                             action="store_const", dest="loglevel",
                             const=logging.DEBUG,
                             default=15,
-                            help="Enables verbose logging to the"
-                                 " log file")
+                            help="Enables verbose logging to the log file")
 
         parser.add_argument("-V",
                             action="store_const", dest="consoleloglevel",
                             const=logging.DEBUG,
                             default=logging.INFO,
                             help="Enables verbose logging to the console. DO "
-                                 "NOTE: you must also use -v for "
-                                 "this to work.")
+                                 "NOTE: you must also use -v for this to work.")
 
         parser.add_argument("-x",
                             action="store_const", dest="force_platform",
                             const='virtual',
-                            help="Forces the virtual platform to be "
-                                 "used for all devices")
+                            help="Forces the virtual platform to be used for all devices")
 
         parser.add_argument("--vpx",
                             action="store_const", dest="force_platform",
                             const='virtual_pinball',
-                            help="Forces the virtual_pinball platform to be "
-                                 "used for all devices")
+                            help="Forces the virtual_pinball platform to be used for all devices")
 
         parser.add_argument("--syslog_address",
                             action="store", dest="syslog_address",
-                            help="Log to the specified syslog address. This "
-                                 "can be a domain socket such as /dev/og on "
-                                 "Linux or /var/run/syslog on Mac. "
-                                 "Alternatively, you an specify host:port for "
-                                 "remote logging over UDP.")
+                            help="Log to the specified syslog address. This can be a domain socket "
+                                 "such as /dev/og on Linux or /var/run/syslog on Mac. Alternatively, "
+                                 "you an specify host:port for remote logging over UDP.")
 
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
                             const='smart_virtual',
-                            help="Forces the smart virtual platform to be "
-                                 "used for all"
-                                 " devices")
+                            help="Forces the smart virtual platform to be used for all devices")
 
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
@@ -212,6 +202,10 @@ class Command:
             logger.addHandler(syslog_logger)
 
         signal.signal(signal.SIGINT, self.sigint_handler)
+
+        if self.args.echo_args:
+            raw_cmd = " ".join(args) if args else "[None]"
+            logger.info("Raw command line: %s", raw_cmd)
 
         if not self.args.production:
             config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
