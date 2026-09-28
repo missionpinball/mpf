@@ -142,7 +142,7 @@ class MockFastNetNeuron(MockFastSerial):
 
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
-            'WD:3E8': 'WD:P',
+            'WD:1F4': 'WD:P',
             'SA:':'SA:0E,2900000000000000000000000000',
             'CH:2000,FF':'CH:P',
             'ID:': 'ID:NET FP-CPU-2000  02.13',
@@ -311,7 +311,7 @@ class MockFastNetNano(MockFastSerial):
 
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
-            'WD:3E8': 'WD:P',
+            'WD:1F4': 'WD:P',
             "SA:": "SA:01,00,09,000000040000000000",  # switch 0x1A is active
             'ID:': 'ID:NET FP-CPU-002-2  01.05',
             }
@@ -331,7 +331,7 @@ class MockFastNetRetro(MockFastSerial):
 
         self.autorespond_commands = {
             'WD:1' : 'WD:P',
-            'WD:3E8': 'WD:P',
+            'WD:1F4': 'WD:P',
             'SA:':'SA:0E,2900000000000000000000000000',
             'CH:9500,FF':'CH:P',
             'ID:': 'ID:NET FP-SBI-0095  02.13',

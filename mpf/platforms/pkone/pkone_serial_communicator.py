@@ -1,14 +1,16 @@
 """PKONE serial communicator."""
 import asyncio
 import re
+from typing import TYPE_CHECKING
+
 from packaging import version
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
 from mpf.platforms.pkone.pkone_lightshow import PKONELightshowBoard
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.pkone.pkone import PKONEHardwarePlatform   # pylint: disable-msg=cyclic-import,unused-import
 
 NANO_MIN_FW = '1.0'

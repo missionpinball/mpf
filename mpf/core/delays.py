@@ -2,11 +2,11 @@
 
 import uuid
 from functools import partial
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, TYPE_CHECKING
 from mpf.core.mpf_controller import MpfController
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 __api__ = ['DelayManager']

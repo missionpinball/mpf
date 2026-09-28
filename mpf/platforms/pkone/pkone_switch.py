@@ -1,12 +1,13 @@
 """A switch input on a PKONE Extension board."""
 import logging
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from mpf.core.platform import SwitchConfig
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.pkone.pkone import PKONEHardwarePlatform    # pylint: disable-msg=cyclic-import,unused-import
 
 PKONESwitchNumber = namedtuple("PKONESwitchNumber", ["board_address_id", "switch_number"])

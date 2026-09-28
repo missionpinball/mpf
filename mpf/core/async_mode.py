@@ -1,13 +1,13 @@
 """Base class for asyncio modes."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import abc
 import asyncio
 
 from mpf.core.mode import Mode
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

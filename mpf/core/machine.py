@@ -1,13 +1,14 @@
 # pylint: disable-msg=too-many-lines
 """Contains the MachineController base class."""
 import asyncio
+import importlib.metadata
 import logging
+import subprocess
 import sys
 import threading
-from typing import Any, Callable, Dict, List, Set, Optional
+from typing import Any, Callable, Dict, List, Set, Optional, TYPE_CHECKING
 
 from packaging import version
-from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
 from mpf.core.clock import ClockBase
@@ -22,8 +23,8 @@ from mpf.core.utility_functions import Util
 from mpf.core.config_loader import MpfConfig
 from mpf.core.plugin import MpfPlugin
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.modes.game.code.game import Game   # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.events import EventManager    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.switch_controller import SwitchController     # pylint: disable-msg=cyclic-import,unused-import
@@ -106,7 +107,8 @@ class MachineController(LogMixin):
                  "stop_future", "events", "switch_controller", "mode_controller", "settings",
                  "bcp", "ball_controller", "show_controller", "placeholder_manager", "device_manager", "auditor",
                  "tui", "service", "switches", "shows", "coils", "ball_devices", "lights", "playfield", "playfields",
-                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down"]
+                 "autofire_coils", "_crash_handlers", "__dict__", "mpf_config", "is_shutting_down",
+                 "soft_power_down_active"]
 
     # pylint: disable-msg=too-many-statements
     def __init__(self, options: dict, config: MpfConfig) -> None:
@@ -116,6 +118,7 @@ class MachineController(LogMixin):
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
         self._crash_handlers = []   # type: List[Callable]
         self.is_shutting_down = False
+        self.soft_power_down_active = False
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
@@ -146,7 +149,7 @@ class MachineController(LogMixin):
         self.variables = MachineVariables(self)  # type: MachineVariables
 
         # add some type hints
-        if MYPY:   # pragma: no cover
+        if TYPE_CHECKING:
             # controllers
             self.events = self.events                               # type: EventManager
             self.switch_controller = self.switch_controller         # type: SwitchController
@@ -396,24 +399,35 @@ class MachineController(LogMixin):
     def _register_system_events(self) -> None:
         """Register default event handlers."""
         self.events.add_handler('quit', self.stop)
-        self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'quit'), self.stop)
+
+        self.events.add_handler(self.config['mpf']['switch_tag_event']. replace('%', 'quit'), self.stop)
+
+        self.events.add_handler('request_soft_shutdown', self._request_soft_shutdown)
+        '''Event: request_soft_shutdown
+        Desc: Trigger a soft shutdown request sequence.
+
+        This event is not itself the boolean event, instead it tells the
+        machine to start its machine_request_shutdown boolean event
+        sequence, which other code can hook onto to deny the request.
+
+        args:
+        reason: Optional, the reason for the shutdown request.
+        '''
 
     def _register_config_players(self) -> None:
         """Register config players."""
-        # todo move this to config_player module
+        # TODO move this to config_player module
         for name, module_class in self.config['mpf']['config_players'].items():
             config_player_class = Util.string_to_class(module_class)
-            setattr(self, '{}_player'.format(name),
-                    config_player_class(self))
+            setattr(self, '{}_player'.format(name), config_player_class(self))
 
         self._register_plugin_config_players()
 
     def _register_plugin_config_players(self):
         """Register plugin config players."""
         self.debug_log("Registering Plugin Config Players")
-        for entry_point in iter_entry_points(group='mpf.config_player',
-                                             name=None):
+        eps = importlib.metadata.entry_points(group='mpf.config_player')
+        for entry_point in eps:
             self.debug_log("Registering %s", entry_point)
             name, player = entry_point.load()(self)
             setattr(self, '{}_player'.format(name), player)
@@ -607,15 +621,14 @@ class MachineController(LogMixin):
 
             else:
                 # check entry points
-                entry_points = list(iter_entry_points(group='mpf.platforms', name=name))
-                if entry_points:
+                eps = list(importlib.metadata.entry_points(group='mpf.platforms', name=name))
+                if eps:
                     # load platform from entry point
                     self.debug_log("Loading platform %s from external entry_point", name)
-                    if len(entry_points) != 1:
-                        raise AssertionError("Got more than one entry point for platform {}: {}".format(name,
-                                                                                                        entry_points))
+                    if len(eps) != 1:
+                        raise AssertionError("Got multiple entry point for platform {}: {}".format(name, eps))
 
-                    hardware_platform = entry_points[0].load()
+                    hardware_platform = eps[0].load()
                 else:
                     raise AssertionError("Unknown platform {}".format(name))
 
@@ -678,10 +691,15 @@ class MachineController(LogMixin):
             return False
         except RuntimeError as e:
             self._crash_shutdown()
-            # do not show a runtime useless runtime error
             self.error_log("Failed to initialize MPF")
             report_crash(e, "init_runtime_error", self.config)
             return False
+
+        if not init.done():
+            self._crash_shutdown()
+            self.error_log("MPF Initialization was interrupted or aborted before completing.")
+            return False
+
         if init.done() and init.exception():
             self._crash_shutdown()
             try:
@@ -785,6 +803,68 @@ class MachineController(LogMixin):
         self.clock.loop.stop()
         self.clock.loop.run_forever()
         self.clock.loop.close()
+
+        if self.soft_power_down_active:
+            self._execute_soft_shutdown_command()
+
+    def _execute_soft_shutdown_command(self) -> None:
+        cmd = self.config['machine'].get('soft_shutdown_exit_command')
+        if not cmd:
+            return
+
+        self.info_log('Executing exit command %s', cmd)
+        try:
+            # pylint: disable=consider-using-with
+            subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        except (subprocess.SubprocessError, OSError) as e:
+            self.error_log("Failed to execute exit command: %s", e)
+
+    def _request_soft_shutdown(self, reason=None, **_kwargs) -> None:
+        """Attempt to soft shut down, allowing hooks to deny the request."""
+        if not reason:
+            self.warning_log("Attempting soft shutdown.")
+        else:
+            self.warning_log("Attempting soft shutdown. Reason: {%s}", reason)
+
+        self.events.post_boolean('machine_request_shutdown', callback=self._result_of_shutdown_request)
+        '''event: machine_request_shutdown
+        desc: This event is posted when to something has instructed the machine
+        to attempt to soft power down.
+
+        This is a boolean event. Any handler can return *False* and the
+        soft power down will not continue. Otherwise when this event is
+        done processing, the soft power down will proceed.
+        '''
+
+    def _result_of_shutdown_request(self, ev_result=True):
+        """Handle the result of the shutdown request.
+
+        Called after the *machine_request_shutdown* event is posted.
+
+        If the boolean result is True, the stop future will be resolved (ending the run loop)
+        and the event 'machine_will_shutdown' is posted. If the result is False,
+        the event 'machine_abort_shutdown' is posted.
+
+        Args:
+        ----
+            ev_result : Bool result of the boolean event
+                *machine_request_shutdown.* If any registered event handler did not
+                want the machine to shut down, this will be False, else it's True.
+        """
+        if ev_result is False:
+            self.warning_log('Soft shutdown was denied')
+            self.events.post('machine_abort_shutdown')
+        else:
+            self.warning_log('Soft shutdown proceeding...')
+            self.events.post('machine_will_shutdown')
+            self.soft_power_down_active = True
+            self.stop('Soft shutdown')
 
     def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface

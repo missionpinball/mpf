@@ -566,6 +566,84 @@ class TestComboSwitches(MpfTestCase):
         self.assertEventNotCalled('mode1_combo_inactive')
         self.assertEventNotCalled('mode1_combo_one')
 
+    def test_combo_switches_in_mode_stopped_while_held(self):
+        # Mode stops while both switches are still held, e.g. when the combo's
+        # own event ends the mode. The state must not latch.
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+
+        self.mock_event('mode1_combo_both')
+        self.hit_switch_and_run('switch1', .1)
+        self.hit_switch_and_run('switch2', .1)
+        self.assertEventCalled('mode1_combo_both')
+
+        # Mode stops with both switches still down, then the player lets go.
+        self.machine.modes["mode1"].stop()
+        self.advance_time_and_run()
+        self.release_switch_and_run('switch1', .1)
+        self.release_switch_and_run('switch2', .1)
+
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+        self.assertEqual('inactive', self.machine.combo_switches["mode1_combo"].state)
+
+        # The identical gesture has to work again.
+        self.mock_event('mode1_combo_both')
+        self.hit_switch_and_run('switch1', .1)
+        self.hit_switch_and_run('switch2', .1)
+        self.assertEventCalled('mode1_combo_both')
+
+    def test_combo_switches_in_mode_restarted_while_held(self):
+        # Mode restarts while both switches are held: the combo resets and the
+        # held switches do not count.
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+
+        self.mock_event('mode1_combo_both')
+        self.hit_switch_and_run('switch1', .1)
+        self.hit_switch_and_run('switch2', .1)
+        self.assertEventCalled('mode1_combo_both')
+
+        self.machine.modes["mode1"].stop()
+        self.advance_time_and_run()
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+        self.assertEqual('inactive', self.machine.combo_switches["mode1_combo"].state)
+
+        # Releasing the pre-held switches posts nothing.
+        self.mock_event('mode1_combo_one')
+        self.mock_event('mode1_combo_inactive')
+        self.release_switch_and_run('switch1', .1)
+        self.release_switch_and_run('switch2', .1)
+        self.assertEventNotCalled('mode1_combo_one')
+        self.assertEventNotCalled('mode1_combo_inactive')
+
+        # A fresh gesture works.
+        self.mock_event('mode1_combo_both')
+        self.hit_switch_and_run('switch1', .1)
+        self.hit_switch_and_run('switch2', .1)
+        self.assertEventCalled('mode1_combo_both')
+
+    def test_combo_switches_in_mode_pre_held_switch_does_not_count(self):
+        # One switch is already held when the mode starts: adding the other
+        # member must not fire the combo.
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+        self.hit_switch_and_run('switch1', .1)
+        self.machine.modes["mode1"].stop()
+        self.advance_time_and_run()
+        self.machine.modes["mode1"].start()
+        self.advance_time_and_run()
+
+        self.mock_event('mode1_combo_both')
+        self.hit_switch_and_run('switch2', .1)
+        self.assertEventNotCalled('mode1_combo_both')
+
+        # Re-pressing the pre-held switch inside the mode completes the combo.
+        self.release_switch_and_run('switch1', .1)
+        self.hit_switch_and_run('switch1', .1)
+        self.assertEventCalled('mode1_combo_both')
+
     def test_built_in_combos(self):
         self.mock_event('flipper_cancel')
         self.hit_switch_and_run('switch9', .1)

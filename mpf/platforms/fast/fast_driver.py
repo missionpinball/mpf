@@ -2,6 +2,7 @@
 import logging
 from copy import copy
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
@@ -9,8 +10,8 @@ from mpf.exceptions.config_file_error import ConfigFileError
 from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.fast.fast import \
         FastHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 

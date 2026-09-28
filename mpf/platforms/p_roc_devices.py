@@ -1,5 +1,5 @@
 """P-Roc hardware platform devices."""
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 
 import asyncio
 import logging
@@ -14,8 +14,8 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.p_roc_common import PROCBasePlatform     # pylint: disable-msg=cyclic-import,unused-import
 
 

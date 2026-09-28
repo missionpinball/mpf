@@ -1,11 +1,12 @@
 """Parse config_spec."""
-from pkg_resources import iter_entry_points
+from typing import TYPE_CHECKING
+import importlib.metadata
 
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.device import Device  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -37,7 +38,8 @@ class ConfigSpecLoader:
     @staticmethod
     def load_external_platform_config_specs(config):
         """Load config spec for external platforms."""
-        for platform_entry in iter_entry_points(group='mpf.platforms'):
+        eps = importlib.metadata.entry_points(group='mpf.platforms')
+        for platform_entry in eps:
             config_spec = platform_entry.load().get_config_spec()
 
             if config_spec:

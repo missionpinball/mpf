@@ -26,7 +26,7 @@ class PickleInterface(FileInterface):
                 raise
             return None
 
-    def save(self, filename, data):
+    def save(self, filename, data, _):
         """Save data to binary file."""
         with open(filename, "wb") as f:
             pickle.dump(data, f)

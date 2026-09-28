@@ -1,0 +1,18 @@
+#config_version=6
+
+dc_motors:
+  test_motor_1:
+    number: 1
+    platform: default
+    default_power: 1.0
+    control_events:
+      trigger_motor_1_pulse_event:
+        action: pulse
+        power: 0.75
+        duration: 1.5s
+      trigger_motor_1_reverse_pulse_event:
+        action: reverse_pulse
+        power: 0.5
+        duration: 2.5s
+      kill_motor_1_motion_event:
+        action: stop

@@ -1,5 +1,8 @@
 import unittest
+import os
+from unittest.mock import patch, mock_open, MagicMock
 from ruamel.yaml.constructor import DuplicateKeyError
+
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 
@@ -57,3 +60,33 @@ int_1: 123
                 raise AssertionError('YAML value "{}" is {}, not {}'.format(v,
                     type(v), eval(k.split('_')[0])))
             self.assertEqual(values[k], v)
+
+    @patch("mpf.file_interfaces.yaml_interface.open", new_callable=mock_open)
+    @patch("os.fsync")
+    def test_yaml_save_triggers_fsync(self, mock_os_fsync, mock_file_open):
+        """Verify that saving a file forces a flush and an os.fsync call."""
+        interface = YamlInterface()
+        interface.log = MagicMock()
+
+        mock_file_handle = mock_file_open.return_value
+        mock_file_handle.fileno.return_value = 42
+
+        interface.save("test_durability.yaml", {"high_score": 100000}, True)
+
+        mock_file_handle.flush.assert_called()
+        mock_os_fsync.assert_called_once_with(42)
+        interface.log.error.assert_not_called()
+
+    @patch("mpf.file_interfaces.yaml_interface.open", new_callable=mock_open)
+    @patch("os.fsync")
+    def test_yaml_save_handles_fsync_os_error_gracefully(self, mock_os_fsync, mock_file_open):
+        """Ensure that if the OS throws an error during fsync, it is logged and caught."""
+        interface = YamlInterface()
+        interface.log = MagicMock()
+
+        mock_file_handle = mock_file_open.return_value
+        mock_file_handle.fileno.return_value = 42
+        mock_os_fsync.side_effect = OSError(5, "Input/output error")
+
+        interface.save("broken_disk.yaml", {"high_score": 100000}, True)
+        interface.log.error.assert_called_once()

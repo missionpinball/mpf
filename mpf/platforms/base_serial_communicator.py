@@ -1,5 +1,5 @@
 """Base class for serial communicator."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import asyncio
 from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
@@ -7,8 +7,7 @@ from serial import SerialException, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from mpf.core.utility_functions import Util
 
 
-MYPY = False
-if MYPY:   # pragma: no cover
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 HEX_FORMAT = " 0x%02x"

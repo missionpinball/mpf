@@ -1,5 +1,5 @@
 """A digital output on either a light or driver platform."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
@@ -7,8 +7,8 @@ from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.platform import ShakerPlatform    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.interfaces.shaker_platform_interface import ShakerPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; #noqa
 
@@ -36,13 +36,16 @@ class Shaker(SystemWideDevice):
         self.platform.assert_has_feature("shakers")
         self.hw_shaker = await self.platform.configure_shaker(self.config['number'], self.config['platform_settings'])
         for event, config in self.config['control_events'].items():
-            if config.get('action') == 'stop':
+            action = config.get('action')
+            if action == 'stop':
                 self.machine.events.add_handler(event, self.event_stop)
-                continue
-            self.machine.events.add_handler(event,
-                                            self.event_pulse,
-                                            power=config.get('power'),
-                                            duration=config['duration'].evaluate({}))
+            elif action == 'pulse' or action is None:
+                self.machine.events.add_handler(event,
+                                                self.event_pulse,
+                                                power=config.get('power'),
+                                                duration=config['duration'].evaluate({}))
+            else:
+                self.raise_config_error("Invalid action in shaker '{}'".format(action), 1)
 
     @event_handler(1)
     def event_pulse(self, duration=None, power=None, **kwargs):

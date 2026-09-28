@@ -76,6 +76,11 @@ BREAKOUT_FEATURES = {
         'min_fw': '0.44',
         'shaker_ports': 1
     },
+    'FP-EXP-0051': {
+        'min_fw': '0.48',
+        'led_ports': 4,
+        'motor_ports': 2
+    },
     'FP-EXP-0061': {
         'min_fw': '0.48',
         'led_ports': 4,

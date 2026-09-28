@@ -1,5 +1,5 @@
 """Device that implements a ball save."""
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -8,8 +8,8 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 

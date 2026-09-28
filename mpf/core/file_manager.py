@@ -3,11 +3,13 @@
 import logging
 import os
 
+from typing import TYPE_CHECKING
+
 from mpf.file_interfaces.pickle_interface import PickleInterface
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import Dict, List  # pylint: disable-msg=cyclic-import,unused-import
 
 
@@ -20,7 +22,6 @@ class FileManager:
     log = logging.getLogger('FileManager')
     file_interfaces = dict()    # type: Dict[str, YamlInterface]
     initialized = False
-    is_busy = False
 
     @classmethod
     def init(cls):
@@ -105,27 +106,30 @@ class FileManager:
         return interface.load(file, verify_version, halt_on_error)
 
     @staticmethod
-    def save(filename, data):
+    def save(filename, data, use_fsync):
         """Save data to file."""
         if not FileManager.initialized:
             FileManager.init()
 
-        # FileManager is a singleton and many threads may attempt to write
-        # concurrently. Ruamel has a known issue where concurrent writes
-        # on a YamlInterface will throw. Set a flag to prevent multiple
-        # data writes concurrently.
-        # TODO: Create FileManager instances for each DataManager instance.
-        FileManager.is_busy = True
         ext = os.path.splitext(filename)[1]
 
         # save to temp file and move afterwards. prevents broken files
         temp_file = os.path.dirname(filename) + os.sep + "_" + os.path.basename(filename)
 
         try:
-            FileManager.file_interfaces[ext].save(temp_file, data)
+            FileManager.file_interfaces[ext].save(temp_file, data, use_fsync)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
         # move temp file
         os.replace(temp_file, filename)
-        FileManager.is_busy = False
+
+        if use_fsync:
+            try:
+                directory = os.open(os.path.dirname(os.path.abspath(filename)), os.O_RDONLY)
+                try:
+                    os.fsync(directory)
+                finally:
+                    os.close(directory)
+            except (OSError, TypeError) as e:
+                FileManager.log.debug("Directory fsync failed for file %s - %s", filename, e)

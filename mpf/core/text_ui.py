@@ -2,6 +2,8 @@
 from collections import defaultdict
 
 from datetime import datetime
+from typing import TYPE_CHECKING
+
 from psutil import cpu_percent, virtual_memory, Process
 
 import mpf._version
@@ -24,8 +26,8 @@ except ImportError:
     Widget = None
     Screen = None
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from typing import List, Tuple, Dict  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import,ungrouped-imports
     from mpf.devices.ball_device.ball_device \

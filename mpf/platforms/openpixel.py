@@ -3,15 +3,15 @@
 The python code to build the OPC message packet came from here:
 https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import logging
 
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

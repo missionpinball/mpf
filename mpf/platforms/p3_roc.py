@@ -12,7 +12,7 @@ https://github.com/preble/pyprocgame
 import asyncio
 import logging
 
-from typing import Dict, List, Optional  # pylint: disable-msg=cyclic-import,unused-import
+from typing import Dict, List, Optional, TYPE_CHECKING  # pylint: disable-msg=cyclic-import,unused-import
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
@@ -25,8 +25,8 @@ from mpf.platforms.interfaces.accelerometer_platform_interface import Accelerome
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.accelerometer import Accelerometer     # pylint: disable-msg=cyclic-import,unused-import
 
 WRITE_DATA_FORMAT = "Setting 0x02 %s to %s"

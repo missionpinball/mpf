@@ -1,15 +1,15 @@
 """Contains the MachineVariables class."""
 import copy
 from platform import platform, python_version, system, release, version, system_alias, machine as platform_machine
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from mpf._version import version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.data_manager import DataManager
 from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 
