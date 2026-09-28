@@ -1446,6 +1446,7 @@ shots:
     switches: list|machine(switches)|None
     start_enabled: single|bool|None
     delay_switch: dict|machine(switches):ms|None
+    delay_event_list: dict|event_handler:ms|None
     persist_enable: single|bool|true
     playfield: single|machine(playfields)|playfield
     priority: single|int|0
@@ -1460,6 +1461,8 @@ shots:
     show_tokens: dict|str:template_str|None
 shot_control_events:
     events: list|event_handler|
+    action: single|enum(set_state,mute)|set_state
+    duration: single|template_ms|None
     state: single|int|
     force: single|bool|true
     force_show: single|bool|false
