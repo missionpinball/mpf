@@ -121,9 +121,16 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
             info_string += f"{port.upper()}: {self.serial_connections[port].remote_model} " + \
                 f"v{self.serial_connections[port].remote_firmware}\n"
 
-        info_string += "\nI/O Boards:\n"
-        for board in self.io_boards.values():
-            info_string += board.get_description_string() + "\n"
+        if self.io_boards.values():
+            info_string += "\nI/O Boards:\n"
+            for board in self.io_boards.values():
+                info_string += board.get_description_string() + "\n"
+
+        if self.exp_boards_by_name.values():
+            info_string += "\nEXP Boards:\n"
+            for board in self.exp_boards_by_name.values():
+                info_string += board.get_description_string() + "\n"
+
         return info_string
 
     async def initialize(self):
@@ -1018,5 +1025,4 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
     def report_soft_power_down_request(self):
         """Neuron soft power requesting shutdown."""
-        self.warning_log("Neuron soft power down requested.")
-        self.machine.request_soft_shutdown()
+        self.machine.events.post("request_soft_shutdown", reason="FAST Neuron soft power down button")
