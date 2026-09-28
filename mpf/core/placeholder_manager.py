@@ -7,15 +7,15 @@ import abc
 from functools import lru_cache, partial
 
 import re
-from typing import Tuple, List, Any, Union
+from typing import Tuple, List, Any, Union, TYPE_CHECKING
 
 from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
 from mpf.exceptions.config_file_error import ConfigFileError
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

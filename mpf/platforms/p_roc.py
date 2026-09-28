@@ -12,7 +12,7 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 """
-from typing import Dict
+from typing import Dict, TYPE_CHECKING
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform
 from mpf.devices.segment_display.segment_display_text import ColoredSegmentDisplayText
@@ -22,8 +22,8 @@ from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

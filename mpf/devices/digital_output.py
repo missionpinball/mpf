@@ -1,5 +1,5 @@
 """A digital output on either a light or driver platform."""
-from typing import Union, Optional
+from typing import Union, Optional, TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.events import event_handler
@@ -9,8 +9,8 @@ from mpf.core.platform import DriverConfig, LightConfig, LightConfigColors
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.platform import DriverPlatform, LightsPlatform    # pylint: disable-msg=cyclic-import,unused-import
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface  # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface    # pylint: disable-msg=cyclic-import,unused-import; # noqa

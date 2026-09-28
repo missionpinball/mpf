@@ -1,6 +1,6 @@
 """Physical segment displays."""
 from asyncio import Future
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, TYPE_CHECKING
 
 from mpf.core.clock import PeriodicTask
 from mpf.core.rgb_color import RGBColor
@@ -14,8 +14,8 @@ from mpf.devices.segment_display.segment_display_text import SegmentDisplayText,
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
 from mpf.plugins.virtual_segment_display_connector import VirtualSegmentDisplayConnector
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface     # pylint: disable-msg=cyclic-import,unused-import; # noqa
     from mpf.core.platform import SegmentDisplayPlatform    # pylint: disable-msg=cyclic-import,unused-import; # noqa
 

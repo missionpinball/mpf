@@ -4,11 +4,11 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from mpf.core.utility_functions import Util
 
-MYPY = False
-if MYPY:    # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.ball_device.ball_count_handler import BallCountHandler     # pylint: disable-msg=cyclic-import,unused-import; # noqa

@@ -1,11 +1,12 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
+from typing import TYPE_CHECKING
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.core.plugin import MpfPlugin
 from mpf.devices.shot import Shot
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from typing import Any, Set     # pylint: disable-msg=cyclic-import,unused-import
 

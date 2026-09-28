@@ -1,13 +1,13 @@
 """Classes which manage BCP transports."""
 from collections import defaultdict
 
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from mpf.core.bcp.bcp_client import BaseBcpClient
 from mpf.core.utility_functions import Util
 
-MYPY = False  # noqa
-if MYPY:
+  # noqa
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

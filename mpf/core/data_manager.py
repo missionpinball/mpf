@@ -3,6 +3,7 @@
 import copy
 import os
 import errno
+import sys
 import threading
 import time
 import _thread
@@ -17,10 +18,10 @@ class DataManager(MpfController):
 
     config_name = "data_manager"
 
-    __slots__ = ["name", "min_wait_secs", "filename", "data", "_dirty"]
+    __slots__ = ["config", "name", "min_wait_secs", "filename", "data", "_dirty", "use_fsync"]
 
     def __init__(self, machine, name, min_wait_secs=1):
-        """Initialize data manger.
+        """Initialize data manager.
 
         The DataManager is responsible for reading and writing data to/from a
         file on disk.
@@ -47,6 +48,14 @@ class DataManager(MpfController):
                                          self.machine.config['mpf']['paths'][name])
         else:
             raise AssertionError("Invalid path {} for {}".format(config_path, name))
+
+        self.config = self.machine.config_validator.validate_config(
+            "data_manager", self.machine.config.get('data_manager'))
+
+        maybe_use_fsync = self.config.get('use_fsync', None)
+        if maybe_use_fsync is None:
+            maybe_use_fsync = sys.platform != 'win32'
+        self.use_fsync = maybe_use_fsync
 
         self.data = dict()
         self._dirty = threading.Event()
@@ -116,29 +125,22 @@ class DataManager(MpfController):
 
     def _writing_thread(self):  # pragma: no cover
         # prevent early writes at start-up
-        data = None
         time.sleep(self.min_wait_secs)
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
-            while FileManager.is_busy:
-                time.sleep(0.2)
             self._dirty.clear()
 
-            data = copy.deepcopy(self.data)
             # save data
             try:
-                FileManager.save(self.filename, data)
+                FileManager.save(self.filename, copy.deepcopy(self.data), self.use_fsync)
             except Exception as e:  # pylint: disable=broad-exception-caught
                 # If the file writer has an exception handle it here. Otherwise
                 # this thread will die and all subsequent write attempts will no-op.
                 self.info_log("ERROR writing file %s: %s", self.filename, e)
-            data = None
             # prevent too many writes
             time.sleep(self.min_wait_secs)
 
         # if dirty write data one last time during shutdown
-        if data and self._dirty.is_set():
-            while FileManager.is_busy:
-                time.sleep(0.2)
-            FileManager.save(self.filename, data)
+        if self._dirty.is_set():
+            FileManager.save(self.filename, copy.deepcopy(self.data), self.use_fsync)

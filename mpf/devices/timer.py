@@ -1,5 +1,5 @@
 """Mode timers."""
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.delays import DelayManager
@@ -7,8 +7,8 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.mode import Mode
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.clock import PeriodicTask     # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.events import EventHandlerKey     # pylint: disable-msg=cyclic-import,unused-import

@@ -1,1 +1,0 @@
-"""Contains twitch bot components."""

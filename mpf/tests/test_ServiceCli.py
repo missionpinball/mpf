@@ -135,7 +135,7 @@ on;['led', 'leds', 'light', 'lights'];
         self.assertEqual("pulsed_10", self.machine.coils["c_test"].hw_driver.state)
 
         cli.onecmd("coil_enable c_test")
-        self.assertEqual("Error: Cannot enable driver with hold_power 0.0\n", self._last_write())
+        self.assertEqual("Error: Cannot enable driver c_test with hold_power 0.0\n", self._last_write())
 
         cli.onecmd("coil_enable c_test6")
         self.assertEqual("Success\n", self._last_write())

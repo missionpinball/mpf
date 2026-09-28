@@ -22,7 +22,7 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     MAX_IO_BOARDS = 9
     MAX_SWITCHES = 104
     MAX_DRIVERS = 48
-    IGNORED_MESSAGES = ['WD:P', 'TL:P']
+    IGNORED_MESSAGES = ['TL:P']
     TRIGGER_CMD = 'TL'
     DRIVER_CMD = 'DL'
     SWITCH_CMD = 'SL'
@@ -37,6 +37,8 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         self.switches = list()
         self.drivers = list()
 
+        self.message_processors['WD:'] = self._process_wd
+        self.message_processors['WP:'] = self._process_wp
         self.message_processors['SA:'] = self._process_sa
         self.message_processors['CH:'] = self._process_ch
         self.message_processors['!B:'] = self._process_boot_message
@@ -268,6 +270,23 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
         """Process an SA: message and update switch states."""
         await self.send_and_wait_for_response_processed('SA:', 'SA:')
 
+    def _process_wp(self, msg):
+        if msg == 'P':
+            if not self.platform.soft_power_held_time:
+                self.platform.soft_power_held_time = self.machine.clock.get_time()
+                self.info_log('Soft power down press started.')
+                self.machine.events.post('fast_soft_power_switch_active')
+
+    def _process_wd(self, msg):
+        if msg == 'P':
+            if self.platform.soft_power_held_time:
+                delta_seconds = self.machine.clock.get_time() - self.platform.soft_power_held_time
+                self.machine.events.post('fast_soft_power_switch_inactive')
+                self.platform.soft_power_held_time = None
+                self.info_log('Soft power down released after %s seconds.', delta_seconds)
+                if delta_seconds * 1000 > self.platform.soft_power_hold_ms:
+                    self.platform.report_soft_power_down_request()
+
     def _process_sa(self, msg):
         if not self.platform.switches_initialized:
             # This means the switches have not been initialized and this data is garbage
@@ -338,3 +357,13 @@ class FastNetNeuronCommunicator(FastSerialCommunicator):
     def stopping(self):
         """Stop the Neuron processor and disable the watchdog."""
         self.send_and_forget('WD:1')
+
+        if self.machine.soft_power_down_active:
+            delay_ms = self.platform.soft_power_down_final_delay_ms
+            hex_ms = f"{delay_ms:X}"
+
+            # Command WP:<ms> - inform the Neuron that a soft powerdown has been requested
+            # Note: if the Neuron is not running on soft power this will do nothing
+            # If the Neuron is using soft power, the powerdown will happen in the given number
+            # of milliseconds. This cannot be aborted, but can be extended by issuing further WPs
+            self.send_and_forget(f'WP:{hex_ms}')

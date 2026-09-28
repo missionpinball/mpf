@@ -13,9 +13,11 @@ auditor:
     events:
         - test_event1
         - test_event2
+        - test_event2  # duplicate should get deduped with set
     player:
         - my_var
         - optional_var
+        - score  # dedups
 
 modes:
     - base

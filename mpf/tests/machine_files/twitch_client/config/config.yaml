@@ -1,6 +1,0 @@
-#config_version=6
-
-twitch_client:
-  user: jan
-  password: MPF
-  channel: MPF-rocks

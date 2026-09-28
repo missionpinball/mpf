@@ -1,14 +1,13 @@
 """Contains the LogMixin class."""
 import logging
 from logging import Logger
-from typing import NoReturn
+from typing import NoReturn, TYPE_CHECKING
 
 from mpf.exceptions.config_file_error import ConfigFileError
 from mpf._version import log_url
 
-MYPY = False
 
-if MYPY:   # pragma: no cover
+if TYPE_CHECKING:
     from typing import Optional  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
@@ -33,7 +32,7 @@ class LogMixin:
         self._debug = False
         self._url_base = None   # type: Optional[str]
 
-        if MYPY:
+        if TYPE_CHECKING:
             self.machine = self.machine     # type: MachineController # noqa
 
         logging.addLevelName(21, "INFO")

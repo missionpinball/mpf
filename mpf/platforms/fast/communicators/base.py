@@ -11,6 +11,16 @@ from mpf.core.utility_functions import Util
 
 MIN_FW = version.parse('0.00')  # override in subclass
 
+# After a response wait_for() times out, yield the event loop at most this many
+# passes (re-checking done_waiting) before treating it as a real timeout. Under
+# cooperative scheduling the timeout timer and the inbound response bytes can
+# become ready in the same pass, so wait_for() raises while the reply is still a
+# few parse callbacks from being handled; letting the loop settle lets it land
+# instead of triggering a spurious resend. The observed worst case (a board's
+# full init parse chain) was ~6 passes; 20 leaves margin. Each pass is just an
+# asyncio.sleep(0) yield, so only a genuinely lost response runs the full count.
+RESPONSE_SETTLE_PASSES = 20
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class FastSerialCommunicator(LogMixin):
@@ -64,10 +74,12 @@ class FastSerialCommunicator(LogMixin):
         else:
             self.watchdog_cmd = None
 
-        # TODO change these to not be hardcoded
-        # TODO do something with the URL endpoint
-        self.configure_logging(logger=f'FAST [{self.remote_processor}]', console_level=config['debug'],
-                               file_level=config['debug'], url_base='https://fastpinball.com/mpf/error')
+        if config['debug']:
+            config['console_log'] = 'full'
+            config['file_log'] = 'full'
+
+        self.configure_logging(logger=f'FAST [{self.remote_processor}]', console_level=config['console_log'],
+                               file_level=config['file_log'], url_base='https://fastpinball.com/mpf/error')
 
     def __repr__(self):
         """Return representation of FAST processor."""
@@ -134,6 +146,13 @@ class FastSerialCommunicator(LogMixin):
 
         await self.clear_board_serial_buffer()
 
+        # reset_input_buffer() above only flushes what was buffered at that
+        # instant. After an unclean shutdown the board can still be clocking out
+        # leftover bytes (often un-terminated binary LED data) that arrive just
+        # afterwards. Drain until the stream goes quiet so the first handshake
+        # response isn't fused onto the tail of that garbage.
+        await self._drain_serial()
+
         self.ignore_decode_errors = False
 
         self.write_task = asyncio.create_task(self._socket_writer())
@@ -145,6 +164,33 @@ class FastSerialCommunicator(LogMixin):
     async def clear_board_serial_buffer(self):
         """Clear out the serial buffer."""
         self.write_to_port(b'\r\r\r\r')
+
+    async def _drain_serial(self, quiet_period=0.1, max_drain_time=2.0):
+        """Read and discard inbound bytes until the serial stream goes quiet.
+
+        After an unclean shutdown (e.g. Ctrl-C mid LED-blast) the board or OS
+        buffer can still hold a burst of leftover bytes with no trailing <CR>.
+        If that reaches the parser it fuses onto the front of the next real
+        message (``<junk>ID:exp ...``), so the response is dropped or raises a
+        decode error. This runs before the read loop starts, so it can read the
+        stream directly: keep reading until nothing has arrived for
+        ``quiet_period`` seconds, bounded by ``max_drain_time`` total.
+        """
+        deadline = self.machine.clock.loop.time() + max_drain_time
+        while True:
+            try:
+                chunk = await asyncio.wait_for(self.reader.read(1024), quiet_period)
+            except asyncio.TimeoutError:
+                return  # nothing for quiet_period -> stream is drained
+            if not chunk:
+                return  # port closed; the normal read path will report it
+            if self.port_debug:
+                self.log.info("Drained %s leftover serial byte(s): %s", len(chunk), chunk)
+            if self.machine.clock.loop.time() >= deadline:
+                self.log.warning(
+                    "Serial port still producing data after %ss; proceeding with handshake anyway.",
+                    max_drain_time)
+                return
 
     async def init(self):
         """Initialize the communicator with any board-specific logic."""
@@ -267,7 +313,7 @@ class FastSerialCommunicator(LogMixin):
 
     # pylint: disable-msg=too-many-arguments
     async def send_and_wait_for_response_processed(self, msg, pause_sending_until, timeout=1,
-                                                   max_retries=0, log_msg=None):
+                                                   max_retries=3, log_msg=None):
         """Send a message and wait for the response to be processed.
 
         Unlike send_and_wait_for_response(), this method will not release the wait when the response is received.
@@ -283,7 +329,9 @@ class FastSerialCommunicator(LogMixin):
                 If a response is not received by then (based on the pause_sending_until), the message will be resent.
                 Defaults to 1.
             max_retries (int, optional): How many times the message will be resent if the response is not
-                received by the timeout. -1 means unlimited retries. Defaults to 0.
+                received by the timeout. -1 means unlimited retries. Defaults to 3. Commands on this path
+                should be idempotent, since a retry resends them; when retries are exhausted an
+                AssertionError is raised rather than hanging.
             log_msg (_type_, optional): Optional version of the message that will be used in logs.
                 Typically used with binary messages so the longs can contain human readable versions.
                 Defaults to None which means the actual msg will be used in the logs.
@@ -293,15 +341,45 @@ class FastSerialCommunicator(LogMixin):
         retries = 0
 
         while max_retries == -1 or retries <= max_retries:
-            try:
-                await asyncio.wait_for(self.send_and_wait_for_response(msg, pause_sending_until,
-                                                                       log_msg), timeout=timeout)
-                break
-            except asyncio.TimeoutError:
-                self.log.error("Timeout waiting for response to %s. Retrying...", msg)
-                retries += 1
+            await self.send_and_wait_for_response(msg, pause_sending_until, log_msg)
+            # done_waiting is set by done_processing_msg_response() once the
+            # reply has been handled; wait for it with a timeout so a lost
+            # response can't hang here forever.
+            if await self._wait_for_processed(timeout):
+                return
 
-        await self.done_waiting.wait()
+            self.log.error("Timeout waiting for response to %s. Retrying...", msg)
+            # Timing out means the writer is stuck paused but we don't expect any
+            # more response. To avoid deadlocking, release no_response_waiting and
+            # clear pause_sending_flag/until.
+            self._resume_sending()
+            self.no_response_waiting.set()
+            retries += 1
+
+        raise AssertionError(
+            f"FAST board on {self.config['port']} never responded to '{msg}' after {retries} attempt(s)")
+
+    async def _wait_for_processed(self, timeout):
+        """Wait up to ``timeout`` seconds for the response to be processed.
+
+        Returns True if done_processing_msg_response() fired, False on timeout.
+
+        A response delivered right at the deadline can still be a couple of
+        callbacks short of being processed when wait_for() times out (under
+        cooperative scheduling the timeout and the inbound bytes can become
+        ready in the same loop pass). Let the loop settle and re-check before
+        declaring a real timeout, so we don't resend — and double-process — a
+        response that actually arrived.
+        """
+        try:
+            await asyncio.wait_for(self.done_waiting.wait(), timeout)
+            return True
+        except asyncio.TimeoutError:
+            for _ in range(RESPONSE_SETTLE_PASSES):
+                await asyncio.sleep(0)
+                if self.done_waiting.is_set():
+                    return True
+            return False
 
     def done_processing_msg_response(self):
         """Releases the wait for the response to be processed.

@@ -1,13 +1,15 @@
 """PKONE Lights."""
 import logging
+from typing import TYPE_CHECKING
+
 from collections import namedtuple
 
 from mpf.core.platform import LightConfig
 from mpf.core.platform_batch_light_system import PlatformBatchLight, PlatformBatchLightSystem
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
-MYPY = False
-if MYPY:  # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.platforms.pkone.pkone import PKONEHardwarePlatform  # pylint: disable-msg=cyclic-import,unused-import
 
 PKONESimpleLEDNumber = namedtuple("PKONESimpleLEDNumber", ["board_address_id", "led_number"])

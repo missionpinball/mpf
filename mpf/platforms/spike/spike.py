@@ -1333,8 +1333,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
         # spike seems to check if bridge_version is > 0.3.0 but that does not work for us as we saw
         # 1.0.5 in older spike machines (i.e. GoT) which used the the old version
         # we use 1.0.0 > version > 0.3.0 instead
-        version = bridge_version[0] << 16 + bridge_version[1] << 8 + bridge_version[2]
-        use_new_version = 0x010000 > version > 0x300
+        version_tuple = tuple(bridge_version[:3])
+        use_new_version = (1, 0, 0) > version_tuple > (0, 3, 0)
         if use_new_version:
             await self.send_cmd_raw([SpikeNodebus.GetBridgeStatus, 0, 4], 0)
             bridge_status = await self._read_raw(4)
@@ -1360,7 +1360,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform,
             self.ticks_per_sec[node] = (fw_version[9] << 8) + fw_version[8]
 
             # remember firmware version of node
-            self.node_firmware_version[node] = fw_version[1] << 16 | fw_version[2] << 8 | fw_version[3]
+            self.node_firmware_version[node] = (fw_version[1] << 16) | (fw_version[2] << 8) | fw_version[3]
 
             self.debug_log("GetFullID on node %s", node)
             full_board_id_0 = await self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetFullBoardId,

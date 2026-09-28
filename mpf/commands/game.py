@@ -31,13 +31,11 @@ class Command:
         self.machine = None
         self._sigint_count = 0
 
-        parser = argparse.ArgumentParser(
-            description='Starts the MPF game engine')
+        parser = argparse.ArgumentParser(description='Starts the MPF game engine')
 
         parser.add_argument("-a",
                             action="store_true", dest="no_load_cache",
-                            help="Forces the config to be loaded from files "
-                                 "and not cache")
+                            help="Forces the config to be loaded from files and not cache")
 
         parser.add_argument("-A",
                             action="store_false", dest="create_config_cache",
@@ -45,24 +43,24 @@ class Command:
 
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,
-                            help="Runs MPF without making a connection "
-                                 "attempt to a BCP Server")
+                            help="Runs MPF without making a connection attempt to a BCP Server")
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
                             default="config.yaml", metavar='config_file',
-                            help="The name of a config file to load. Default "
-                                 "is "
-                                 "config.yaml. Multiple files can be used "
-                                 "via a comma-"
+                            help="The name of a config file to load. Default is "
+                                 "config.yaml. Multiple files can be used via a comma-"
                                  "separated list (no spaces between)")
+
+        parser.add_argument("-e",
+                            action="store_false", dest="echo_args", default=True,
+                            help="Stop logging the raw command line arguments on startup.")
 
         parser.add_argument("-f",
                             action="store_true", dest="force_assets_load",
                             default=False,
                             help="Load all assets upon startup.  Useful for "
-                            "ensuring all assets are set up properly "
-                            "during development.")
+                            "ensuring all assets are set up properly during development.")
 
         parser.add_argument("-pit", action="store", dest="platform_integration_test",
                             metavar='pit_file', default=False,
@@ -91,8 +89,8 @@ class Command:
 
         parser.add_argument("-P",
                             action="store_true", dest="production", default=False,
-                            help="Production mode. Will suppress errors, wait for hardware on start and "
-                                 "try to exit when startup fails. Run this inside a loop.")
+                            help="Production mode. Will suppress errors, wait for hardware on start "
+                                 "and try to exit when startup fails. Run this inside a loop.")
 
         parser.add_argument("-t",
                             action="store_false", dest='text_ui', default=True,
@@ -102,43 +100,35 @@ class Command:
                             action="store_const", dest="loglevel",
                             const=logging.DEBUG,
                             default=15,
-                            help="Enables verbose logging to the"
-                                 " log file")
+                            help="Enables verbose logging to the log file")
 
         parser.add_argument("-V",
                             action="store_const", dest="consoleloglevel",
                             const=logging.DEBUG,
                             default=logging.INFO,
                             help="Enables verbose logging to the console. DO "
-                                 "NOTE: you must also use -v for "
-                                 "this to work.")
+                                 "NOTE: you must also use -v for this to work.")
 
         parser.add_argument("-x",
                             action="store_const", dest="force_platform",
                             const='virtual',
-                            help="Forces the virtual platform to be "
-                                 "used for all devices")
+                            help="Forces the virtual platform to be used for all devices")
 
         parser.add_argument("--vpx",
                             action="store_const", dest="force_platform",
                             const='virtual_pinball',
-                            help="Forces the virtual_pinball platform to be "
-                                 "used for all devices")
+                            help="Forces the virtual_pinball platform to be used for all devices")
 
         parser.add_argument("--syslog_address",
                             action="store", dest="syslog_address",
-                            help="Log to the specified syslog address. This "
-                                 "can be a domain socket such as /dev/og on "
-                                 "Linux or /var/run/syslog on Mac. "
-                                 "Alternatively, you an specify host:port for "
-                                 "remote logging over UDP.")
+                            help="Log to the specified syslog address. This can be a domain socket "
+                                 "such as /dev/og on Linux or /var/run/syslog on Mac. Alternatively, "
+                                 "you an specify host:port for remote logging over UDP.")
 
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
                             const='smart_virtual',
-                            help="Forces the smart virtual platform to be "
-                                 "used for all"
-                                 " devices")
+                            help="Forces the smart virtual platform to be used for all devices")
 
         # The following are just included for full compatibility with mc
         # which is needed when using "mpf both".
@@ -180,6 +170,8 @@ class Command:
         console_log.setFormatter(logging.Formatter(
             '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
 
+        console_log.addFilter(ConsoleCustomLevelFilter())
+
         # initialize async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
@@ -194,6 +186,7 @@ class Command:
         else:
             formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         file_log.setFormatter(formatter)
+        file_log.addFilter(FileCustomLevelFilter())
 
         # initialize async handler for file log
         file_log_queue = Queue()
@@ -220,6 +213,10 @@ class Command:
             logger.addHandler(syslog_logger)
 
         signal.signal(signal.SIGINT, self.sigint_handler)
+
+        if self.args.echo_args:
+            raw_cmd = " ".join(args) if args else "[None]"
+            logger.info("Raw command line: %s", raw_cmd)
 
         if not self.args.production:
             config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
@@ -248,6 +245,8 @@ class Command:
     def sigint_handler(self, signum=None, frame=None):
         """Handle SIGINT."""
         del signum, frame
+        if self.machine:
+            self.machine.error_log("SIGINT received")
         self._sigint_count += 1
         if self._sigint_count > 1:
             self.exit("Received second SIGINT. Will exit ungracefully!")
@@ -280,3 +279,25 @@ class Command:
             input('Press ENTER to continue...')     # nosec
 
         sys.exit()
+
+
+class ConsoleCustomLevelFilter(logging.Filter):
+
+    """Filters out custom levels meant strictly for files."""
+
+    def filter(self, record):
+        """Filters: 11 = DEBUG (File Only), 21 = INFO (File Only)."""
+        if record.levelno in (11, 21):
+            return False
+        return True
+
+
+class FileCustomLevelFilter(logging.Filter):
+
+    """Filters out custom levels meant strictly for console."""
+
+    def filter(self, record):
+        """Filters: 12 = DEBUG (Console Only), 22 = INFO (Console Only)."""
+        if record.levelno in (12, 22):
+            return False
+        return True

@@ -1,5 +1,6 @@
 """Segment Display serial communicator interface."""
 # mpf/platforms/fast/communicators/seg.py
+from typing import TYPE_CHECKING
 
 from packaging import version
 
@@ -7,8 +8,8 @@ from mpf.platforms.fast.communicators.base import FastSerialCommunicator
 
 MIN_FW = version.parse('0.01')         # Minimum FW for a Segment Display
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.core.machine import MachineController  # pylint: disable-msg=cyclic-import,unused-import
 
 

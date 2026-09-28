@@ -1,5 +1,5 @@
 """Contains the BallLock device class."""
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from mpf.core.enable_disable_mixin import EnableDisableMixin
 
@@ -7,8 +7,8 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 
-MYPY = False
-if MYPY:   # pragma: no cover
+
+if TYPE_CHECKING:
     from mpf.devices.ball_device.ball_device import BallDevice  # pylint: disable-msg=cyclic-import,unused-import
     from mpf.devices.playfield import Playfield     # pylint: disable-msg=cyclic-import,unused-import
 
