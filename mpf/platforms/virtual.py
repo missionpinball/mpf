@@ -343,6 +343,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del number
         return {}
 
+    def get_info_string(self) -> str:
+        """Provide info on virtual devices."""
+        return 'Virtual Platform'
+
 
 class VirtualI2cDevice(I2cPlatformInterface):
 
