@@ -22,7 +22,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
     class_label = 'sequence_shot'
 
     __slots__ = ["delay", "active_sequences", "active_delays", "_sequence_events", "_delay_events",
-                 "_allow_multiple_active", "_start_time"]
+                 "_allow_multiple_active", "_start_time", "_timeout_reset_on_advance"]
 
     def __init__(self, machine, name):
         """Initialize sequence shot."""
@@ -35,6 +35,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         self._sequence_events = []      # type: List[str]
         self._delay_events = {}         # type: Dict[str, int]
         self._allow_multiple_active = None
+        self._timeout_reset_on_advance = None
         self._start_time = None
 
     @property
@@ -66,6 +67,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
         self._sequence_events = self.config['event_sequence']
         self._allow_multiple_active = self.config['allow_multiple_active']
+        self._timeout_reset_on_advance = self.config['sequence_timeout_reset_on_advance']
 
         for switch in self.config['switch_sequence']:
             self._sequence_events.append(self.machine.switch_controller.get_active_event_for_switch(switch.name))
@@ -180,6 +182,12 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self.debug_log("Advancing the sequence. Next: %s", next_event)
 
             self.active_sequences.append(ActiveSequence(sequence.id, current_position_index, next_event))
+
+            if self._timeout_reset_on_advance:
+                self.delay.reset(name=sequence.id,
+                                 ms=self.config['sequence_timeout'],
+                                 callback=self._sequence_timeout,
+                                 seq_id=sequence.id)
 
     def _completed(self):
         #measure the elapsed time between start and completion of the sequence
