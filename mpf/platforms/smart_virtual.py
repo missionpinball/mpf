@@ -291,6 +291,10 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self._initialize_drop_target_banks()
         self._initialize_score_reels()
 
+    def get_info_string(self) -> str:
+        """Provide info on virtual devices."""
+        return 'Smart Virtual Platform'
+
     def _initialize_score_reels(self):
         for device in self.machine.score_reels.values():
             if device.config['coil_inc'] and isinstance(device.config['coil_inc'].hw_driver, VirtualDriver):
