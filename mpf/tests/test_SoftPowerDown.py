@@ -31,7 +31,7 @@ class TestSoftPowerDown(MpfTestCase):
 
         self.machine.events.add_handler('machine_request_shutdown', veto_handler)
 
-        self.machine.events.post('request_soft_shutdown')
+        self.machine.events.post('request_soft_shutdown', reason='Testing')
         self.advance_time_and_run(1.0)  # Advance far enough to process async handlers
 
         self.assertFalse(self.machine.soft_power_down_active)
