@@ -33,7 +33,8 @@ jobs:
       - name: Install MPF
         run: |
           sudo apt-get install -y libjpeg-dev
-          pip install --upgrade pip setuptools wheel build prospector
+          pip install --upgrade pip setuptools wheel build
+          pip install "prospector==1.19.1" "pylint==4.0.9" # Sept 2026 - minor pylint bumps can introduce backwards-looking rule enforcement. No thank you.
           pip install -e .
 
       - name: Run Prospector
