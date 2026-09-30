@@ -161,7 +161,7 @@ logging:
       data_manager: none  # todo subclasses
       delay_manager: none
       device_manager: none
-      event_manager: none
+      event_manager: basic
       extra_balls: none
       file_manager: none  # todo
       light_controller: none
