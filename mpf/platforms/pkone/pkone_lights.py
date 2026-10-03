@@ -17,7 +17,7 @@ PKONESimpleLEDNumber = namedtuple("PKONESimpleLEDNumber", ["board_address_id", "
 
 class PKONESimpleLED(LightPlatformSoftwareFade):
 
-    """A simple led (single emitter/color) on a PKONE Extension board. Simple leds are either on or off."""
+    """A general-lighting output on a PKONE Lightshow board."""
 
     __slots__ = ["log", "send", "platform"]
 
@@ -46,7 +46,7 @@ class PKONESimpleLED(LightPlatformSoftwareFade):
 
     def get_board_name(self):
         """Return PKONE Lightshow addr."""
-        if self.number.board_address_id not in self.platform.pkone_extensions.keys():
+        if self.number.board_address_id not in self.platform.pkone_lightshows:
             return "PKONE Unknown Board"
         return "PKONE Lightshow Board {}".format(self.number.board_address_id)
 
