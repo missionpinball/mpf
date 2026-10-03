@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from packaging import version
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
-from mpf.platforms.pkone.pkone_extension import PKONEExtensionBoard
+from mpf.platforms.pkone.pkone_ex2 import PKONEEX2Board
 from mpf.platforms.pkone.pkone_switch import PKONESwitchBoard
 from mpf.platforms.pkone.pkone_lightshow import PKONELightshowBoard
 
@@ -14,8 +14,9 @@ from mpf.platforms.pkone.pkone_lightshow import PKONELightshowBoard
 if TYPE_CHECKING:
     from mpf.platforms.pkone.pkone import PKONEHardwarePlatform   # pylint: disable-msg=cyclic-import,unused-import
 
-NANO_MIN_FW = '1.0'
-EXTENSION_MIN_FW = '1.0'
+EX2_USB_MIN_FW = '1.0'
+EX2_MIN_FW = '1.0'
+SWITCH_MIN_FW = '3.0'
 LIGHTSHOW_MIN_FW = '1.0'
 STARTUP_TIMEOUT = 2.0
 MAX_MESSAGE_LENGTH = 1024
@@ -111,31 +112,30 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         self.remote_hardware_rev = match[2]
 
         self.platform.log.info("Connected! "
-                               "Board Type: PKONE Controller, Firmware: %s, Hardware Rev: %s",
+                               "Board Type: PKONE EX2 USB connection, Firmware: %s, Hardware Rev: %s",
                                self.remote_firmware, self.remote_hardware_rev)
 
         self.machine.variables.set_machine_var("pkone_firmware", self.remote_firmware)
         '''machine_var: pkone_firmware
 
-        desc: Holds the version number of the firmware for the Penny K Pinball PKONE controller that's connected.'''
+        desc: Holds the version number returned by the PKONE EX2 USB connection.'''
 
         self.machine.variables.set_machine_var("pkone_hardware",
-                                               "PKONE Controller (rev {})".format(self.remote_hardware_rev))
+                                               "PKONE EX2 (rev {})".format(self.remote_hardware_rev))
         '''machine_var: pkone_hardware
 
-        desc: Holds the model name and hardware revision number of the Penny K Pinball PKONE controller
-        board that's connected.'''
+        desc: Holds the model name and hardware revision of the connected PKONE EX2.'''
 
-        if version.parse(NANO_MIN_FW) > version.parse(self.remote_firmware):
+        if version.parse(EX2_USB_MIN_FW) > version.parse(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires '
-                                 'the PKONE Controller to be firmware {}, but yours is {}. '
+                                 'the connected PKONE EX2 to be firmware {}, but yours is {}. '
                                  'Please update your firmware.'.
-                                 format(NANO_MIN_FW, self.remote_firmware))
+                                 format(EX2_USB_MIN_FW, self.remote_firmware))
 
-        # Reset the Nano controller and connected boards
+        # Reset the EX2 and every board on its CAN chain.
         await self.reset_controller()
 
-        # Determine what additional boards are connected to the Nano controller
+        # Discover EX2, Switch and Lightshow boards on the CAN chain.
         await self.query_pkone_boards()
 
         await self.configure_lightshow_groups()
@@ -149,7 +149,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
         """Reset the controller."""
         self.platform.debug_log('Resetting controller.')
 
-        # this command returns several responses (one from each board, starting with the Nano controller)
+        # This command returns several responses, ending with the EX2 acknowledgement.
         self.writer.write('PRSE'.encode())
         loop = asyncio.get_running_loop()
         deadline = loop.time() + STARTUP_TIMEOUT
@@ -164,13 +164,14 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 raise AssertionError("Unexpected PKONE reset reply: {}".format(msg))
 
     async def query_pkone_boards(self):
-        """Query the NANO processor to discover which additional boards are connected."""
+        """Ask the connected EX2 to discover the PKONE CAN chain."""
         self.platform.debug_log('Querying PKONE boards...')
 
         # Determine connected add-on boards (PCB command)
         # Responses:
-        # Extension board - PCB01XF11H1 = PCB[board number 0-7]XP[Y:48V, N: no 48V]F[firmware rev]H[hardware rev]
-        # Lightshow board - PCB01LF10H1RGBW = PCB[board number 0-3]LF[firmware rev]H[hardware rev][firmware_type]
+        # EX2 - PCB0XF30H20PY = address, firmware, hardware and 48 V state
+        # Switch - PCB1SF30H20I40C00PN = address, 40 inputs, outputs disabled and 48 V state
+        # Lightshow - PCB2LF30H20MIX = address, firmware, hardware and RGB/RGBW capability
         # No board at the address: PCB[board number 0-7]N
         for address_id in range(8):
             self.writer.write('PCB{}E'.format(address_id).encode('ascii', 'replace'))
@@ -185,8 +186,11 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                     raise AssertionError("PKONE Switch board address mismatch")
                 digits = switch.group(2)
                 firmware = digits[:-1] + '.' + digits[-1]
-                self.platform.register_extension_board(
-                    PKONESwitchBoard(address_id, firmware, switch.group(3)))
+                if version.parse(SWITCH_MIN_FW) > version.parse(firmware):
+                    raise AssertionError('Firmware version mismatch. MPF requires PKONE Switch boards '
+                                         'to be at least firmware {}, but yours is {}.'.format(
+                                             SWITCH_MIN_FW, firmware))
+                self.platform.register_switch_board(PKONESwitchBoard(address_id, firmware, switch.group(3)))
                 continue
 
             match = re.fullmatch('PCB([0-7])([XL])F([0-9]+)H([0-9]+)(P[YN])?(RGB|RGBW|MIX)?E', msg)
@@ -196,21 +200,21 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 raise AssertionError("PKONE board address mismatch: requested {}, received {}".format(address_id, msg))
 
             if match.group(2) == "X":
-                # Extension board
+                # EX2 board. X is retained in the on-wire protocol for compatibility.
                 firmware = match.group(3)[:-1] + '.' + match.group(3)[-1]
                 hardware_rev = match.group(4)
 
-                if version.parse(EXTENSION_MIN_FW) > version.parse(firmware):
+                if version.parse(EX2_MIN_FW) > version.parse(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
-                                         'PKONE Extension boards to be at least firmware {}, but yours is {}. '
+                                         'PKONE EX2 boards to be at least firmware {}, but yours is {}. '
                                          'Please update your firmware.'.
-                                         format(EXTENSION_MIN_FW, firmware))
+                                         format(EX2_MIN_FW, firmware))
 
-                self.platform.debug_log('PKONE Extension Board {0}: '
+                self.platform.debug_log('PKONE EX2 Board {0}: '
                                         'Firmware: {1}, Hardware Rev: {2}'.format(address_id,
                                                                                   firmware, hardware_rev))
 
-                self.platform.register_extension_board(PKONEExtensionBoard(address_id, firmware, hardware_rev))
+                self.platform.register_ex2_board(PKONEEX2Board(address_id, firmware, hardware_rev))
 
             elif match.group(2) == "L":
                 # Lightshow board
@@ -268,10 +272,12 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
     async def read_all_switches(self):
         """Read the current state of all switches from the hardware."""
         self.platform.debug_log('Reading all switches.')
-        for address_id in self.platform.pkone_extensions:
+        input_boards = dict(self.platform.pkone_ex2_boards)
+        input_boards.update(self.platform.pkone_switch_boards)
+        for address_id, board in input_boards.items():
             self.writer.write('PSA{}E'.format(address_id).encode())
             msg = await self._wait_for_response('PSA', 'reading switches on board {}'.format(address_id))
-            count = self.platform.pkone_extensions[address_id].switch_count
+            count = board.switch_count
             if not re.fullmatch(r'PSA' + str(address_id) + r'[01]{' + str(count) + r'}E', msg):
                 raise AssertionError("Invalid PKONE switch snapshot for board {}: {}".format(address_id, msg))
             # Runtime parser strips the terminator; startup must do the same.
