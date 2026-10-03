@@ -114,9 +114,9 @@ class TestPKONE(MpfTestCase):
         self.controller = BaseMockPKONE()
 
         self.controller.expected_commands = {
-            'PCN': 'PCNF11H1',          # Nano controller (firmware 1.1, hardware rev 1)
-            'PCB0': 'PCB0XF11H2PY',     # Extension board at ID 0 (firmware 1.1, hardware rev 2, high power on)
-            'PCB1': 'PCB1XF11H2PN',     # Extension board at ID 1 (firmware 1.1, hardware rev 2, high power off)
+            'PCN': 'PCNF11H1',          # EX2 USB connection (firmware 1.1, hardware rev 1)
+            'PCB0': 'PCB0XF11H2PY',     # EX2 board at ID 0 (firmware 1.1, hardware rev 2, high power on)
+            'PCB1': 'PCB1XF11H2PN',     # EX2 board at ID 1 (firmware 1.1, hardware rev 2, high power off)
             'PCB2': 'PCB2LF10H1RGB',    # Lightshow board at ID 2 (RGB firmware 1.0, hardware rev 1)
             'PCB3': 'PCB3LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
             'PCB4': 'PCB4N',
@@ -145,16 +145,16 @@ class TestPKONE(MpfTestCase):
 
         # test add-on board detection
         self.assertIsInstance(self.machine.default_platform, PKONEHardwarePlatform)
-        self.assertEqual(2, len(self.machine.default_platform.pkone_extensions))
-        self.assertEqual(35, self.machine.default_platform.pkone_extensions[0].switch_count)
-        self.assertEqual(10, self.machine.default_platform.pkone_extensions[0].coil_count)
-        self.assertEqual(4, self.machine.default_platform.pkone_extensions[0].servo_count)
-        self.assertEqual(0, self.machine.default_platform.pkone_extensions[0].addr)
+        self.assertEqual(2, len(self.machine.default_platform.pkone_ex2_boards))
+        self.assertEqual(35, self.machine.default_platform.pkone_ex2_boards[0].switch_count)
+        self.assertEqual(10, self.machine.default_platform.pkone_ex2_boards[0].coil_count)
+        self.assertEqual(4, self.machine.default_platform.pkone_ex2_boards[0].servo_count)
+        self.assertEqual(0, self.machine.default_platform.pkone_ex2_boards[0].addr)
 
-        self.assertEqual(35, self.machine.default_platform.pkone_extensions[1].switch_count)
-        self.assertEqual(10, self.machine.default_platform.pkone_extensions[1].coil_count)
-        self.assertEqual(4, self.machine.default_platform.pkone_extensions[1].servo_count)
-        self.assertEqual(1, self.machine.default_platform.pkone_extensions[1].addr)
+        self.assertEqual(35, self.machine.default_platform.pkone_ex2_boards[1].switch_count)
+        self.assertEqual(10, self.machine.default_platform.pkone_ex2_boards[1].coil_count)
+        self.assertEqual(4, self.machine.default_platform.pkone_ex2_boards[1].servo_count)
+        self.assertEqual(1, self.machine.default_platform.pkone_ex2_boards[1].addr)
 
         self.assertEqual(2, len(self.machine.default_platform.pkone_lightshows))
         self.assertFalse(self.machine.default_platform.pkone_lightshows[2].rgbw_firmware)
@@ -170,7 +170,7 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(3, self.machine.default_platform.pkone_lightshows[3].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
-        self.assertEqual("PKONE Controller (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
+        self.assertEqual("PKONE EX2 (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
 
     def test_coils(self):
         self._test_pulse()
@@ -183,11 +183,13 @@ class TestPKONE(MpfTestCase):
         info_str = """Penny K Pinball Hardware
 ------------------------
  - Connected Controllers:
-   -> PKONE Nano - Port: com3 at 115200 baud (firmware v1.1, hardware rev 1).
+   -> PKONE EX2 USB connection - Port: com3 at 115200 baud (firmware v1.1, hardware rev 1).
 
- - Extension boards:
+ - EX2 boards:
    -> Address ID: 0 (firmware v1.1, hardware rev 2)
    -> Address ID: 1 (firmware v1.1, hardware rev 2)
+
+ - Switch boards:
 
  - Lightshow boards:
    -> Address ID: 2 (RGB firmware v1.0, hardware rev 1)
@@ -196,9 +198,9 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
-        self.assertEqual("PKONE Extension Board 0", self.machine.coils["c_slingshot_test"].hw_driver.get_board_name())
-        self.assertEqual("PKONE Extension Board 1", self.machine.coils["c_test"].hw_driver.get_board_name())
-        self.assertEqual("PKONE Extension Board 1", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
+        self.assertEqual("PKONE EX2 Board 0", self.machine.coils["c_slingshot_test"].hw_driver.get_board_name())
+        self.assertEqual("PKONE EX2 Board 1", self.machine.coils["c_test"].hw_driver.get_board_name())
+        self.assertEqual("PKONE EX2 Board 1", self.machine.coils["c_flipper_hold"].hw_driver.get_board_name())
         # last driver on board
         self.controller.expected_commands = {
             "PCC1100000000000": None
@@ -224,7 +226,7 @@ class TestPKONE(MpfTestCase):
             self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '0-0',
                                                            {"recycle_ms": 10})
 
-        # only extension boards 0-1 exist
+        # only EX2 boards 0-1 exist
         with self.assertRaises(AssertionError):
             self.machine.default_platform.configure_driver(self.machine.coils["c_test"].hw_driver.config, '4-1',
                                                            {"recycle_ms": 10})

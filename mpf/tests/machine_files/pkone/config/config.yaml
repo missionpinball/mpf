@@ -1,5 +1,5 @@
 #config_version=6
-# Hardware setup for tests: Extension boards at addresses 0 and 1, Lightshow boards at 2 (rgb) and 3 (rgbw)
+# Hardware setup for tests: EX2 boards at addresses 0 and 1, Lightshow boards at 2 (rgb) and 3 (rgbw)
 
 hardware:
     platform: pkone
