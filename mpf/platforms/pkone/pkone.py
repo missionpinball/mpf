@@ -18,6 +18,8 @@ from mpf.platforms.pkone.pkone_coil import PKONECoil, PKONECoilNumber
 from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
 from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber, PKONELEDChannel
 
+DUPLICATE_ADDRESS_ERROR = "Duplicate address id: a board has already been registered at address {}"
+
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig, RepulseSettings, ServoPlatform
 
@@ -151,9 +153,14 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         infos += "\n - Lightshow boards:\n"
         for lightshow in self.pkone_lightshows.values():
+            firmware_type = 'RGB'
+            if lightshow.mixed_firmware:
+                firmware_type = 'MIX'
+            elif lightshow.rgbw_firmware:
+                firmware_type = 'RGBW'
             infos += "   -> Address ID: {} ({} firmware v{}, " \
                      "hardware rev {})\n".format(lightshow.addr,
-                                                 'MIX' if lightshow.mixed_firmware else ('RGBW' if lightshow.rgbw_firmware else 'RGB'),
+                                                 firmware_type,
                                                  lightshow.firmware_version,
                                                  lightshow.hardware_rev)
 
@@ -172,8 +179,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     def register_ex2_board(self, board: PKONEEX2Board):
         """Register an EX2 board."""
         if self._address_is_registered(board.addr):
-            raise AssertionError("Duplicate address id: a board has already been "
-                                 "registered at address {}".format(board.addr))
+            raise AssertionError(DUPLICATE_ADDRESS_ERROR.format(board.addr))
 
         if board.addr not in range(8):
             raise AssertionError("Address out of range: EX2 board address id must be between 0 and 7")
@@ -183,8 +189,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     def register_switch_board(self, board: PKONESwitchBoard):
         """Register a Switch board."""
         if self._address_is_registered(board.addr):
-            raise AssertionError("Duplicate address id: a board has already been "
-                                 "registered at address {}".format(board.addr))
+            raise AssertionError(DUPLICATE_ADDRESS_ERROR.format(board.addr))
         if board.addr not in range(8):
             raise AssertionError("Address out of range: Switch board address id must be between 0 and 7")
         self.pkone_switch_boards[board.addr] = board
@@ -192,8 +197,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     def register_lightshow_board(self, board: PKONELightshowBoard):
         """Register a Lightshow board."""
         if self._address_is_registered(board.addr):
-            raise AssertionError("Duplicate address id: a board has already been "
-                                 "registered at address {}".format(board.addr))
+            raise AssertionError(DUPLICATE_ADDRESS_ERROR.format(board.addr))
 
         if board.addr not in range(4):
             raise AssertionError("Address out of range: Lightshow board address id must be between 0 and 3")
