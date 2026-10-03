@@ -1155,6 +1155,7 @@ pin2dmd:
     resolution: single|enum(128x32,192x64,256x64)|128x32
     panel: single|enum(rgb,rbg)|rgb
 pkone:
+    lightshow_groups: dict|str:str|None
     __valid_in__: machine
     __type__: config
     port: single|str|
