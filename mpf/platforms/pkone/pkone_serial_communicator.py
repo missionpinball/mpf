@@ -222,6 +222,11 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 hardware_rev = match.group(4)
                 rgbw_firmware = match.group(6) == 'RGBW'
                 mixed_firmware = match.group(6) == 'MIX'
+                firmware_type = 'RGB'
+                if mixed_firmware:
+                    firmware_type = 'MIX'
+                elif rgbw_firmware:
+                    firmware_type = 'RGBW'
 
                 if version.parse(LIGHTSHOW_MIN_FW) > version.parse(firmware):
                     raise AssertionError('Firmware version mismatch. MPF requires '
@@ -232,7 +237,7 @@ class PKONESerialCommunicator(BaseSerialCommunicator):
                 self.platform.debug_log('PKONE Lightshow Board {0}: Firmware: {1} ({2}), '
                                         'Hardware Rev: {3}'.format(address_id,
                                                                    firmware,
-                                                                   'MIX' if mixed_firmware else ('RGBW' if rgbw_firmware else 'RGB'),
+                                                                   firmware_type,
                                                                    hardware_rev))
 
                 self.platform.register_lightshow_board(PKONELightshowBoard(address_id,
