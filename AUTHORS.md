@@ -32,6 +32,7 @@ their spare time, unpaid, for the love of pinball!
  * Eric Selk <ericselk2018@gmail.com>
  * Alex Lobascio (bosh)
  * Jerome Vivien
+ * Mark Kelynack <mark@pennykpinball.com>
 
 MPF was inspired by pyprocgame which was written by:
 

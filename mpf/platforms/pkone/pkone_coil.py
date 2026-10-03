@@ -16,7 +16,7 @@ PKONECoilConfiguration = namedtuple("PKONECoilConfiguration", ["pulse_settings",
 
 class PKONECoil(DriverPlatformInterface):
 
-    """Base class for coils/drivers connected to a PKONE Controller/Extension."""
+    """A coil/driver connected to a PKONE EX2 board."""
 
     __slots__ = ["log", "hardware_rule", "_config_state", "machine", "platform",
                  "send", "platform_settings"]
@@ -37,10 +37,10 @@ class PKONECoil(DriverPlatformInterface):
         self.reset()
 
     def get_board_name(self):
-        """Return PKONE Extension addr."""
-        if self.number.board_address_id not in self.platform.pkone_extensions.keys():
+        """Return PKONE EX2 address."""
+        if self.number.board_address_id not in self.platform.pkone_ex2_boards:
             return "PKONE Unknown Board"
-        return "PKONE Extension Board {}".format(self.number.board_address_id)
+        return "PKONE EX2 Board {}".format(self.number.board_address_id)
 
     def get_recycle_time_ms_for_cmd(self, recycle, pulse_ms) -> int:
         """Return recycle ms."""

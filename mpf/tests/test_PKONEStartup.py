@@ -15,8 +15,9 @@ class TestPKONEStartup(unittest.IsolatedAsyncioTestCase):
         self.platform = SimpleNamespace(
             machine=SimpleNamespace(variables=Mock(), switch_controller=Mock(), stop=Mock()),
             config={'debug': False}, log=logging.getLogger('pkone-test'), debug_log=Mock(),
-            pkone_extensions={}, pkone_lightshows={}, hw_switch_data={})
-        self.platform.register_extension_board = lambda b: self.platform.pkone_extensions.update({b.addr: b})
+            pkone_ex2_boards={}, pkone_switch_boards={}, pkone_lightshows={}, hw_switch_data={})
+        self.platform.register_ex2_board = lambda b: self.platform.pkone_ex2_boards.update({b.addr: b})
+        self.platform.register_switch_board = lambda b: self.platform.pkone_switch_boards.update({b.addr: b})
         self.platform.register_lightshow_board = lambda b: self.platform.pkone_lightshows.update({b.addr: b})
         self.platform.process_received_message = self.dispatch
         self.connection = PKONESerialCommunicator(self.platform, 'simulated-ex2', 115200)
@@ -42,12 +43,12 @@ class TestPKONEStartup(unittest.IsolatedAsyncioTestCase):
 
     async def test_ex2_integrated_io_and_lightshow_startup(self):
         await self.connection._identify_connection()
-        self.assertEqual([0], list(self.platform.pkone_extensions))
+        self.assertEqual([0], list(self.platform.pkone_ex2_boards))
         self.assertTrue(self.platform.pkone_lightshows[1].rgbw_firmware)
         self.assertEqual(35, len(self.platform.hw_switch_data))
         self.assertEqual(1, self.platform.hw_switch_data[PKONESwitchNumber(0, 2)])
         self.assertIs(self.connection, self.platform.controller_connection)
-        self.platform.machine.variables.set_machine_var.assert_any_call('pkone_hardware', 'PKONE Controller (rev 20)')
+        self.platform.machine.variables.set_machine_var.assert_any_call('pkone_hardware', 'PKONE EX2 (rev 20)')
 
     async def test_bad_board_reply_fails_clearly(self):
         for reply in (b'PCB0F20H20YE', b'PCB0QF20H20E', b'PCB9XF20H20E'):
@@ -118,11 +119,17 @@ class TestPKONEStartup(unittest.IsolatedAsyncioTestCase):
 
     async def test_switch_source_profile_and_peripheral_reset_replies(self):
         self.responses[b'PRSE'] = b'PRS1LEPRS2SEPRSNE'
-        self.responses[b'PCB2E'] = b'PCB2SF20H20I40C00PNE'
+        self.responses[b'PCB2E'] = b'PCB2SF30H20I40C00PNE'
         self.responses[b'PSA2E'] = b'PSA2' + b'0' * 39 + b'1E'
         await self.connection._identify_connection()
-        board = self.platform.pkone_extensions[2]
+        board = self.platform.pkone_switch_boards[2]
         self.assertEqual((40, 0, 0), (board.switch_count, board.coil_count, board.servo_count))
+        self.assertEqual(PKONESwitchNumber(2, 40),
+                         PKONEHardwarePlatform._parse_switch_number(self.platform, '2-40'))
+        with self.assertRaisesRegex(AssertionError, 'only has 40 switch inputs'):
+            PKONEHardwarePlatform._parse_switch_number(self.platform, '2-41')
+        with self.assertRaisesRegex(AssertionError, 'EX2 2 does not exist'):
+            PKONEHardwarePlatform._parse_coil_number(self.platform, '2-1')
         self.assertEqual(75, len(self.platform.hw_switch_data))
         self.assertEqual(1, self.platform.hw_switch_data[PKONESwitchNumber(2, 40)])
         self.connection._parse_msg(b'PSW2400E')
