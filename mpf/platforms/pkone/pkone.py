@@ -5,6 +5,7 @@ Contains the hardware interface and drivers for the Penny K Pinball PKONE
 platform hardware.
 """
 import asyncio
+import re
 from copy import deepcopy
 from typing import Optional, Dict, List, Tuple, Set
 
@@ -45,14 +46,19 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         self._watchdog_task = None
         self.hw_switch_data = dict()
 
-        self.pkone_commands = {'PCN': lambda x, y: None,            # connected Nano processor
-                               'PCB': lambda x, y: None,            # connected board
-                               'PWD': lambda x, y: None,            # watchdog
-                               'PWF': lambda x, y: None,            # watchdog stop
+        self.pkone_commands = {'PCN': lambda payload: None,            # connected Nano processor
+                               'PCB': lambda payload: None,            # connected board
+                               'PWD': lambda payload: None,            # watchdog
+                               'PWT': self.receive_watchdog_timeout,
+                               'PWF': lambda payload: None,            # watchdog stop
                                'PSA': self.receive_all_switches,    # all switch states
                                'PSW': self.receive_switch,          # switch state change
                                'PXX': self.receive_error,           # error
                                }
+
+        for command in ('PRS', 'PWS', 'PCC', 'PCP', 'PCH', 'PCR', 'PHR', 'PHD', 'PSC',
+                        'PLS', 'PLO', 'PLB', 'PWB', 'PLW', 'PWW', 'PLC', 'PWC'):
+            self.pkone_commands[command] = lambda payload: None
 
         # Set platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -139,7 +145,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         for lightshow in self.pkone_lightshows.values():
             infos += "   -> Address ID: {} ({} firmware v{}, " \
                      "hardware rev {})\n".format(lightshow.addr,
-                                                 'RGBW' if lightshow.rgbw_firmware else 'RGB',
+                                                 'MIX' if lightshow.mixed_firmware else ('RGBW' if lightshow.rgbw_firmware else 'RGB'),
                                                  lightshow.firmware_version,
                                                  lightshow.hardware_rev)
 
@@ -182,13 +188,18 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         """
         assert self.log is not None
         cmd = msg[0:3]
-        payload = msg[3:].replace('E', '')
+        payload = msg[3:].removesuffix('E')
 
         # Can't use try since it swallows too many errors for now
         if cmd in self.pkone_commands:
             self.pkone_commands[cmd](payload)
         else:   # pragma: no cover
             self.log.warning("Received unknown serial command %s.", msg)
+
+    def receive_watchdog_timeout(self, msg):
+        """Stop play when the controller reports that host communication was lost."""
+        del msg
+        self.machine.stop("PKONE hardware watchdog expired; outputs were disabled. Restart after checking the connection.")
 
     def receive_error(self, msg):
         """Receive an error message from the controller."""
@@ -430,9 +441,12 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         # [PSA opcode] + [[board address id] + 0 or 1 for each switch on the board] + E
         self.debug_log("Received all switch states (PSA): %s", msg)
 
-        # the message payload is delimited with an 'X' character for the switches on each board
-        # The first character is the board address ID
+        if not msg or msg[0] not in '01234567':
+            raise AssertionError("Invalid PKONE switch snapshot: {}".format(msg))
         board_address_id = int(msg[0])
+        board = self.pkone_extensions.get(board_address_id)
+        if board is None or not re.fullmatch('[01]{' + str(board.switch_count) + '}', msg[1:]):
+            raise AssertionError("Invalid PKONE switch snapshot: {}".format(msg))
         switch_states = msg[1:]
 
         # There is one character for each switch on the board (1 = active, 0 = inactive)
@@ -446,8 +460,14 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         # The PSW message contains the following information:
         # [PSW opcode] + [board address id] + switch number + switch state (0 or 1) + E
         self.debug_log("Received switch state change (PSW): %s", msg)
-        switch_number = PKONESwitchNumber(int(msg[0]), int(msg[1:3]))
-        switch_state = int(msg[-1])
+        if not re.fullmatch(r'[0-7][0-9]{2}[01]', msg):
+            raise AssertionError("Invalid PKONE switch event: {}".format(msg))
+        board_id, number, switch_state = int(msg[0]), int(msg[1:3]), int(msg[3])
+        board = self.pkone_extensions.get(board_id)
+        if board is None or not 1 <= number <= board.switch_count:
+            raise AssertionError("Unknown PKONE switch: {}".format(msg))
+        switch_number = PKONESwitchNumber(board_id, number)
+        self.hw_switch_data[switch_number] = switch_state
         self.machine.switch_controller.process_switch_by_num(state=switch_state,
                                                              num=switch_number,
                                                              platform=self)
@@ -461,7 +481,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         # get the lightshow board that will be sent the command (need to know if rgb or rgbw board)
         lightshow = self.pkone_lightshows[first_channel.board_address_id]
-        if lightshow.rgbw_firmware:
+        if lightshow.channels_for_group(first_channel.group) == 4:
             cmd_opcode = "PWB"
             channel_grouping = 4
         else:
@@ -546,6 +566,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             board_address_id, group, index = number.split("-")
             led_channel = PKONELEDChannel(board_address_id, group, index, config, self._light_system)
             lightshow = self.pkone_lightshows[int(board_address_id)]
+            channels = lightshow.channels_for_group(group)
+            if not 0 <= int(index) < 64 * channels:
+                raise AssertionError("PKONE LED channel exceeds this group's 64-pixel range")
             lightshow.add_channel_hw_driver(int(group), led_channel)
             self._light_system.mark_dirty(led_channel)
             return led_channel
@@ -556,9 +579,9 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
         """Determine whether the specified LED is hardware aligned."""
         light = self.machine.lights[led_name]
         hw_numbers = light.get_hw_numbers()
-        board_address_id, _, index = hw_numbers[0].split("-")
+        board_address_id, group, index = hw_numbers[0].split("-")
         lightshow = self.pkone_lightshows[int(board_address_id)]
-        if lightshow.rgbw_firmware:
+        if lightshow.channels_for_group(group) == 4:
             channel_grouping = 4
         else:
             channel_grouping = 3
@@ -589,7 +612,7 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
             index = int(number_str)
 
             # Determine if there are 3 or 4 channels depending upon firmware on board
-            if self.pkone_lightshows[board_address_id].rgbw_firmware:
+            if self.pkone_lightshows[int(board_address_id)].channels_for_group(group) == 4:
                 # rgbw uses 4 channels per led
                 return [
                     {

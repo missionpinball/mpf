@@ -1,3 +1,4 @@
+
 import sys
 import unittest
 
@@ -84,7 +85,7 @@ class BaseMockPKONE(MockSerial):
         pass
 
 
-@unittest.skipIf(sys.version_info >= (3, 12), "PKONE tests not updated for 3.12 asyncio")
+@unittest.skipIf(sys.version_info >= (3, 12), "PKONE legacy integration tests use pre-3.12 asyncio timing")
 class TestPKONE(MpfTestCase):
 
     """Test the Penny K Pinball PKONE hardware platform."""
@@ -117,15 +118,15 @@ class TestPKONE(MpfTestCase):
             'PCB0': 'PCB0XF11H2PY',     # Extension board at ID 0 (firmware 1.1, hardware rev 2, high power on)
             'PCB1': 'PCB1XF11H2PN',     # Extension board at ID 1 (firmware 1.1, hardware rev 2, high power off)
             'PCB2': 'PCB2LF10H1RGB',    # Lightshow board at ID 2 (RGB firmware 1.0, hardware rev 1)
-            'PCB3': 'PCB2LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
+            'PCB3': 'PCB3LF10H1RGBW',   # Lightshow board at ID 3 (RGBW firmware 1.0, hardware rev 1)
             'PCB4': 'PCB4N',
             'PCB5': 'PCB5N',
             'PCB6': 'PCB6N',
             'PCB7': 'PCB7N',
             'PRS': 'PRS',
             'PWS1000': 'PWS',
-            'PSA0': 'PSA011000000000000000000000000000000000E',
-            'PSA1': 'PSA100110000000000000000000000000000000E',
+            'PSA0': 'PSA011000000000000000000000000000000000',
+            'PSA1': 'PSA100110000000000000000000000000000000',
             'PCC1040000000000': 'PCC',
             'PCC1060000000000': 'PCC',
             'PCC0070000000000': 'PCC',
@@ -169,7 +170,7 @@ class TestPKONE(MpfTestCase):
         self.assertEqual(3, self.machine.default_platform.pkone_lightshows[3].addr)
 
         self.assertEqual("1.1", self.machine.variables.get_machine_var("pkone_firmware"))
-        self.assertEqual("PKONE Nano Controller (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
+        self.assertEqual("PKONE Controller (rev 1)", self.machine.variables.get_machine_var("pkone_hardware"))
 
     def test_coils(self):
         self._test_pulse()
