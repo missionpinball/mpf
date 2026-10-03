@@ -1,0 +1,43 @@
+#config_version=6
+
+# A lock whose single eject pulse (a post dropping) releases every queued
+# ball at once, feeding a VUK that kicks them to the playfield one by one.
+
+playfields:
+    playfield:
+        default_source_device: test_vuk
+        tags: default
+
+coils:
+    c_lock_post:
+        number:
+    c_vuk:
+        number:
+
+switches:
+    s_lock_1:
+        number:
+    s_lock_2:
+        number:
+    s_lock_3:
+        number:
+    s_vuk:
+        number:
+
+ball_devices:
+    test_lock:
+        eject_coil: c_lock_post
+        ball_switches: s_lock_1, s_lock_2, s_lock_3
+        eject_targets: test_vuk, playfield
+    test_vuk:
+        eject_coil: c_vuk
+        ball_switches: s_vuk
+        eject_targets: playfield
+        eject_timeouts: 1s
+
+ball_holds:
+    hold_lock:
+        hold_devices: test_lock
+        balls_to_hold: 3
+        enable_events: machine_reset_phase_3
+        release_all_events: release_all
