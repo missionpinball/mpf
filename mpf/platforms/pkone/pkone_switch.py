@@ -34,12 +34,16 @@ class PKONESwitch(SwitchPlatformInterface):
             return "PKONE Switch Board {}".format(address)
         return "PKONE Unknown Board"
 
+
 class PKONESwitchBoard:
+
     """PKONE Switch board with 40 inputs and no enabled outputs."""
+
     __slots__ = ["log", "addr", "firmware_version", "hardware_rev", "switch_count",
                  "coil_count", "servo_count"]
 
     def __init__(self, addr, firmware_version, hardware_rev):
+        """Initialize a PKONE Switch board."""
         self.log = logging.getLogger('PKONESwitchBoard {}'.format(addr))
         self.addr = addr
         self.firmware_version = firmware_version
@@ -49,5 +53,6 @@ class PKONESwitchBoard:
         self.servo_count = 0
 
     def get_description_string(self):
+        """Return a description of the Switch board and its firmware."""
         return (f"PKONE Switch Board {self.addr} - Firmware: {self.firmware_version}, "
                 f"Hardware Rev: {self.hardware_rev}, Switches: 40, Coil outputs disabled")

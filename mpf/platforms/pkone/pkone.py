@@ -9,6 +9,9 @@ import re
 from copy import deepcopy
 from typing import Optional, Dict, List, Tuple, Set
 
+from mpf.core.platform import (
+    SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings,
+    DriverConfig, SwitchConfig, RepulseSettings, ServoPlatform)
 from mpf.core.platform_batch_light_system import PlatformBatchLightSystem
 from mpf.platforms.pkone.pkone_serial_communicator import PKONESerialCommunicator
 from mpf.platforms.pkone.pkone_ex2 import PKONEEX2Board
@@ -19,9 +22,6 @@ from mpf.platforms.pkone.pkone_servo import PKONEServo, PKONEServoNumber
 from mpf.platforms.pkone.pkone_lights import PKONESimpleLED, PKONESimpleLEDNumber, PKONELEDChannel
 
 DUPLICATE_ADDRESS_ERROR = "Duplicate address id: a board has already been registered at address {}"
-
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, RepulseSettings, ServoPlatform
 
 
 # pylint: disable-msg=too-many-instance-attributes,too-many-public-methods
@@ -141,15 +141,21 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
 
         infos += "\n - EX2 boards:\n"
         for board in self.pkone_ex2_boards.values():
-            infos += "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(board.addr,
-                                                                                 board.firmware_version,
-                                                                                 board.hardware_rev)
+            infos += (
+                "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(
+                    board.addr,
+                    board.firmware_version,
+                    board.hardware_rev)
+            )
 
         infos += "\n - Switch boards:\n"
         for board in self.pkone_switch_boards.values():
-            infos += "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(board.addr,
-                                                                                 board.firmware_version,
-                                                                                 board.hardware_rev)
+            infos += (
+                "   -> Address ID: {} (firmware v{}, hardware rev {})\n".format(
+                    board.addr,
+                    board.firmware_version,
+                    board.hardware_rev)
+            )
 
         infos += "\n - Lightshow boards:\n"
         for lightshow in self.pkone_lightshows.values():
@@ -224,7 +230,8 @@ class PKONEHardwarePlatform(SwitchPlatform, DriverPlatform, LightsPlatform, Serv
     def receive_watchdog_timeout(self, msg):
         """Stop play when the controller reports that host communication was lost."""
         del msg
-        self.machine.stop("PKONE hardware watchdog expired; outputs were disabled. Restart after checking the connection.")
+        self.machine.stop(
+            "PKONE hardware watchdog expired; outputs were disabled. Restart after checking the connection.")
 
     def receive_error(self, msg):
         """Receive an error message from the controller."""
