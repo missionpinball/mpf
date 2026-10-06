@@ -1664,6 +1664,7 @@ state_machines:
     states: dict|str:subconfig(state_machine_states)|
     transitions: list|subconfig(state_machine_transitions)|
     persist_state: single|bool|false
+    repost_start_events_on_restore: single|bool|false
     starting_state: single|str|start
 state_machine_transitions:
     source: list|str|
@@ -1674,6 +1675,7 @@ state_machine_states:
     label: single|str|None
     show_when_active: single|subconfig(show_config)|None
     events_when_started: list|event_posted|None
+    events_when_restored: list|event_posted|None
     events_when_stopped: list|event_posted|None
 show_config:
     show: single|str|

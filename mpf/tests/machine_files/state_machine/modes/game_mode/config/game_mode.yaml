@@ -15,3 +15,34 @@ state_machines:
       - source: start
         target: done
         events: game_mode_state_machine_proceed
+
+  persisted_repost_machine:
+    persist_state: true
+    repost_start_events_on_restore: true
+    states:
+      start:
+        label: Start state
+        events_when_started: repost_machine_start_fired
+        events_when_restored: repost_machine_start_restored
+      done:
+        label: Done state
+        events_when_started: repost_machine_done
+    transitions:
+      - source: start
+        target: done
+        events: repost_machine_proceed
+
+  persisted_explicit_machine:
+    persist_state: true
+    repost_start_events_on_restore: false
+    states:
+      start:
+        label: Start state
+      done:
+        label: Done state
+        events_when_started: explicit_machine_done
+        events_when_restored: explicit_machine_restored
+    transitions:
+      - source: start
+        target: done
+        events: explicit_machine_proceed
