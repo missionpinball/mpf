@@ -95,3 +95,87 @@ class TestStateMachine(MpfFakeGameTestCase):
         self.assertEqual("foo", self.machine.state_machines["second_state"].state)
         self.post_event("state_machine_outoforder")
         self.assertEqual("bar", self.machine.state_machines["second_state"].state)
+
+    def test_repost_start_events_on_restore_boolean(self):
+        """Verifies root boolean forces standard start events to re-fire on restore."""
+        self.mock_event("repost_machine_done")
+        self.start_game()
+
+        sm = self.machine.state_machines["persisted_repost_machine"]
+        self.assertEqual("start", sm.state)
+
+        # Advance to done and verify the start event fired
+        self.post_event("repost_machine_proceed")
+        self.assertEqual("done", sm.state)
+        self.assertEventCalled("repost_machine_done")
+
+        self.mock_event("repost_machine_done")
+        self.assertEventNotCalled("repost_machine_done")
+
+        # Cycle the mode
+        self.machine.modes["game_mode"].stop()
+        self.advance_time_and_run(0.1)
+        self.machine.modes["game_mode"].start()
+        self.advance_time_and_run(0.1)
+
+        self.assertEqual("done", sm.state)
+        self.assertEventCalled("repost_machine_done")
+
+    def test_explicit_events_when_restored(self):
+        """Verifies explicit restore hooks override start events on restore."""
+        self.mock_event("explicit_machine_done")
+        self.mock_event("explicit_machine_restored")
+        self.start_game()
+
+        sm = self.machine.state_machines["persisted_explicit_machine"]
+        self.assertEqual("start", sm.state)
+
+        # Advance to done
+        self.post_event("explicit_machine_proceed")
+        self.assertEqual("done", sm.state)
+        self.assertEventCalled("explicit_machine_done")
+        self.assertEventNotCalled("explicit_machine_restored")
+
+        self.mock_event("explicit_machine_done")
+        self.mock_event("explicit_machine_restored")
+        self.assertEventNotCalled("explicit_machine_done")
+        self.assertEventNotCalled("explicit_machine_restored")
+
+        # Cycle the mode
+        self.machine.modes["game_mode"].stop()
+        self.advance_time_and_run(0.1)
+        self.machine.modes["game_mode"].start()
+        self.advance_time_and_run(0.1)
+
+        self.assertEqual("done", sm.state)
+        self.assertEventNotCalled("explicit_machine_done")
+        self.assertEventCalled("explicit_machine_restored")
+
+    def test_repost_initial_state_on_restore(self):
+        """Proves initial state event behavior on restoration loops."""
+        self.mock_event("repost_machine_start_fired")
+        self.mock_event("repost_machine_start_restored")
+
+        # expect standard start event
+        self.start_game()
+        sm = self.machine.state_machines["persisted_repost_machine"]
+        self.assertEqual("start", sm.state)
+        self.assertEventCalled("repost_machine_start_fired")
+        self.assertEventNotCalled("repost_machine_start_restored")
+
+        self.mock_event("repost_machine_start_fired")
+        self.mock_event("repost_machine_start_restored")
+
+        # stop while still in initial state
+        self.machine.modes["game_mode"].stop()
+        self.advance_time_and_run(0.1)
+        self.assertIsNone(sm.state)
+
+        # restart mode
+        self.machine.modes["game_mode"].start()
+        self.advance_time_and_run(0.1)
+        self.assertEqual("start", sm.state)
+
+        self.assertEventCalled("repost_machine_start_restored")
+        # events_when_restored wins over when started if both set
+        self.assertEventNotCalled("repost_machine_start_fired")
