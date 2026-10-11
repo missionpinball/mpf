@@ -83,9 +83,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         if not self.state:
             self._start_state(self.config['starting_state'])
         else:
-            self._add_handlers_for_current_state()
-            self._run_show_for_current_state()
-            self.notify_virtual_change("state", None, self.state)
+            self._restore_state(self.state)
 
     def device_removed_from_mode(self, mode: Mode):
         """Unset internal state to prevent leakage."""
@@ -127,6 +125,22 @@ class StateMachine(SystemWideDevice, ModeDevice):
 
         self._add_handlers_for_current_state()
         self._run_show_for_current_state()
+
+    def _restore_state(self, state):
+        self.debug_log("Restoring state %s", state)
+
+        state_config = self.config['states'][state]
+        if state_config['events_when_restored']:
+            for event_name in state_config['events_when_restored']:
+                self.machine.events.post(event_name)
+
+        elif self.config['repost_start_events_on_restore'] and state_config['events_when_started']:
+            for event_name in state_config['events_when_started']:
+                self.machine.events.post(event_name)
+
+        self._add_handlers_for_current_state()
+        self._run_show_for_current_state()
+        self.notify_virtual_change("state", None, self.state)
 
     def _run_show_for_current_state(self):
         assert not self._show
