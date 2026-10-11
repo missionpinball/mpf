@@ -95,7 +95,9 @@ class LogMixin:
         if not self.log:
             self._logging_not_configured()
 
-        if self._debug_to_console:
+        if self._debug_to_console and self._debug_to_file:
+            level = 10
+        elif self._debug_to_console:
             level = 12
         elif self._debug_to_file:
             level = 11
@@ -116,7 +118,9 @@ class LogMixin:
         if not self.log:
             self._logging_not_configured()
 
-        if self._info_to_console or self._debug_to_console:
+        if (self._info_to_console or self._debug_to_console) and (self._info_to_file or self._debug_to_file):
+            level = 20
+        elif self._info_to_console or self._debug_to_console:
             level = 22
         elif self._info_to_file or self._debug_to_file:
             level = 21
