@@ -60,14 +60,14 @@ class FASTDriver:
         self.current_driver_config = self.baseline_driver_config
 
         self.mode_param_mapping = {
-            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
-            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],
-            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],
-            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],
-            '25': ['relay_on_report_ms', 'relay_off_report_ms'],
-            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
-            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
-            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
+            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],         # pulse
+            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],            # pulse + kick
+            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],              # pulse + hold
+            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],         # pulse + hold w cancel switch
+            '25': ['relay_on_report_ms', 'relay_off_report_ms'],                            # system 11 AC relay
+            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],       # delayed pulse
+            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # long pulse
+            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # pulse w cancel switch
         }
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
