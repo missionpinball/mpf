@@ -6,6 +6,7 @@ modes:
   - mode1
   - mode2
   - mode3
+  - mode_test_persist_enable
 
 switches:
   switch_1:
