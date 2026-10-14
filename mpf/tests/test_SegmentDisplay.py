@@ -476,8 +476,8 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.assertEqual(5, len(test_text))
         colors = test_text.get_colors()
         self.assertEqual(5, len(colors))
-        self.assertEqual([RGBColor("white"), RGBColor("red"), RGBColor("red"),
-                          RGBColor("red"), RGBColor("red")], colors)
+        self.assertEqual([RGBColor("white"), RGBColor("white"), RGBColor("white"),
+                          RGBColor("white"), RGBColor("white")], colors)
 
         # multiple colors (fewer colors than letters and fewer letters than characters)
         test_text = SegmentDisplayText.from_str("COLOR", 8, False, False, False,
@@ -487,7 +487,7 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         colors = test_text.get_colors()
         self.assertEqual(8, len(colors))
         self.assertEqual([RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"),
-                          RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red")], colors)
+                          RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white")], colors)
 
     def test_transitions(self):
         """Test segment display text transitions."""
@@ -1240,16 +1240,16 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         self.advance_time_and_run(.5)
         self.assertEqual("    EVENT1", self.machine.segment_displays["display1"].text)
         self.assertEqual(
-            [RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("blue"),
-             RGBColor("yellow"), RGBColor("green"), RGBColor("white"), RGBColor("purple")],
+            [RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"),
+             RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white")],
             self.machine.segment_displays["display1"].colors)
 
         self.post_event("test_event2")
         self.advance_time_and_run(2)
         self.assertEqual("    EVENT2", self.machine.segment_displays["display1"].text)
         self.assertEqual(
-            [RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("red"), RGBColor("blue"),
-             RGBColor("yellow"), RGBColor("green"), RGBColor("white"), RGBColor("purple")],
+            [RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white"),
+             RGBColor("white"), RGBColor("white"), RGBColor("white"), RGBColor("white")],
             self.machine.segment_displays["display1"].colors)
 
     @test_config("config_flashing.yaml")
@@ -1362,12 +1362,12 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
         # remove "FIRST" entry
         display1.remove_text_by_key(None)
         self.assertEqual("       3rd", display1.text)
-        self.assertEqual([RGBColor("blue")] * 10, display1.colors)
+        self.assertEqual([RGBColor("yellow")] * 10, display1.colors)
         self.assertEqual(FlashingType.NO_FLASH, display1.flashing)
 
         # set flashing
         display1.set_flashing(FlashingType.FLASH_MASK, "FFF   ")
-        self.assertEqual([RGBColor("blue")] * 10, display1.colors)
+        self.assertEqual([RGBColor("yellow")] * 10, display1.colors)
         self.assertEqual(FlashingType.FLASH_MASK, display1.flashing)
         self.assertEqual("FFF   ", display1.flash_mask)
 

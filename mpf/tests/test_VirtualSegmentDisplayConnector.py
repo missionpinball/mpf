@@ -45,7 +45,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         self.assertIsNone(display3.virtual_connector)
 
         display1.add_text("NEW TEXT")
-        display1.set_color([RGBColor("FF0000"), RGBColor("00FF00")])
+        display1.set_color([RGBColor("red"), RGBColor("lime"),RGBColor("red"), RGBColor("lime"),RGBColor("red"), RGBColor("lime"),RGBColor("red")])
         self.assertTrue(mock_bcp_trigger_client.called)
         mock_bcp_trigger_client.assert_has_calls([call(client=ANY, flashing='False', flash_mask='',
                                                        name='update_segment_display', segment_display_name='display1',
@@ -54,8 +54,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
                                                   call(client=ANY, name='update_segment_display',
                                                        segment_display_name='display1', text='EW TEXT',
                                                        flashing='False', flash_mask='',
-                                                       colors=['ff0000', '00ff00','00ff00', '00ff00', '00ff00',
-                                                               '00ff00', '00ff00'])])
+                                                       colors=['ff0000', '00ff00', 'ff0000', '00ff00', 'ff0000', '00ff00', 'ff0000'])])
         mock_bcp_trigger_client.reset_mock()
 
         display2.add_text_entry("OTHER TEXT", [RGBColor("green")], FlashingType.FLASH_ALL, "", None, None, None, None)
