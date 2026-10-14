@@ -84,6 +84,15 @@ sequence_shots:
         cancel_switches:
             - switch_4
             - switch_5
+    sequence_events_with_dupes_and_cancel:
+        event_sequence:
+            - event_6
+            - event_7
+            - event_6
+            - event_7
+        cancel_events:
+            - event_6
+            - event_7
     sequence_multiple_disabled:
         event_sequence:
             - event6
@@ -98,3 +107,10 @@ sequence_shots:
             - seq4_1
         delay_switch_list:
             seq4_delay: 1s
+    sequence_with_timeout_reset_on_advance:
+        event_sequence:
+            - event_10
+            - event_11
+            - event_12
+        sequence_timeout: 1s
+        sequence_timeout_reset_on_advance: True
