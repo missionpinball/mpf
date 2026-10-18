@@ -20,6 +20,23 @@ class TestSegmentDisplay(MpfFakeGameTestCase):
     def get_machine_path(self):
         return 'tests/machine_files/segment_display/'
 
+    def test_comma_field_width_updates(self):
+        display = self.machine.segment_displays['display1']
+        display.config['integrated_dots'] = True
+        display.config['use_dots_for_commas'] = True
+        self.machine.variables.set_machine_var('comma_score', 1234)
+        display.add_text('{machine.comma_score:<10,d}')
+        self.assertEqual('1.234      ', display.hw_display.text)
+        self.machine.variables.set_machine_var('comma_score', 12345)
+        self.advance_time_and_run()
+        self.assertEqual('12.345     ', display.hw_display.text)
+
+        display = self.machine.segment_displays['display_replace']
+        display.config['integrated_dots'] = True
+        display.config['use_dots_for_commas'] = True
+        display.add_text('{machine.comma_score:0' + str(display.size) + ',d}')
+        self.assertEqual(format(12345, '0' + str(display.size) + 'd'), display.hw_display.text.replace('.', ''))
+
     def test_integrated_dots_and_commas(self):
         display1 = self.machine.segment_displays["display1"]
         display4 = self.machine.segment_displays["display4"]

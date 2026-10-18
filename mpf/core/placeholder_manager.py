@@ -264,17 +264,21 @@ class TextTemplate:
         self.text = str(text)
         self._change_callback = None
 
+    def _create_formatter(self, parameters, subscribe):
+        """Create the formatter used to evaluate this template."""
+        return MpfFormatter(self.machine, parameters, subscribe)
+
     def evaluate(self, parameters) -> str:
         """Evaluate placeholder to string."""
         try:
-            f = MpfFormatter(self.machine, parameters, False)
+            f = self._create_formatter(parameters, False)
             return f.format(self.text)
         except Exception as e:
             raise AssertionError("Failed to format {} with {}".format(self.text, parameters)) from e
 
     def evaluate_and_subscribe(self, parameters) -> Tuple[str, asyncio.Future]:
         """Evaluate placeholder to string and subscribe to changes."""
-        f = MpfFormatter(self.machine, parameters, True)
+        f = self._create_formatter(parameters, True)
         value = f.format(self.text)
         subscriptions = f.subscriptions
         if not subscriptions:

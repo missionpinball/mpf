@@ -50,6 +50,11 @@ class SegmentDisplayText(metaclass=abc.ABCMeta):
                                    char_colors), collapse_dots, collapse_commas, use_dots_for_commas)
 
     @classmethod
+    def get_display_width(cls, text: str, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool):
+        """Return the number of cells occupied before display padding or truncation."""
+        return len(cls._embed_dots_and_commas(text, collapse_dots, collapse_commas, use_dots_for_commas))
+
+    @classmethod
     def _embed_dots_and_commas(cls, text: str, collapse_dots: bool, collapse_commas: bool, use_dots_for_commas: bool):
         """Return text with embedded dots and commas."""
         char_has_dot = False
