@@ -6,6 +6,7 @@ from mpf.core.clock import PeriodicTask
 from mpf.core.rgb_color import RGBColor
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
+from mpf.devices.segment_display.segment_display_template import SegmentDisplayTextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.segment_display.text_stack_entry import TextStackEntry
 from mpf.devices.segment_display.transition_manager import TransitionManager
@@ -73,6 +74,11 @@ class SegmentDisplay(SystemWideDevice):
         self._current_transition = None             # type: Optional[TransitionRunner]
         self._default_color = None                  # type: Optional[RGBColor]
         self._current_state = None                  # type: Optional[SegmentDisplayState]
+
+    def _create_text_template(self, text):
+        """Create a placeholder template using this display's punctuation settings."""
+        return SegmentDisplayTextTemplate(self.machine, text, self.config['integrated_dots'],
+                                          self.config['integrated_commas'], self.config['use_dots_for_commas'])
 
     async def _initialize(self):
         """Initialize display."""
@@ -155,7 +161,7 @@ class SegmentDisplay(SystemWideDevice):
             raise ValueError(f"Unknown update_method '{self.config['update_method']}' for segment display {self.name}")
 
         # For the replace-text update method, skip the stack and write straight to the display
-        new_text = TextTemplate(self.machine, text).evaluate({})
+        new_text = self._create_text_template(text).evaluate({})
         text = SegmentDisplayText.from_str(new_text, self.size, self.config['integrated_dots'],
                                            self.config['integrated_commas'], self.config['use_dots_for_commas'],
                                            color)
@@ -215,7 +221,7 @@ class SegmentDisplay(SystemWideDevice):
             if self._current_text_stack_entry:
                 # update placeholder
                 if len(self._current_text_stack_entry.text) > 0:
-                    self._current_placeholder = TextTemplate(self.machine, self._current_text_stack_entry.text)
+                    self._current_placeholder = self._create_text_template(self._current_text_stack_entry.text)
                     self._current_placeholder_changed()
             else:
                 self._current_placeholder = None
@@ -284,7 +290,7 @@ class SegmentDisplay(SystemWideDevice):
                                    self.config['default_transition_update_hz'], flashing, flash_mask)
         else:
             # no transition - subscribe to text template changes and update display
-            self._current_placeholder = TextTemplate(self.machine, top_text_stack_entry.text)
+            self._current_placeholder = self._create_text_template(top_text_stack_entry.text)
             new_text, future = self._current_placeholder.evaluate_and_subscribe({})
             future.add_done_callback(self._current_placeholder_changed)
 
