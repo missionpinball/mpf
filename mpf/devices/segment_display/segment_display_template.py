@@ -15,7 +15,9 @@ class SegmentDisplayFormatter(MpfFormatter):
 
     __slots__ = ["_collapse_dots", "_collapse_commas", "_use_dots_for_commas"]
 
+    # pylint: disable=too-many-arguments
     def __init__(self, machine, parameters, subscribe, collapse_dots, collapse_commas, use_dots_for_commas):
+        """Initialize the formatter with the display's punctuation settings."""
         super().__init__(machine, parameters, subscribe)
         self._collapse_dots = collapse_dots
         self._collapse_commas = collapse_commas
@@ -52,7 +54,9 @@ class SegmentDisplayTextTemplate(TextTemplate):
 
     __slots__ = ["_collapse_dots", "_collapse_commas", "_use_dots_for_commas"]
 
+    # pylint: disable=too-many-arguments
     def __init__(self, machine, text, collapse_dots, collapse_commas, use_dots_for_commas):
+        """Initialize the template with the display's punctuation settings."""
         super().__init__(machine, text)
         self._collapse_dots = collapse_dots
         self._collapse_commas = collapse_commas
