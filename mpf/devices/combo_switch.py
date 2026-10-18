@@ -51,6 +51,8 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add event handlers."""
+        # Start from scratch: switches already held when the mode starts do not count.
+        self._reset_state()
         self._add_switch_handlers()
 
     def _add_switch_handlers(self):
@@ -87,6 +89,15 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
         self._remove_switch_handlers()
         self._kill_delays()
+
+        # Ensure reset to inactive state when mode ends, in case combo switch event triggers mode end,
+        # or the combo switch was partially engaged as mode ended.
+        self._reset_state()
+
+    def _reset_state(self):
+        self._state = 'inactive'
+        self._switches_1_active = False
+        self._switches_2_active = False
 
     def _register_switch_handlers(self):
         for switch in self.config['switches_1']:

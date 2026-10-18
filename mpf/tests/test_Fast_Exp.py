@@ -88,6 +88,19 @@ class TestFastExp(TestFastBase):
             'MP@882:7,7F,7D0': '',
         }
 
+    def test_exp_info(self):
+        info_str = (
+            'EXP:  vNone\n'
+            '\n'
+            'EXP Boards:\n'
+            'EXP Board: brian - FP-EXP-0091,  Firmware: 0.0, Address: 88\n'
+            'EXP Board: aaron - FP-EXP-0091,  Firmware: 0.8, Address: 89\n'
+            'EXP Board: dave - FP-EXP-0071,  Firmware: 0.11, Address: B4\n'
+            'EXP Board: eli - FP-EXP-0081,  Firmware: 0.12, Address: 84\n'
+            'EXP Board: neuron - FP-EXP-2000,  Firmware: 0.8, Address: 48\n'
+            )
+        self.assertEqual(info_str, self.machine.hardware_platforms['fast'].get_info_string())
+
     def test_servo(self):
         # go to min position
         self.exp_cpu.expected_commands = {

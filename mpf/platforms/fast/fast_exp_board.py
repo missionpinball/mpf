@@ -87,7 +87,7 @@ class FastExpansionBoard:
     def get_description_string(self) -> str:
         """Return description string."""
         # TODO add breakout boards
-        return f"Expansion Board Model: {self.model_string},  Firmware: {self.firmware_version}"
+        return f"EXP Board: {self.name} - {self.model},  Firmware: {self.firmware_version}, Address: {self.address}"
 
     def verify_hardware(self, id_string: str, active_board: str) -> None:
         """Verifies an EXP or breakout board firmware versions.
