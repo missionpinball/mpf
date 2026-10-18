@@ -2,7 +2,7 @@
 import abc
 from typing import Optional, List
 
-from mpf.core.placeholder_manager import TextTemplate
+from mpf.devices.segment_display.segment_display_template import SegmentDisplayTextTemplate
 from mpf.core.rgb_color import RGBColor
 from mpf.devices.segment_display.segment_display_text import SegmentDisplayText, UncoloredSegmentDisplayText
 
@@ -57,8 +57,10 @@ class TransitionRunner:
         """Class initializer."""
         self._transition = transition
         self._step = 0
-        self._current_placeholder = TextTemplate(machine, current_text)
-        self._new_placeholder = TextTemplate(machine, new_text)
+        self._current_placeholder = SegmentDisplayTextTemplate(
+            machine, current_text, transition.collapse_dots, transition.collapse_commas, transition.use_dots_for_commas)
+        self._new_placeholder = SegmentDisplayTextTemplate(
+            machine, new_text, transition.collapse_dots, transition.collapse_commas, transition.use_dots_for_commas)
         self._current_colors = current_colors
         self._new_colors = new_colors
 

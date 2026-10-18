@@ -12,6 +12,20 @@ class TestLightSegmentDisplays(MpfTestCase):
     def get_platform(self):
         return None
 
+    @test_config("config_dots.yaml")
+    def test_comma_field_alignment(self):
+        display = self.machine.segment_displays['display1']
+        display.config['use_dots_for_commas'] = True
+        self.machine.variables.set_machine_var('comma_text', '1,')
+        display.add_text('{machine.comma_text:<2}')
+        self.assertLightColor('segment1_b', 'on')
+        self.assertLightColor('segment1_c', 'on')
+        self.assertLightColor('segment1_dp', 'on')
+        self.assertLightColor('segment2_b', 'off')
+        self.assertLightColor('segment2_c', 'off')
+        self.assertLightColor('segment2_dp', 'off')
+        display.add_text('')
+
     def test_scoring(self):
         display1 = self.machine.segment_displays["display1"]
 
