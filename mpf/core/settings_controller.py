@@ -74,6 +74,10 @@ class SettingsController(MpfController):
         """Return machine var name."""
         return self._settings[setting_name].machine_var
 
+    def get_setting_types(self) -> List[str]:
+        """Return a unique list of all available setting types."""
+        return list({entry.settingType for entry in self._settings.values()})
+
     def get_setting_value(self, setting_name):
         """Return the current value of a setting."""
         if setting_name not in self._settings:
