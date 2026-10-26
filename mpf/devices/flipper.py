@@ -105,19 +105,22 @@ class Flipper(SystemWideDevice):
 
         self.debug_log('Enabling flipper with config: %s', self.config)
 
-        # Apply the proper hardware rules for our config
+        # Apply the proper hardware rules for our config:
 
-        if self.config['activation_switch']:
-            # only add rules if we are using a switch
-            if self.config['use_eos']:
+        if self.config['activation_switch']:  # only add rules if we are using a switch
+            if self.config['use_eos']:  # eos is most significant factor for rule selection
                 self._enable_main_coil_eos_cutoff_rule()
-            elif self.config['hold_coil']:
+                if self.config['hold_coil']:
+                    self._enable_hold_coil_rule()
+                return
+
+            # dual or single wound is second most important factor
+            if self.config['hold_coil']:
                 self._enable_main_coil_pulse_rule()
+                self._enable_hold_coil_rule()
             else:
                 self._enable_single_coil_rule()
 
-            if self.config['hold_coil']:
-                self._enable_hold_coil_rule()
 
     @event_handler(10)
     def event_disable(self, **kwargs):
@@ -221,7 +224,7 @@ class Flipper(SystemWideDevice):
         self._active_rules.append(rule)
 
     def _enable_main_coil_eos_cutoff_rule(self):
-        if self.config['hold_coil']:
+        if self.config['hold_coil']:  # dual wound case, so main doesnt need hold-up behavior
             self.debug_log('Enabling main coil EOS cutoff rule w/o hold')
             rule = self.machine.platform_controller.set_pulse_on_hit_and_release_and_disable_rule(
                 SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
@@ -232,7 +235,7 @@ class Flipper(SystemWideDevice):
                                 debounce_ms=self.config["eos_active_ms_before_repulse"])
             )
             self._active_rules.append(rule)
-        else:
+        else:  # single wound case, so main rule must support holding behavior
             self.debug_log('Enabling main coil EOS cutoff rule w/ hold')
             rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
                 SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
