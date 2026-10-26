@@ -6,15 +6,19 @@ on:
       - dev
       - 0.57.x
       - 0.58.x
+      - 0.59.x
       - 0.80.x
       - 0.81.x
+      - 0.82.x
   pull_request:
     branches:
       - dev
       - 0.57.x
       - 0.58.x
+      - 0.59.x
       - 0.80.x
       - 0.81.x
+      - 0.82.x
 
 jobs:
   prospector:
@@ -34,7 +38,7 @@ jobs:
         run: |
           sudo apt-get install -y libjpeg-dev
           pip install --upgrade pip setuptools wheel build
-          pip install "prospector==1.19.1" "pylint==4.0.9" # Sept 2026 - minor pylint bumps can introduce backwards-looking rule enforcement. No thank you.
+          pip install "prospector==1.19.1" "pylint==4.0.9" # frozen Sept 2026 to avoid minor bumps adding new rules
           pip install -e .
 
       - name: Run Prospector
