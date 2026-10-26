@@ -817,10 +817,13 @@ light_segment_displays:
 light_stripes:
     __valid_in__: machine
     __type__: device
+    name_start_offset: single|int|0
+    zero_pad_digits: single|int|0
     number_start: single|int|0
     start_channel: single|str|None
     previous: single|machine(lights)|None
     number_template: single|str|None
+    name_template: single|str|None
     start_x: single|float|None
     start_y: single|float|None
     direction: single|float|None
@@ -830,10 +833,13 @@ light_stripes:
 light_rings:
     __valid_in__: machine
     __type__: device
+    name_start_offset: single|int|0
+    zero_pad_digits: single|int|0
     number_start: single|int|0
     start_channel: single|str|None
     previous: single|machine(lights)|None
     number_template: single|str|None
+    name_template: single|str|None
     center_x: single|float|None
     center_y: single|float|None
     start_angle: single|float|0
@@ -843,10 +849,13 @@ light_rings:
 neoseg_displays:
     __valid_in__: machine
     __type__: device
+    name_start_offset: single|int|0
+    zero_pad_digits: single|int|0
     number_start: single|int|0
     start_channel: single|str|None
     previous: single|machine(lights)|None
     number_template: single|str|None
+    name_template: single|str|None
     start_x: single|float|None
     start_y: single|float|None
     size: single|enum(2digit,8digit,2digit-rg-swapped,8digit-rg-swapped)|8digit
