@@ -150,7 +150,7 @@ ball_devices:
     mechanical_eject: single|bool|false
     player_controlled_eject_event: single|event_handler|None
     ball_search_order: single|int|200
-    auto_fire_on_unexpected_ball: single|bool|true
+    auto_fire_on_unexpected_ball: single|template_bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
     ejector: ignore
     counter: ignore
