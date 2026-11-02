@@ -957,7 +957,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         """
         # Force hold to None which is needed with this rule
         coil.hold_settings = None
-        coil.hw_driver.set_hardware_rule('18', enable_switch, coil)
+        coil.hw_driver.set_hardware_rule('5D', enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release rule on driver.
@@ -985,7 +985,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         # If enabled, set a switch rule to look for EOS being open and flipper button closed and manually pulse?
         off_switch = eos_switch.hw_switch.hw_number
 
-        coil.hw_driver.set_hardware_rule('75', enable_switch, coil, off_switch=off_switch)
+        coil.hw_driver.set_hardware_rule('5E', enable_switch, coil, off_switch=off_switch)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
                                                                  eos_switch: SwitchSettings, coil: DriverSettings,

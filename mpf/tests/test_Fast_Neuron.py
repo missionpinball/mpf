@@ -1,6 +1,7 @@
 # mpf.tests.test_Fast_Neuron
 
 from mpf.core.platform import SwitchConfig
+from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.tests.test_Fast import TestFastBase
 from mpf.tests.MpfTestCase import MagicMock
 
@@ -960,3 +961,68 @@ class TestFastNeuron(TestFastBase):
 
         self.hit_and_release_switch("s_debounce_auto")
         self.advance_time_and_run()
+
+    def test_neuron_driver_advanced_modes_and_padding(self):
+        """Directly tests that advanced driver modes serialize parameters and pad safely."""
+
+        # Instantiate a naked driver object directly to bypass platform connection mock maps
+        mock_communicator = MagicMock()
+        hw_driver = FASTDriver(communicator=mock_communicator, hw_number=0)
+
+        # Mock up minimal switch and coil settings objects for the function signature
+        mock_switch = MagicMock()
+        mock_switch.hw_switch.hw_number = '01'
+        mock_switch.invert = False
+
+        mock_coil = MagicMock()
+        mock_coil.pulse_settings.duration = 23     # 0x17
+        mock_coil.pulse_settings.power = 1.0       # 0xFF
+        mock_coil.hold_settings.power = 0.25       # 0x40
+        mock_coil.hold_settings.duration = None
+        mock_coil.recycle = False
+
+        # Ensure platform_settings starts completely clean (no YAML overrides)
+        hw_driver.platform_settings = {}
+
+        # TEST 1: Short Mode 5D (Flipper Hold Direct) - Verify safe zero-padding
+        # Seed trailing slots with garbage data to prove the padding loop clears it
+        hw_driver.current_driver_config.param4 = 'AA'
+        hw_driver.current_driver_config.param5 = 'BB'
+
+        # Execute the hardware rule update for Mode 5D
+        hw_driver.set_hardware_rule(mode='5D', switch=mock_switch, coil_settings=mock_coil)
+
+        # Assertions for 3-parameter mode boundaries; tail params are zeroed
+        self.assertEqual(hw_driver.current_driver_config.mode, '5D')
+        self.assertEqual(hw_driver.current_driver_config.param1, '17')  # pwm1_ms
+        self.assertEqual(hw_driver.current_driver_config.param2, 'FF')  # pwm1_power
+        self.assertEqual(hw_driver.current_driver_config.param3, '88')  # pwm2_power
+        self.assertEqual(hw_driver.current_driver_config.param4, '00')
+        self.assertEqual(hw_driver.current_driver_config.param5, '00')
+
+        # TEST 2: Mode 5A (Max Dynamic Range) - Verify name-checked defaults
+        hw_driver.set_hardware_rule(mode='5A', switch=mock_switch, coil_settings=mock_coil, off_switch='01')
+
+        self.assertEqual(hw_driver.current_driver_config.mode, '5A')
+        self.assertEqual(hw_driver.current_driver_config.param1, '01')  # off_switch mapped from kwargs
+        self.assertEqual(hw_driver.current_driver_config.param2, 'FF')  # pwm1_power
+
+        # Verify our explicit non-zero timing safety fallbacks kicked in
+        self.assertEqual(hw_driver.current_driver_config.param3, '32')  # max_eos_ms default: 50 -> 0x32
+        self.assertEqual(hw_driver.current_driver_config.param4, 'FF')  # max_on_time_ms default: 255 -> 0xFF
+        self.assertEqual(hw_driver.current_driver_config.param5, '02')  # refresh_ms default: 2 -> 0x02
+
+        # TEST 3: Mode 5A with YAML overrides - Verify custom platform settings
+        # Populate platform_settings to mimic explicit options specified in a YAML profile
+        hw_driver.platform_settings = {
+            'max_eos_ms': 30,         # 0x1E
+            'max_on_time_ms': 100,    # 0x64
+            'refresh_ms': 10          # 0x0A
+        }
+
+        hw_driver.set_hardware_rule(mode='5A', switch=mock_switch, coil_settings=mock_coil)
+
+        # Verify that user-defined YAML attributes completely override the safe fallbacks
+        self.assertEqual(hw_driver.current_driver_config.param3, '1E')
+        self.assertEqual(hw_driver.current_driver_config.param4, '64')
+        self.assertEqual(hw_driver.current_driver_config.param5, '0A')

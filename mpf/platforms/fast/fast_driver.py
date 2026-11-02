@@ -60,14 +60,21 @@ class FASTDriver:
         self.current_driver_config = self.baseline_driver_config
 
         self.mode_param_mapping = {
-            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
-            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],
-            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],
-            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],
-            '25': ['relay_on_report_ms', 'relay_off_report_ms'],
-            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],
-            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
-            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],
+            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],             # pulse
+            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],                # pulse + kick
+            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms'],                        # pulse + hold
+            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],             # pulse + hold w cancel switch
+            '25': ['relay_on_report_ms', 'relay_off_report_ms'],                                # system 11 AC relay
+            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],           # delayed pulse
+            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],        # long pulse
+            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],        # pulse w cancel switch
+            '78': ['pwm1_ms', 'pwm1_power', 'hold_ms_x10', 'pwm2_power', 'rest_ms'],            # pulse + hold w extension
+            '59': ['pwm1_ms', 'pwm1_power', 'pwm2_power'],                                      # Flipper Hold (Dual PWM)
+            '5A': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_time_ms', 'refresh_ms'],   # Flipper Max Dynamic Range
+            '5B': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_time_ms', 'refresh_ms'],   # Flipper Max Dynamic Begin Range
+            '5D': ['pwm1_ms', 'pwm1_power', 'pwm2_power'],                                      # Flipper Hold Direct
+            '5E': ['off_switch', 'pwm1_power', 'pwm2_power', 'max_eos_ms', 'refresh_ms'],       # Flipper Main Direct
+            '5F': ['off_switch', 'pwm1_ms', 'pwm1_power', 'rest_ms']                            # Flipper 3 Try
         }
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
@@ -291,14 +298,32 @@ class FASTDriver:
         else:
             new_settings['recycle_ms'] = Util.int_to_hex_string(coil_settings.recycle)
 
+        for i in range(len(self.mode_param_mapping[mode]), 5):
+            setattr(self.current_driver_config, f'param{i + 1}', '00')
+
         # Update the current_driver_config with any new settings
         for idx, param in enumerate(self.mode_param_mapping[mode]):
-            if param is None or new_settings.get(param, None) is None:
+            if param is None:
                 continue
+
+            if new_settings.get(param, None) is None:
+                if self.platform_settings.get(param) is not None:
+                    new_settings[param] = Util.int_to_hex_string(self.platform_settings[param])
+                elif param == 'max_eos_ms':
+                    new_settings[param] = Util.int_to_hex_string(50)
+                elif param == 'max_on_time_ms':
+                    new_settings[param] = Util.int_to_hex_string(255)
+                elif param == 'refresh_ms':
+                    new_settings[param] = Util.int_to_hex_string(2)
+                else:
+                    continue
+
             if param == 'delay_ms_x10':
-                new_settings['delay_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
+                new_settings[param] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
             elif param == 'pwm2_ms_x100':
-                new_settings['pwm2_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 100)
+                new_settings[param] = Util.int_to_hex_string(int(new_settings[param], 16) // 100)
+            elif param == 'hold_ms_x10':
+                new_settings[param] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
 
             param_name = f'param{idx + 1}'
             if new_settings[param] != getattr(self.current_driver_config, param_name):
