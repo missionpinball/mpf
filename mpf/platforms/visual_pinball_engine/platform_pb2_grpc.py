@@ -5,7 +5,7 @@ import warnings
 
 from . import platform_pb2 as platform__pb2
 
-GRPC_GENERATED_VERSION = '1.69.0'
+GRPC_GENERATED_VERSION = '1.84.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,14 +18,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in platform_pb2_grpc.py depends on'
+        + ' but the generated code in platform_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
     )
 
 
-class MpfHardwareServiceStub(object):
+class MpfHardwareServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -61,7 +61,7 @@ class MpfHardwareServiceStub(object):
                 _registered_method=True)
 
 
-class MpfHardwareServiceServicer(object):
+class MpfHardwareServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
     def Start(self, request, context):
@@ -130,7 +130,7 @@ def add_MpfHardwareServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class MpfHardwareService(object):
+class MpfHardwareService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
