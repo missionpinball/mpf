@@ -39,6 +39,7 @@ class FASTDriver:
     __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
                  "config", "current_driver_config", "mode_param_mapping", "platform_settings"]
 
+    # pylint: disable-msg=line-too-long
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
 
@@ -60,15 +61,24 @@ class FASTDriver:
         self.current_driver_config = self.baseline_driver_config
 
         self.mode_param_mapping = {
-            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],         # pulse
-            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],            # pulse + kick
-            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],              # pulse + hold
-            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],         # pulse + hold w cancel switch
-            '25': ['relay_on_report_ms', 'relay_off_report_ms'],                            # system 11 AC relay
-            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],       # delayed pulse
-            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # long pulse
-            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # pulse w cancel switch
-            '78': ['pwm1_ms', 'pwm1_power', 'hold_ms_x10', 'pwm2_power', 'recycle_ms'],     # pulse + hold with extension time
+            '10': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],       # pulse
+            '12': ['pwm1_ms', 'pwm1_power', 'pwm2_ms', 'pwm2_power', 'kick_ms'],          # pulse + kick
+            '18': ['pwm1_ms', 'pwm1_power', 'pwm2_power', 'recycle_ms', None],            # pulse + hold
+            '20': ['off_switch', 'pwm1_ms', 'pwm1_power', 'pwm2_power', 'rest_ms'],       # pulse + hold w cancel switch
+            '25': ['relay_on_report_ms', 'relay_off_report_ms'],                          # system 11 AC relay
+            '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],     # delayed pulse
+            '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],  # long pulse
+            '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],  # pulse w cancel switch
+            '78': ['pwm1_ms', 'pwm1_power', 'hold_ms_x10', 'pwm2_power', 'recycle_ms'],   # pulse + hold with extension time
+
+            # Neuron 2.16 modes:
+            '56': ['off_switch', 'pwm1_ms', 'pwm2_power', 'max_eos_ms', 'micro_flip_ms'],    # flipper direct eos
+            '59': ['pwm1_ms', 'pwm1_power', 'pwm2_power', None, None],                       # flipper hold
+            '5A': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],   # flipper max dynamic range
+            '5B': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],   # flipper max dynamic begin range
+            '5D': ['pwm1_ms', 'pwm1_power', 'pwm2_power', None, None],                       # flipper direct - hold coil
+            '5E': ['off_switch', 'pwm1_power', 'pwm1_power', 'max_eos_ms', 'next_flip_ms'],  # flipper direct - main coil
+            '5F': ['off_switch', 'max_on_ms', 'pwm2_power', 'recycle_ms', None],             # flipper 3 try
         }
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
