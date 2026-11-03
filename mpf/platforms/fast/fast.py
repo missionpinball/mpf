@@ -999,8 +999,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
 
         FAST Driver Mode 20
         """
-        coil.hw_driver.set_hardware_rule('20', enable_switch, coil, eos_switch=eos_switch,
-                                         repulse_settings=repulse_settings)
+        del repulse_settings
+        off_switch = eos_switch.hw_switch.hw_number
+        coil.hw_driver.set_hardware_rule('20', enable_switch, coil, off_switch=off_switch)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.
