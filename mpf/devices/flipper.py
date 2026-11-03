@@ -105,19 +105,24 @@ class Flipper(SystemWideDevice):
 
         self.debug_log('Enabling flipper with config: %s', self.config)
 
-        # Apply the proper hardware rules for our config
+        # Apply the proper hardware rules for our config:
 
-        if self.config['activation_switch']:
-            # only add rules if we are using a switch
-            if self.config['use_eos']:
-                self._enable_main_coil_eos_cutoff_rule()
-            elif self.config['hold_coil']:
+        if self.config['activation_switch']:  # only add rules if we are using a switch
+            if self.config['use_eos']:  # eos is most significant factor for rule selection
+                if self.config['hold_coil']:
+                    self._enable_dual_wound_main_coil_eos_rule()
+                    self._enable_hold_coil_rule()
+                else:
+                    self._enable_single_wound_main_coil_eos_rule()
+                return
+
+            # dual or single wound is second most important factor
+            if self.config['hold_coil']:
                 self._enable_main_coil_pulse_rule()
+                self._enable_hold_coil_rule()
             else:
                 self._enable_single_coil_rule()
 
-            if self.config['hold_coil']:
-                self._enable_hold_coil_rule()
 
     @event_handler(10)
     def event_disable(self, **kwargs):
@@ -192,10 +197,10 @@ class Flipper(SystemWideDevice):
         self.debug_log('Enabling single coil rule')
 
         rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
-            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
-            DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-            PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power()),
-            HoldRuleSettings(power=self._get_hold_power())
+            self._get_activation_switch_settings(),
+            self._get_main_driver_settings(),
+            self._get_main_pulse_settings(),
+            self._get_hold_settings()
         )
         self._active_rules.append(rule)
 
@@ -203,9 +208,9 @@ class Flipper(SystemWideDevice):
         self.debug_log('Enabling main coil pulse rule')
 
         rule = self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
-            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
-            DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-            PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power())
+            self._get_activation_switch_settings(),
+            self._get_main_driver_settings(),
+            self._get_main_pulse_settings()
         )
         self._active_rules.append(rule)
 
@@ -213,37 +218,56 @@ class Flipper(SystemWideDevice):
         self.debug_log('Enabling hold coil rule')
 
         rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
-            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
+            self._get_activation_switch_settings(),
             DriverRuleSettings(driver=self.config['hold_coil'], recycle=False),
             PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
-            HoldRuleSettings(power=self._get_hold_power())
+            self._get_hold_settings()
         )
         self._active_rules.append(rule)
 
-    def _enable_main_coil_eos_cutoff_rule(self):
-        if self.config['hold_coil']:
-            self.debug_log('Enabling main coil EOS cutoff rule w/o hold')
-            rule = self.machine.platform_controller.set_pulse_on_hit_and_release_and_disable_rule(
-                SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
-                SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
-                DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-                PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
-                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
+    def _enable_dual_wound_main_coil_eos_rule(self):
+        self.debug_log('Enabling dual-wound main coil EOS cutoff rule w/o hold')
+
+        rule = self.machine.platform_controller.set_pulse_on_hit_and_release_and_disable_rule(
+            self._get_activation_switch_settings(),
+            self._get_eos_switch_settings(),
+            self._get_main_driver_settings(),
+            self._get_main_pulse_settings(),
+            self._get_eos_rule_settings()
+        )
+        self._active_rules.append(rule)
+
+    def _enable_single_wound_main_coil_eos_rule(self):
+        self.debug_log('Enabling single-wound main coil EOS cutoff rule w/ hold')
+
+        rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
+            self._get_activation_switch_settings(),
+            self._get_eos_switch_settings(),
+            self._get_main_driver_settings(),
+            self._get_main_pulse_settings(),
+            self._get_hold_settings(),
+            self._get_eos_rule_settings()
+        )
+        self._active_rules.append(rule)
+
+    def _get_activation_switch_settings(self) -> SwitchRuleSettings:
+        return SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False)
+
+    def _get_eos_switch_settings(self) -> SwitchRuleSettings:
+        return SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False)
+
+    def _get_main_driver_settings(self) -> DriverRuleSettings:
+        return DriverRuleSettings(driver=self.config['main_coil'], recycle=False)
+
+    def _get_main_pulse_settings(self) -> PulseRuleSettings:
+        return PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power())
+
+    def _get_hold_settings(self) -> HoldRuleSettings:
+        return HoldRuleSettings(power=self._get_hold_power())
+
+    def _get_eos_rule_settings(self) -> EosRuleSettings:
+        return EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
                                 debounce_ms=self.config["eos_active_ms_before_repulse"])
-            )
-            self._active_rules.append(rule)
-        else:
-            self.debug_log('Enabling main coil EOS cutoff rule w/ hold')
-            rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
-                SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
-                SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
-                DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-                PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
-                HoldRuleSettings(power=self._get_hold_power()),
-                EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
-                                debounce_ms=self.config["eos_active_ms_before_repulse"])
-            )
-            self._active_rules.append(rule)
 
     @event_handler(6)
     def event_sw_flip(self, **kwargs):
