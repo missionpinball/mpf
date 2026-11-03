@@ -69,6 +69,15 @@ class FASTDriver:
             '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # long pulse
             '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # pulse w cancel switch
             '78': ['pwm1_ms', 'pwm1_power', 'hold_ms_x10', 'pwm2_power', 'recycle_ms'],     # pulse + hold with extension time
+
+            # Neuron 2.16 modes:
+            '56': ['off_switch', 'pwm1_ms', 'pwm2_power', 'max_eos_ms', 'micro_flip_ms'],   # flipper direct eos
+            '59': ['pwm1_ms', 'pwm1_power', 'pwm2_power', None, None],                      # flipper hold
+            '5A': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],  # flipper max dynamic range
+            '5B': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],  # flipper max dynamic begin range
+            '5D': ['pwm1_ms', 'pwm1_power', 'pwm2_power', None, None],                      # flipper direct - hold coil
+            '5E': ['off_switch', 'pwm1_power', 'pwm2_power', 'max_eos_ms', 'next_flip_ms'], # flipper direct - mail coil
+            '5F': ['off_switch', 'max_on_ms', 'pwm2_power', 'recycle_ms', None],            # flipper 3 try
         }
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
