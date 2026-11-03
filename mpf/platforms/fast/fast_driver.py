@@ -302,6 +302,13 @@ class FASTDriver:
         else:
             new_settings['recycle_ms'] = Util.int_to_hex_string(coil_settings.recycle)
 
+        # Extract and hex-encode Neuron 2.16 platform-specific parameters if present
+        for platform_param in ['max_eos_ms', 'micro_flip_ms', 'max_on_ms', 'next_flip_ms']:
+            if self.platform_settings.get(platform_param):
+                new_settings[platform_param] = Util.int_to_hex_string(self.platform_settings[platform_param])
+            else:
+                new_settings[platform_param] = '00'
+
         # Update the current_driver_config with any new settings
         for idx, param in enumerate(self.mode_param_mapping[mode]):
             if param is None or new_settings.get(param, None) is None:

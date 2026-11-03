@@ -681,6 +681,10 @@ fast_switches:
 fast_coils:
     recycle_ms: single|ms|None
     pwm2_ms: single|ms|None
+    max_eos_ms: single|ms|None
+    micro_flip_ms: single|ms|None
+    max_on_ms: single|ms|None
+    next_flip_ms: single|ms|None
 fast_servos:
     max_us: single|int|2000
     min_us: single|int|1000
