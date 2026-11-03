@@ -68,6 +68,7 @@ class FASTDriver:
             '30': ['delay_ms_x10', 'pwm1_ms', 'pwm2_ms', 'pwm2_power', 'recycle_ms'],       # delayed pulse
             '70': ['pwm1_ms', 'pwm1_power', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # long pulse
             '75': ['off_switch', 'pwm1_ms', 'pwm2_ms_x100', 'pwm2_power', 'recycle_ms'],    # pulse w cancel switch
+            '78': ['pwm1_ms', 'pwm1_power', 'hold_ms_x10', 'pwm2_power', 'recycle_ms'],     # pulse + hold with extension time
         }
 
     def set_initial_config(self, mpf_config: DriverConfig, platform_settings):
@@ -297,6 +298,8 @@ class FASTDriver:
                 continue
             if param == 'delay_ms_x10':
                 new_settings['delay_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
+            elif param == 'hold_ms_x10':
+                new_settings['hold_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 10)
             elif param == 'pwm2_ms_x100':
                 new_settings['pwm2_ms'] = Util.int_to_hex_string(int(new_settings[param], 16) // 100)
 
