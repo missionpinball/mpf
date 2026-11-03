@@ -230,7 +230,7 @@ class Flipper(SystemWideDevice):
                 SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
                 SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
                 DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-                PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
+                PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power()),
                 EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
                                 debounce_ms=self.config["eos_active_ms_before_repulse"])
             )
@@ -241,7 +241,7 @@ class Flipper(SystemWideDevice):
                 SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
                 SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
                 DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-                PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
+                PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power()),
                 HoldRuleSettings(power=self._get_hold_power()),
                 EosRuleSettings(enable_repulse=self.config["repulse_on_eos_open"],
                                 debounce_ms=self.config["eos_active_ms_before_repulse"])
