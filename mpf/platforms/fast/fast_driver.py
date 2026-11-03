@@ -76,7 +76,7 @@ class FASTDriver:
             '5A': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],  # flipper max dynamic range
             '5B': ['off_switch', 'pwm1_power', 'max_eos_ms', 'max_on_ms', 'next_flip_ms'],  # flipper max dynamic begin range
             '5D': ['pwm1_ms', 'pwm1_power', 'pwm2_power', None, None],                      # flipper direct - hold coil
-            '5E': ['off_switch', 'pwm1_power', 'pwm2_power', 'max_eos_ms', 'next_flip_ms'], # flipper direct - mail coil
+            '5E': ['off_switch', 'pwm1_power', 'pwm1_power', 'max_eos_ms', 'next_flip_ms'], # flipper direct - main coil
             '5F': ['off_switch', 'max_on_ms', 'pwm2_power', 'recycle_ms', None],            # flipper 3 try
         }
 
