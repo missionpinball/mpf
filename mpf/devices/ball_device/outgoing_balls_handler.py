@@ -427,28 +427,46 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             await self.ball_device.ball_count_handler.end_eject(ball_eject_process, result)
 
             # Check if more balls left than expected, meaning the ejector kicked out multiple
-            # balls. If so, tag those missing balls as lost (except for mechanical ejects, which
-            # may be expected, and troughs, which may jam)
+            # balls (e.g. a lock post that releases every queued ball at once). Mechanical
+            # ejects may be expected and troughs may jam, so both are exempt.
             if "trough" not in self.ball_device.tags and not self.ball_device.config['mechanical_eject']:
                 new_balls = await self.ball_device.ball_count_handler.counter.count_balls()
                 old_balls = self.ball_device.counted_balls
 
                 if new_balls < old_balls:
                     self.info_log("Found %s physical balls and %s expected balls", new_balls, old_balls)
-                    # Post that the ball is lost
-                    await self.ball_device.lost_idle_ball()
-                    # Cancel the eject queue for the lost ball
-                    for _ in range(0, old_balls - new_balls):
-                        if not self._eject_queue.empty():
-                            self._eject_queue.get_nowait()
-                            self._eject_queue.task_done()
-                    self.info_log("Necessary queue requests are cancelled. Updating ball count to %s." % new_balls)
                     self.ball_device.ball_count_handler._set_ball_count(new_balls)  # pylint: disable=protected-access
+                    await self._fulfil_queued_ejects_with_surplus_balls(old_balls - new_balls, eject_request.target)
 
             return result
         except asyncio.CancelledError:
             ball_eject_process.cancel()
             raise
+
+    async def _fulfil_queued_ejects_with_surplus_balls(self, surplus_balls: int, target: "BallDevice"):
+        """Account for balls which left together with the one just ejected.
+
+        A surplus ball left through the same exit, so it is headed to the same
+        target. Mark the next queued requests to that target as already left
+        (the mechanical eject path) instead of cancelling them, so the target
+        keeps expecting the ball and the path's available_balls promises stay
+        balanced. Fulfilled requests move to the front of the queue so their
+        balls are confirmed before any new eject. Requests to other targets
+        stay queued, and balls with no matching request are lost.
+        """
+        pending = []
+        while not self._eject_queue.empty():
+            pending.append(self._eject_queue.get_nowait())
+            self._eject_queue.task_done()
+        fulfilled = [request for request in pending if request.target == target][:surplus_balls]
+        for eject_request in fulfilled:
+            eject_request.already_left = True
+        for eject_request in fulfilled + [request for request in pending if request not in fulfilled]:
+            self._eject_queue.put_nowait(eject_request)
+        self.info_log("%s queued eject(s) fulfilled by balls which already left.", len(fulfilled))
+
+        for _ in range(surplus_balls - len(fulfilled)):
+            await self.ball_device.lost_idle_ball()
 
     def _add_incoming_ball_to_target(self, target: "BallDevice") -> IncomingBall:
         # we are the source of this ball
