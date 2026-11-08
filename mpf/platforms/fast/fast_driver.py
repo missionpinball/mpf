@@ -39,7 +39,6 @@ class FASTDriver:
     __slots__ = ["log", "communicator", "number", "hw_number", "autofire_config", "baseline_driver_config",
                  "config", "current_driver_config", "mode_param_mapping", "platform_settings"]
 
-    # pylint: disable-msg=line-too-long
     def __init__(self, communicator: FastSerialCommunicator, hw_number: int) -> None:
         """Initialize the driver object.
 
