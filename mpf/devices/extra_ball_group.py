@@ -169,7 +169,7 @@ class ExtraBallGroup(SystemWideDevice):
 
         # if this award puts us over the max limits, make sure none are lit
         if not self.enabled:
-            self.player['extra_ball_group_{}_num_lit'] = 0
+            self.player[self._player_var_num_lit] = 0
             if not posted_unlit_events:
                 self._post_unlit_events()
 

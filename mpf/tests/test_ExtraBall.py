@@ -247,23 +247,23 @@ class TestExtraBall(MpfGameTestCase):
         self.assertEventCalled('extra_ball_group_main_awarded')
         self.assertEventCalled('extra_ball_group_main_unlit')
         self.assertEqual(1, self.machine.game.player.extra_balls)
-        self.assertEqual(1,
+        self.assertEqual(0,
             self.machine.game.player.extra_ball_group_main_num_lit)
         self.assertEqual(2,
              self.machine.game.player.extra_ball_group_main_num_awarded_game)
         self.assertEqual(2,
              self.machine.game.player.extra_ball_group_main_num_awarded_ball)
 
-        # drain, should still be player 1 and the EB should still be lit
+        # drain, should still be player 1 and the EB should not be lit again
         self.mock_event('extra_ball_group_main_lit')
         self.mock_event('extra_ball_group_main_lit_awarded')
 
         self.drain_all_balls()
         self.advance_time_and_run()
-        self.assertEventCalled('extra_ball_group_main_lit')
+        self.assertEventNotCalled('extra_ball_group_main_lit')
         self.assertEventNotCalled('extra_ball_group_main_lit_awarded')
         self.assertEqual(0, self.machine.game.player.extra_balls)
-        self.assertEqual(1,
+        self.assertEqual(0,
             self.machine.game.player.extra_ball_group_main_num_lit)
         self.assertEqual(2,
              self.machine.game.player.extra_ball_group_main_num_awarded_game)
@@ -283,7 +283,7 @@ class TestExtraBall(MpfGameTestCase):
         self.assertEventNotCalled('extra_ball_group_main_lit_awarded')
         self.assertEventCalled('extra_ball_group_main_award_disabled')
         self.assertEqual(0, self.machine.game.player.extra_balls)
-        self.assertEqual(1,
+        self.assertEqual(0,
             self.machine.game.player.extra_ball_group_main_num_lit)
         self.assertEqual(2,
              self.machine.game.player.extra_ball_group_main_num_awarded_game)
