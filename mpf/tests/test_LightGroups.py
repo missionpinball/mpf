@@ -44,6 +44,23 @@ class TestLightGroups(MpfTestCase):
         self.assertEqual("led-ABC-123+3", self.machine.lights["stripe3_light_0"].hw_drivers["white"][0].number)
         self.assertEqual("led-ABC-123+4", self.machine.lights["stripe3_light_1"].hw_drivers["red"][0].number)
 
+    def test_config_stripe_4(self):
+        self.assertEqual("led-ex-8-r", self.machine.lights["l_example_light_098"].hw_drivers["red"][0].number)
+        self.assertEqual("led-ex-8-g", self.machine.lights["l_example_light_098"].hw_drivers["green"][0].number)
+        self.assertEqual("led-ex-8-b", self.machine.lights["l_example_light_098"].hw_drivers["blue"][0].number)
+        self.assertEqual("led-ex-9-r", self.machine.lights["l_example_light_099"].hw_drivers["red"][0].number)
+        self.assertEqual("led-ex-9-g", self.machine.lights["l_example_light_099"].hw_drivers["green"][0].number)
+        self.assertEqual("led-ex-10-r", self.machine.lights["l_example_light_100"].hw_drivers["red"][0].number)
+        self.assertEqual("led-ex-12-r", self.machine.lights["l_example_light_102"].hw_drivers["red"][0].number)
+
+    def test_config_stripe_5(self):
+        self.assertEqual("led-ex-2-0-r", self.machine.lights["l_example-2_light_9"].hw_drivers["red"][0].number)
+        self.assertEqual("led-ex-2-0-g", self.machine.lights["l_example-2_light_9"].hw_drivers["green"][0].number)
+        self.assertEqual("led-ex-2-0-b", self.machine.lights["l_example-2_light_9"].hw_drivers["blue"][0].number)
+        self.assertEqual("led-ex-2-1-r", self.machine.lights["l_example-2_light_10"].hw_drivers["red"][0].number)
+        self.assertEqual("led-ex-2-1-g", self.machine.lights["l_example-2_light_10"].hw_drivers["green"][0].number)
+        self.assertEqual("led-ex-2-2-r", self.machine.lights["l_example-2_light_11"].hw_drivers["red"][0].number)
+
     def test_config_rings(self):
         self.assertEqual("led-20-r", self.machine.lights["ring1_light_0"].hw_drivers["red"][0].number)
         self.assertEqual("led-21-r", self.machine.lights["ring1_light_1"].hw_drivers["red"][0].number)

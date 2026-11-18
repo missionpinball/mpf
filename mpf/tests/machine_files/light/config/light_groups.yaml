@@ -26,6 +26,19 @@ light_stripes:
     debug: True
     light_template:
       type: rgbw
+  stripe4:
+    count: 50
+    name_start_offset: 98
+    number_start: 8
+    zero_pad_digits: 3
+    name_template: l_example
+    number_template: ex-{}
+  stripe5:
+    count: 3
+    name_start_offset: 9
+    zero_pad_digits: 0
+    name_template: l_example-2
+    number_template: ex-2-{}
 
 light_rings:
   ring1:
