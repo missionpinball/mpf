@@ -26,7 +26,7 @@ class TestFastSeg(TestFastBase):
         seg_addresses = list()
 
         # Make sure the MPF segment interface is picking up the digits and colors
-        for seg in self.machine.segment_displays:
+        for seg in self.machine.segment_displays.values():
             for digit_color in seg.colors:
                 self.assertEqual('ffffff', digit_color.hex)
             for digit_text in seg.text:

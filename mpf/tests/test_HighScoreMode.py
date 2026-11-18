@@ -611,7 +611,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def testInvalidData(self):
         self.start_game(4)
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run(10)
 
         # this should reload the defaults
@@ -629,7 +629,7 @@ class TestHighScoreMode(MpfBcpTestCase):
     @test_config_directory("tests/machine_files/high_score_reverse/")
     def test_reverse_sort(self):
         self.start_game(4)
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
 
         new_score_data = dict()

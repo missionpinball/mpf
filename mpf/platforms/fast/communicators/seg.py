@@ -26,7 +26,7 @@ class FastSegCommunicator(FastSerialCommunicator):
 
     def start_tasks(self):
         """Setup the interval tasks for updating the display."""
-        for s in self.machine.device_manager.collections["segment_displays"]:
+        for s in self.machine.device_manager.collections["segment_displays"].values():
             self.platform.fast_segs.append(s.hw_display)
 
         self.platform.fast_segs.sort(key=lambda x: x.number)
