@@ -145,16 +145,6 @@ class Game(AsyncMode):
 
         self.debug_log("Game started")
 
-    def ball_ending(self):
-        """Handle ball ending.
-
-        DEPRECATED in v0.50. Use ``end_ball()`` instead.
-        """
-        # TODO: Remove this function as it has been deprecated and replaced
-        self.warning_log("game.ball_ending() function has been deprecated. "
-                         "Please use game.end_ball() instead.")
-        self.end_ball()
-
     def event_end_game(self, **kwargs):
         """Event handler to end the current game."""
         del kwargs
@@ -465,16 +455,6 @@ class Game(AsyncMode):
         await self.machine.events.post_async('game_ended')
         '''event: game_ended
         desc: The game has ended.'''
-
-    def game_ending(self):
-        """Handle game ending.
-
-        DEPRECATED in v0.50. Use ``end_game()`` instead.
-        """
-        # TODO: Remove this function as it has been deprecated and replaced
-        self.warning_log("game.game_ending() function has been deprecated. "
-                         "Please use game.end_game() instead.")
-        self.end_game()
 
     def end_game(self):
         """End the current game.
