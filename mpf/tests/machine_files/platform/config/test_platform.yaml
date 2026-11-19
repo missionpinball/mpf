@@ -9,3 +9,10 @@ switches:
   switch2:
     number: 2
     platform: virtual
+
+coils:
+  coil1:
+    number: 1
+  coil2:
+    number: 2
+    platform: virtual

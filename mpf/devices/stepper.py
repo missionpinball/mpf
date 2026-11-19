@@ -95,7 +95,7 @@ class Stepper(SystemWideDevice):
                         config[cfg][pos] = {'event': value}
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
-            'stepper_controllers', getattr(config, "platform", None))
+            'stepper_controllers', config.get("platform"))
         config['platform_settings'] = platform.validate_stepper_section(
             self, config.get('platform_settings', None))
         self._configure_device_logging(config)

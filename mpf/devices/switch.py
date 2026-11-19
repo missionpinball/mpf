@@ -89,7 +89,7 @@ class Switch(SystemWideDevice, DevicePositionMixin):
         """Validate switch config."""
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
-            'switches', getattr(config, "platform", None))
+            'switches', config.get("platform"))
         platform.assert_has_feature("switches")
         config['platform_settings'] = platform.validate_switch_section(
             self, config.get('platform_settings', None))
