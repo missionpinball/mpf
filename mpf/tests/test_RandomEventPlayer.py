@@ -18,6 +18,10 @@ class TestRandomEventPlayer(MpfTestCase):
         tester = TestRandomEventPlayerBase(self, "machine")
         tester.run_all_tests()
 
+    def test_machine_conditional_random(self):
+        tester = TestRandomEventPlayerBase(self, "machine")
+        tester._test_conditional_random()
+
 
 class TestRandomEventPlayerGame(MpfGameTestCase):
 
@@ -102,28 +106,25 @@ class TestRandomEventPlayerBase():
             self.runner.assertEqual(self.lastEvent, self.events[expectedIdx])
 
     def _test_conditional_random(self):
+        # Only event2's condition is true without kwargs
         self._reset()
-
-        # Only one event is true
-        results = list()
-        for x in range(RANDOM_RUNS):
+        for _ in range(RANDOM_RUNS):
             self.runner.post_event("test_{}_conditional_random".format(self.scope))
             self.runner.advance_time_and_run()
-            self.assertEqual(RANDOM_RUNS, results.count('event1'))
+        self.runner.assertTrue(self.eventHistory)
+        self.runner.assertEqual({"event2"}, set(self.eventHistory))
 
-        # Conditional event kwarg is true
-        results = list()
-        for x in range(RANDOM_RUNS):
+        # The trigger's kwargs reach the conditions, so event3 is true as well
+        self._reset()
+        for _ in range(RANDOM_RUNS):
             self.runner.post_event("test_{}_conditional_random".format(self.scope), event_arg="foo")
             self.runner.advance_time_and_run()
-            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event1'), delta=3)
-            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event3'), delta=3)
+        self.runner.assertEqual({"event2", "event3"}, set(self.eventHistory))
 
-        # Machine setting event is true
-        self.runner.machine.settings.set_setting_value("foo","bar")
-        results = list()
-        for x in range(RANDOM_RUNS):
+        # A machine setting makes event4 true
+        self.runner.machine.settings.set_setting_value("foo", "bar")
+        self._reset()
+        for _ in range(RANDOM_RUNS):
             self.runner.post_event("test_{}_conditional_random".format(self.scope))
             self.runner.advance_time_and_run()
-            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event1'), delta=3)
-            self.assertAlmostEqual(RANDOM_RUNS / 2, results.count('event4'), delta=3)
+        self.runner.assertEqual({"event2", "event4"}, set(self.eventHistory))

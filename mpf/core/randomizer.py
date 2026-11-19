@@ -155,8 +155,13 @@ class Randomizer:
         return next(self)
 
     def get_next(self, conditional_args=None):
-        """Return next item."""
-        return next(self, conditional_args)
+        """Return next item.
+
+        The conditional args go to the item conditions. (``next()``'s second
+        argument is its default, so ``next(self, conditional_args)`` never
+        passed them on.)
+        """
+        return self.__next__(conditional_args)
 
     def _get_items(self, conditional_args):
         if self._template_type:
