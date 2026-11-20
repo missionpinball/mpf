@@ -56,4 +56,14 @@ random_event_player:
       - event1{False==True}
       - event2{True==True}
       - event3{event_arg=="foo"}
-      - event4{machine.settings.foo=="bar"}
+      - event4{settings.foo=="bar"}
+
+settings:
+  foo:
+    label: Foo
+    values:
+      bar: "Bar"
+      baz: "Baz"
+    default: baz
+    key_type: str
+    sort: 100
