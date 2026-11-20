@@ -152,6 +152,13 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
         self.machine.coils["c_flipper_single_main"].hw_driver.disable.assert_called_with()
         self.machine.coils["c_flipper_single_main"].hw_driver.disable = MagicMock()
 
+        # normal flip without repulse should not call disable on release
+        self.hit_switch_and_run("s_flipper_single", 0.05)
+        self.hit_switch_and_run("s_flipper_single_eos", 1)
+        self.release_switch_and_run("s_flipper_single", 0.05)
+        self.release_switch_and_run("s_flipper_single_eos", 1)
+        self.machine.coils["c_flipper_single_main"].hw_driver.disable.assert_not_called()
+
         # disable flipper
         self.post_event("disable_flipper_single")
         self.assertPlaceholderEvaluates(False, "device.flippers.single_flipper.enabled")
@@ -328,8 +335,7 @@ class TestFlippersSoftwareEosRepulse(MpfTestCase):
         self.release_switch_and_run("s_flipper_dual_wound_eos", 1)
         self.machine.coils["c_flipper_dual_wound_main"].hw_driver.pulse.assert_not_called()
         self.machine.coils["c_flipper_dual_wound_main"].hw_driver.enable.assert_not_called()
-        self.machine.coils["c_flipper_dual_wound_main"].hw_driver.disable.assert_called_with()
-        self.machine.coils["c_flipper_dual_wound_main"].hw_driver.disable = MagicMock()
+        self.machine.coils["c_flipper_dual_wound_main"].hw_driver.disable.assert_not_called()
 
         # disable flipper
         self.post_event("disable_flipper_dual_wound")
