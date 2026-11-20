@@ -437,6 +437,39 @@ class TestBcpInterface(MpfBcpTestCase):
         queue = self._bcp_external_client.reset_and_return_queue()
         self.assertFalse(queue)
 
+    def test_service_start_stop_are_idempotent(self):
+        """A BCP client may not know whether service mode is active.
+
+        A second start (e.g. while the operator is in the service menu) or a
+        stop while service mode is not active must not raise and end MPF.
+        """
+        self.assertFalse(self.machine.service.is_in_service())
+
+        self._bcp_external_client.send('service', {'subcommand': 'start'})
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.service.is_in_service())
+
+        # second start is ignored
+        self._bcp_external_client.send('service', {'subcommand': 'start'})
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.service.is_in_service())
+
+        # Leave service mode from the machine side (e.g. the operator exits
+        # the service menu). Done directly here: a BCP stop while in service
+        # waits in machine.reset() for reset_complete from this same mock
+        # client, whose receive loop is busy with that stop.
+        self.loop.run_until_complete(self.machine.service.stop_service())
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.service.is_in_service())
+
+        # stop while not in service mode is ignored but still replies
+        self._bcp_external_client.reset_and_return_queue()
+        self._bcp_external_client.send('service', {'subcommand': 'stop'})
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.service.is_in_service())
+        self.assertIn(('service_stop', {}),
+                      self._bcp_external_client.reset_and_return_queue())
+
     def test_list_coils(self):
         self.assertIn('mode1', self.machine.modes)
         self.assertIn('mode2', self.machine.modes)
