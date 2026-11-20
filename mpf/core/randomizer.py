@@ -50,8 +50,12 @@ class Randomizer:
         """Return iterator."""
         return self
 
-    def __next__(self, conditional_args=None):
+    def __next__(self):
         """Return next."""
+        return self._next(None)
+
+    def _next(self, conditional_args):
+        """Return the next item, its conditions evaluated with conditional_args."""
         if not conditional_args:
             conditional_args = {}
 
@@ -161,7 +165,7 @@ class Randomizer:
         argument is its default, so ``next(self, conditional_args)`` never
         passed them on.)
         """
-        return self.__next__(conditional_args)
+        return self._next(conditional_args)
 
     def _get_items(self, conditional_args):
         if self._template_type:
