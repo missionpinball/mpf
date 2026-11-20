@@ -18,10 +18,6 @@ class TestRandomEventPlayer(MpfTestCase):
         tester = TestRandomEventPlayerBase(self, "machine")
         tester.run_all_tests()
 
-    def test_machine_conditional_random(self):
-        tester = TestRandomEventPlayerBase(self, "machine")
-        tester._test_conditional_random()
-
 
 class TestRandomEventPlayerGame(MpfGameTestCase):
 
@@ -59,8 +55,17 @@ class TestRandomEventPlayerBase():
             runner.machine.events.add_handler(event=event, handler=self._handle_event, event_name=event)
 
     def run_all_tests(self):
-        for test in [self._test_force_different, self._test_force_all, self._test_disable_random]:
-            test()
+        self._reset()
+        self._test_force_different()
+
+        self._reset()
+        self._test_force_all()
+
+        self._reset()
+        self._test_disable_random()
+
+        self._reset()
+        self._test_conditional_random()
 
     def _reset(self):
         self.eventHistory = []
@@ -75,14 +80,12 @@ class TestRandomEventPlayerBase():
         self.uniqueEvents.add(self.lastEvent)
 
     def _test_force_different(self):
-        self._reset()
         for x in range(0, RANDOM_RUNS):
             self.runner.post_event("test_{}_force_different".format(self.scope))
             self.runner.advance_time_and_run()
             self.runner.assertNotEqual(self.prevEvent, self.lastEvent)
 
     def _test_force_all(self):
-        self._reset()
         for x in range(0, RANDOM_RUNS):
             # If we have done all the events, reset the unique list
             if len(self.events) == len(self.uniqueEvents):
@@ -95,7 +98,6 @@ class TestRandomEventPlayerBase():
             self.runner.assertEqual(len(self.uniqueEvents), len(self.eventHistory))
 
     def _test_disable_random(self):
-        self._reset()
         # Set initial values for our lookback
         self.prevEvent = self.events[:1]
         for x in range(0, RANDOM_RUNS):
@@ -107,7 +109,6 @@ class TestRandomEventPlayerBase():
 
     def _test_conditional_random(self):
         # Only event2's condition is true without kwargs
-        self._reset()
         for _ in range(RANDOM_RUNS):
             self.runner.post_event("test_{}_conditional_random".format(self.scope))
             self.runner.advance_time_and_run()

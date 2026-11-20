@@ -25,3 +25,9 @@ random_event_player:
       - event2
       - event3
       - event4
+  test_player_conditional_random:
+    events:
+      - event1{False==True}
+      - event2{True==True}
+      - event3{event_arg=="foo"}
+      - event4{settings.foo=="bar"}

@@ -55,7 +55,13 @@ class Randomizer:
         return self._next(None)
 
     def _next(self, conditional_args):
-        """Return the next item, its conditions evaluated with conditional_args."""
+        """Return the next item, its conditions evaluated with conditional_args.
+
+        Both ``__next__`` and ``get_next`` pick the next item here:
+        ``__next__`` takes no arguments (the iterator protocol), while
+        ``get_next`` passes the args its caller's conditions need, such as
+        a triggering event's kwargs.
+        """
         if not conditional_args:
             conditional_args = {}
 
@@ -159,12 +165,7 @@ class Randomizer:
         return next(self)
 
     def get_next(self, conditional_args=None):
-        """Return next item.
-
-        The conditional args go to the item conditions. (``next()``'s second
-        argument is its default, so ``next(self, conditional_args)`` never
-        passed them on.)
-        """
+        """Return next item, its conditions evaluated with conditional_args."""
         return self._next(conditional_args)
 
     def _get_items(self, conditional_args):
