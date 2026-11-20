@@ -336,10 +336,6 @@ class BallDevice(SystemWideDevice):
             self.raise_config_error("When using confirm_eject_type event you need " +
                                     "to specify a confirm_eject_event", 14)
 
-        if "ball_add_live" in self.tags:
-            self.raise_config_error("Using \"tag: ball_add_live\" is deprecated. Please use default_source_device "
-                                    "in your playfield section instead.", 10)
-
         if "drain" in self.tags and "trough" not in self.tags and not self.find_next_trough():
             self.raise_config_error("No path to trough but device is tagged as drain", 11)
 

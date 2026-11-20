@@ -323,27 +323,15 @@ class ConfigValidator:
                     if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
 
                         self.log.warning('Unrecognized config setting. "%s" is '
-                                         'not a valid setting name.',
-                                         path_string)
-
-                    elif k == "track":
-                        # MPF 0.80 DEPRECATED
-                        self.log.error('Your config contains a value for "track" in '
-                                       'setting "%s", but "track" has been replaced '
-                                       'with "bus" in MPF 0.80.', path_string)
-
-                        raise ConfigFileError('Your config contains a value for "track" in '
-                                              'setting "' + path_string + '", but "track" has '
-                                              'been replaced with "bus" in MPF 0.80.', 20, self.log.name)
+                                         'not a valid setting name.', path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
                                        'setting "%s", but this is not a valid '
                                        'setting name.', path_string)
 
-                        raise ConfigFileError('Your config contains a value for the '
-                                              'setting "' + path_string + '", but this is not a valid '
-                                                                          'setting name.', 2, self.log.name)
+                        raise ConfigFileError('Your config contains a value for the setting "' + path_string +
+                                              '", but this is not a valid setting name.', 2, self.log.name)
 
         except TypeError:
             raise ConfigFileError(
