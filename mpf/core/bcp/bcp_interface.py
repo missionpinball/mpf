@@ -121,13 +121,20 @@ class BcpInterface(MpfController):
         for light in self.machine.lights.values():
             light.remove_from_stack_by_key("service")
         self._shows = {}
-        await self.machine.service.stop_service()
+        # A BCP client cannot always know whether service mode is still
+        # active (e.g. the operator left the menu at the machine), so only
+        # stop it when it runs. Cleanup and the reply happen either way.
+        if self.machine.service.is_in_service():
+            await self.machine.service.stop_service()
         self.machine.bcp.transport.send_to_client(client, "service_stop")
 
     async def _service(self, client, subcommand, **kwargs):
         """Run service command."""
         if subcommand == "start":
-            self.machine.service.start_service()
+            # Service mode may already be active (e.g. entered at the coin
+            # door). Starting it twice raises and would end MPF.
+            if not self.machine.service.is_in_service():
+                self.machine.service.start_service()
         elif subcommand == "stop":
             await self._service_stop(client)
         elif subcommand == "list_switches":
