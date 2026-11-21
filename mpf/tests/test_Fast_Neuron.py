@@ -960,3 +960,51 @@ class TestFastNeuron(TestFastBase):
 
         self.hit_and_release_switch("s_debounce_auto")
         self.advance_time_and_run()
+
+
+
+
+    def test_flipper_two_coils_with_eos_repulse(self):
+        flipper = self.machine.flippers["f_test_hold_eos"]
+        flipper.config['repulse_on_eos_open'] = True
+        flipper.config['eos_active_ms_before_repulse'] = 500
+        net_serial = self.fast_net_serial()
+
+        # Enable flipper rule -> Mode 75 on main coil (0x12), Mode 18 on hold coil (0x13)
+        self.net_cpu.expected_commands = {
+            "DL:12,01,38,75,02,0F,00,00,00": "DL:P",
+            "DL:13,01,38,18,0A,FF,FF,00,00": "DL:P",
+        }
+        flipper.enable()
+        self.confirm_commands()
+
+        # 1. Normal flip and release without repulse: MUST NOT send TL:12,02 on release
+        net_serial.parse_incoming_raw_bytes(b"-L:38\r")  # cabinet flipper button active
+        self.advance_time_and_run(0.015)
+        net_serial.parse_incoming_raw_bytes(b"-L:02\r")  # EOS switch active
+        self.advance_time_and_run(0.600)
+        net_serial.parse_incoming_raw_bytes(b"/L:38\r")  # cabinet flipper button released
+        self.advance_time_and_run(0.005)
+        net_serial.parse_incoming_raw_bytes(b"/L:02\r")  # EOS switch released
+        self.advance_time_and_run(0.100)
+        self.confirm_commands()
+
+        # 2. Repulse when EOS opens while flipper button stays held (> 500ms)
+        net_serial.parse_incoming_raw_bytes(b"-L:38\r")  # cabinet flipper button active
+        self.advance_time_and_run(0.015)
+        net_serial.parse_incoming_raw_bytes(b"-L:02\r")  # EOS switch active
+        self.advance_time_and_run(0.600)
+
+        # Knock flipper down (EOS opens while button still held) -> one-shot pulse, then restore Mode 75
+        self.net_cpu.expected_commands = {
+            "DL:12,09,38,10,0F,FF,00,00,00": "DL:P",
+            "DL:12,01,38,75,02,0F,00,00,00": "DL:P",
+        }
+        net_serial.parse_incoming_raw_bytes(b"/L:02\r")
+        self.advance_time_and_run(0.050)
+        self.confirm_commands()
+
+        # Release button after repulse -> still MUST NOT send TL:12,02
+        net_serial.parse_incoming_raw_bytes(b"/L:38\r")
+        self.advance_time_and_run(0.100)
+        self.confirm_commands()
