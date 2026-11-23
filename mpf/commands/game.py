@@ -20,6 +20,10 @@ from mpf.commands.logging_formatters import JSONFormatter
 from mpf.exceptions.config_file_error import ConfigFileError
 
 
+CONSOLE_LOG_FORMAT = '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s'
+CONSOLE_DATE_FORMAT = '%H:%M:%S'
+
+
 class Command:
 
     """Runs the mpf game."""
@@ -130,6 +134,23 @@ class Command:
                             const='smart_virtual',
                             help="Forces the smart virtual platform to be used for all devices")
 
+        parser.add_argument(
+            "--color",
+            nargs="?",
+            const="basic",
+            default=None,
+            choices=("none", "basic"),
+            dest="color",
+            help="Console ANSI color mode: none, basic (default mode when using --color: basic).",
+        )
+        parser.add_argument(
+            "--no-color",
+            action="store_const",
+            const="none",
+            dest="color",
+            help="Disable ANSI colorized console output. (Sets color mode: none)",
+        )
+
         self.args = parser.parse_args(args)
         self.args.configfile = Util.string_to_event_list(self.args.configfile)
 
@@ -156,8 +177,8 @@ class Command:
             else:
                 console_log.setLevel(self.args.consoleloglevel)
 
-        console_log.setFormatter(logging.Formatter(
-            '%(asctime)s.%(msecs)03d : %(levelname)s [%(name)s] %(message)s', "%H:%M:%S"))
+        color_mode = self.args.color
+        console_log.setFormatter(self._get_console_formatter(color_mode))
 
         console_log.addFilter(ConsoleCustomLevelFilter())
 
@@ -273,6 +294,25 @@ class Command:
 
         sys.exit()
 
+    def _get_console_formatter(self, color_mode):
+        """Return the console logging formatter for the selected color mode."""
+        if color_mode is None:
+            if os.environ.get("NO_COLOR"):
+                color_mode = "none"
+            elif os.environ.get("FORCE_COLOR"):
+                color_mode = "basic"
+            elif sys.stderr.isatty() and os.environ.get("TERM") != "dumb":
+                color_mode = "none"
+            else:
+                color_mode = "none"
+
+        if color_mode != "none" and sys.platform == "win32":
+            os.system("")  # Enable ANSI VT100 escape processing in Windows consoles
+
+        if color_mode == "basic":
+            return LevelColorFormatter(CONSOLE_LOG_FORMAT, CONSOLE_DATE_FORMAT)
+        return logging.Formatter(CONSOLE_LOG_FORMAT, CONSOLE_DATE_FORMAT)
+
 
 class ConsoleCustomLevelFilter(logging.Filter):
 
@@ -294,3 +334,32 @@ class FileCustomLevelFilter(logging.Filter):
         if record.levelno in (12, 22):
             return False
         return True
+
+
+class LevelColorFormatter(logging.Formatter):
+
+    """ANSI formatter that colorizes log level tags."""
+
+    RESET = "\033[0m"
+
+    LEVEL_COLORS = {
+        logging.DEBUG: "\033[36m",       # Cyan
+        logging.WARNING: "\033[33m",     # Yellow
+        logging.ERROR: "\033[31m",       # Red
+        logging.CRITICAL: "\033[1;31m",  # Bold Red
+    }
+
+    def format(self, record):
+        """Colorize non-INFO log level tags."""
+        base_level = (record.levelno // 10) * 10
+        color = self.LEVEL_COLORS.get(base_level)
+
+        if not color:
+            return super().format(record)
+
+        orig_levelname = record.levelname
+        record.levelname = f"{color}{orig_levelname}{self.RESET}"
+        try:
+            return super().format(record)
+        finally:
+            record.levelname = orig_levelname
