@@ -340,9 +340,9 @@ class ConfigValidator:
                     validation_failure_info.parent.item, config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
-        # The inclusion of sound_pools causes a nested ducking subconfig that
+        # The legacy sound_pools caused a nested ducking subconfig that
         # fails due to missing required properties. Check for an empty dict
-        # as subconfig and ignore it.
+        # as subconfig and ignore it. -- .80+ may be able to simplify
         if item is None or (item is Dict and len(item) == 0):
             return {}
         try:
