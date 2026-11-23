@@ -38,6 +38,7 @@ class SoftwareEosRepulseManager:
         self.repulse_settings = repulse_settings
         self._button_is_active = False
         self._is_eos_closed_long_enough = False
+        self._software_enable_active = False
         self._handlers = []
 
         self._handlers.append(self.machine.switch_controller.add_switch_handler_obj(
@@ -69,11 +70,15 @@ class SoftwareEosRepulseManager:
     def _button_inactive(self, **kwargs):
         del kwargs
         self._button_is_active = False
-        self.driver.hw_driver.disable()
+        self._is_eos_closed_long_enough = False
+        if self._software_enable_active:
+            self._software_enable_active = False
+            self.driver.hw_driver.disable()
 
     def _eos_closed_long_enough(self, **kwargs):
         del kwargs
-        self._is_eos_closed_long_enough = True
+        if self._button_is_active:
+            self._is_eos_closed_long_enough = True
 
     def _repulse_on_eos_open(self, **kwargs):
         del kwargs
@@ -83,6 +88,7 @@ class SoftwareEosRepulseManager:
         self._is_eos_closed_long_enough = False
 
         if self.driver.hold_settings:
+            self._software_enable_active = True
             self.driver.hw_driver.enable(self.driver.pulse_settings, self.driver.hold_settings)
         else:
             self.driver.hw_driver.pulse(self.driver.pulse_settings)
