@@ -604,6 +604,12 @@ fast_exp_board:
 fast_breakout:
     port: single|enum(1,2,3)|
     model: single|str|
+    power_filter: single|subconfig(fast_power_filter)|None  # only used with FP-PWR-0007
+fast_power_filter:
+    poll_interval: single|ms|2s  # 0 = read fuses and voltages once at startup only
+    voltage_tolerance: single|float|10  # percent around the nominal voltage
+    hv_nominal: single|float|48  # nominal voltage of hv1 and hv2
+    lv_nominal: single|float|12  # nominal voltage of cabinet, backbox, playfield and cpu
 fast_led_port:
     port: single|int|
     type: single|enum(ws2812,apa-102,sk6812,mixed)|ws2812

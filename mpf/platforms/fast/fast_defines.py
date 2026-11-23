@@ -111,10 +111,14 @@ BREAKOUT_FEATURES = {
         'min_fw': '0.0',
         'flasher_ports': 16,
     },
-    # TODO temp module until this code is written
+    # Smart Power Filter Board. It identifies itself with its PCB number ("ID:PWR FP-PWR-0432 0.10"),
+    # only works on a Neuron breakout port and is optional: if it doesn't answer at startup, MPF
+    # logs a warning and runs without it. Fuses and voltages are read via an EB: passthrough.
     'FP-PWR-0007': {
-        'min_fw': '0.0',
-        'device_class': 'mpf.platforms.fast.fast_exp_board',
+        'min_fw': '0.10',
+        'device_class': 'mpf.platforms.fast.fast_power_filter.FastPowerFilterBoard',
+        'exp_boards': ['FP-EXP-2000'],
+        'optional': True,
     },
 }
 

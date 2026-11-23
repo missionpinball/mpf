@@ -165,8 +165,51 @@ class MockFastExp(MockFastSerial):
         self.leds = dict()
         self.led_map = dict()  # LED number to name index, e.g. 88000: "led1", 88121: "led5"
 
+        # Smart Power Filter Boards by breakout address. Replies are sent from inside an EB: passthrough.
+        # Set an entry to None to simulate a board that is configured but not connected.
+        self.power_filters = {
+            '481': {'ID': 'ID:PWR FP-PWR-0432  0.10',
+                    'IF:': 'IF:3F',
+                    'IV:': 'IV:3328,3393,0CDA,0CDC,0CD3,0CA4'},
+        }
+        self.selected_exp_board = None  # set by EA:
+        self.passthrough = None  # breakout address while an EB: passthrough is open
+        self.passthrough_log = list()  # (breakout address, command) for everything sent inside a passthrough
+        self.passthrough_sessions = 0
+        self.id_overrides = dict()  # address -> ID: reply, checked before the built-in replies
+        self.eb_reply = 'EB:P'  # set to None for an EXP board that doesn't answer EB:
+
+    def _process_passthrough_msg(self, cmd):
+        """Everything except the NUL byte goes to the breakout board while the passthrough is open."""
+        if cmd == '\x00':  # sent as NUL + CR; the Neuron answers the line with XX:F
+            self.passthrough = None
+            return 'XX:F'
+
+        self.passthrough_log.append((self.passthrough, cmd))
+        board = self.power_filters.get(self.passthrough)
+        if board and board.get(cmd):
+            return board[cmd]
+        return True  # no board, unknown command or a board that stays silent
+
     def process_msg(self, cmd):
         # returns True if the msg was fully processed, False if it was not
+
+        if self.passthrough is not None:
+            return self._process_passthrough_msg(cmd)
+
+        if cmd == '\x00':  # NUL + CR without an open passthrough: answered with XX:F, the next command is clean
+            return 'XX:F'
+
+        if cmd.startswith('EA:'):
+            self.selected_exp_board = cmd[3:]
+            return True
+
+        if cmd.startswith('EB:'):
+            if not self.eb_reply:  # simulate an EXP board that doesn't switch through
+                return True
+            self.passthrough = f'{self.selected_exp_board}{int(cmd[3:], 16)}'
+            self.passthrough_sessions += 1
+            return self.eb_reply
 
         try:
             cmd, payload = cmd.split(":", 1)
@@ -174,6 +217,14 @@ class MockFastExp(MockFastSerial):
             cmd, payload = bytes.fromhex(cmd).decode().split(":", 1)
 
         cmd, address = cmd.split("@", 1)
+
+        if cmd == "ID" and address in self.id_overrides:
+            return self.id_overrides[address]
+
+        if cmd == "ID" and address in self.power_filters:
+            if self.power_filters[address] is None:
+                return "ID:F"
+            return self.power_filters[address]['ID']
 
         if cmd == "ID":
             if not address:  # no ID has been set, so lowest address will respond

@@ -24,6 +24,7 @@ from mpf.platforms.fast.fast_led import (FASTRGBLED, FASTLEDChannel, FASTExpLED)
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_motor import FastMotor
 from mpf.platforms.fast.fast_port_detector import FastPortDetector
+from mpf.platforms.fast.fast_power_filter import FastPowerFilterBoard
 from mpf.platforms.fast.fast_segment_display import FASTSegmentDisplay
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast.fast_shaker import FastShaker
@@ -129,6 +130,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, RgbDmdPlatform,
         if self.exp_boards_by_name.values():
             info_string += "\nEXP Boards:\n"
             for board in self.exp_boards_by_name.values():
+                info_string += board.get_description_string() + "\n"
+
+        power_filters = [brk for brk in self.exp_breakout_boards.values() if isinstance(brk, FastPowerFilterBoard)]
+        if power_filters:
+            info_string += "\nPower Filter Boards:\n"
+            for board in power_filters:
                 info_string += board.get_description_string() + "\n"
 
         return info_string
