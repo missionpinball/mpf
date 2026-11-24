@@ -56,6 +56,12 @@ class Command:
                                  "config.yaml. Multiple files can be used via a comma-"
                                  "separated list (no spaces between)")
 
+        parser.add_argument("--config-spec",
+                            action="store", dest="configspec",
+                            default=None, metavar='config_spec_file',
+                            help="Additional config_spec YAML file(s) to load. Multiple files "
+                                 "can be used via a comma-separated list (no spaces between)")
+
         parser.add_argument("-e",
                             action="store_false", dest="echo_args", default=True,
                             help="Stop logging the raw command line arguments on startup.")
@@ -228,9 +234,17 @@ class Command:
             raw_cmd = " ".join(args) if args else "[None]"
             logger.info("Raw command line: %s", raw_cmd)
 
+        extra_spec_files = [
+            os.path.join(machine_path, f) if not os.path.isabs(f) else f
+            for f in Util.string_to_event_list(self.args.configspec)
+        ] if self.args.configspec else []
+
         if not self.args.production:
-            config_loader = YamlMultifileConfigLoader(machine_path, self.args.configfile,
-                                                      not self.args.no_load_cache, self.args.create_config_cache)
+            config_loader = YamlMultifileConfigLoader(machine_path,
+                                                      self.args.configfile,
+                                                      not self.args.no_load_cache,
+                                                      self.args.create_config_cache,
+                                                      extra_spec_files=extra_spec_files)
         else:
             config_loader = ProductionConfigLoader(machine_path)
 
