@@ -75,7 +75,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
                 device.eject(device.available_balls)
 
             if total_ball_to_drain > 0:
-                self.log.info("Ejected %s balls to empty lock devices. "
+                self.info_log("Ejected %s balls to empty lock devices. "
                               "Waiting for them to drain!", total_ball_to_drain)
                 queue.wait()
                 self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue,
@@ -88,7 +88,7 @@ class MultiballLock(EnableDisableMixin, ModeDevice):
 
         # check if the lock is physically full and not virtually full and release balls in that case
         if self._physically_remaining_space <= 0 and not self.is_virtually_full:
-            self.log.info("Will release a ball because the lock is physically full but not virtually for the player.")
+            self.info_log("Will release a ball because the lock is physically full but not virtually for the player.")
             # TODO: eject to next playfield
             self.lock_devices[0].eject()
             queue.wait()

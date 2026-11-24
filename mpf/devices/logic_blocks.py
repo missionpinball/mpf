@@ -431,7 +431,7 @@ class Counter(LogicBlock):
             return
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:
-            self.log.warning("Placeholder %s for counter add did not evaluate with args %s", value, kwargs)
+            self.warning_log("Placeholder %s for counter add did not evaluate with args %s", value, kwargs)
             return
         # Add to the counter the specified value
         self.value += evaluated_value
@@ -452,7 +452,7 @@ class Counter(LogicBlock):
             return
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:
-            self.log.warning("Placeholder %s for counter substract did not evaluate with args %s", value, kwargs)
+            self.warning_log("Placeholder %s for counter substract did not evaluate with args %s", value, kwargs)
             return
         # Subtract from the counter the specified value
         self.value -= evaluated_value
@@ -473,7 +473,7 @@ class Counter(LogicBlock):
             return
         evaluated_value = value.evaluate_or_none(kwargs)
         if evaluated_value is None:
-            self.log.warning("Placeholder %s for counter jump did not evaluate with args %s", value, kwargs)
+            self.warning_log("Placeholder %s for counter jump did not evaluate with args %s", value, kwargs)
             return
         # Set the internal value of the counter to the specified value
         self.value = evaluated_value

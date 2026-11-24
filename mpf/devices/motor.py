@@ -92,7 +92,7 @@ class Motor(SystemWideDevice):
 
     def go_to_position(self, position):
         """Move motor to a specific position."""
-        self.log.info("Moving motor to position %s", position)
+        self.info_log("Moving motor to position %s", position)
         self._target_position = position
         self._move_to_position(position)
 
