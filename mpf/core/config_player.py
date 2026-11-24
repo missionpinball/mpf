@@ -43,7 +43,11 @@ class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
         self._add_handlers()
 
-        self.configure_logging(self.config_file_section)
+        self.configure_logging(
+            self.config_file_section,
+            self.machine.config['logging']['console']['config_players'],
+            self.machine.config['logging']['file']['config_players'],
+        )
 
         self.mode_event_keys = dict()
         self.instances = {'_global': {self.config_file_section: {}}}
