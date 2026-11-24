@@ -33,7 +33,7 @@ class LightGroup(SystemWideDevice):
 
     """An abstract group of lights."""
 
-    __slots__ = ["lights", "_drivers_loaded"]
+    __slots__ = ["lights", "_drivers_loaded", "expected_count"]
 
     def __init__(self, machine: MachineController, name) -> None:
         """Initialize light group."""
@@ -41,6 +41,7 @@ class LightGroup(SystemWideDevice):
 
         self.lights = []        # type: List[Light]
         self._drivers_loaded = asyncio.Future()
+        self.expected_count = 0
 
     @classmethod
     def prepare_config(cls, config: dict, is_mode_config: bool):
@@ -59,6 +60,9 @@ class LightGroup(SystemWideDevice):
 
     async def _initialize(self):
         await super()._initialize()
+        if 'count' in self.config:
+            self.expected_count = self.config['count']
+
         reorder = self._create_lights()
 
         for light in self.lights:
@@ -74,8 +78,18 @@ class LightGroup(SystemWideDevice):
         return {'lights': self.lights}
 
     def _create_light_at_index(self, index, x, y, relative_index):
-        light = Light(self.machine, "{}_light_{}".format(self.name, relative_index))
-        tags = [self.name]
+        new_name_number = relative_index + self.config['name_start_offset']
+        if self.config['zero_pad_digits'] > 0:
+            formatted_number = f"{new_name_number:0{self.config['zero_pad_digits']}d}"
+        else:
+            formatted_number = str(new_name_number)
+
+        base_name = self.name
+        if self.config['name_template']:
+            base_name = self.config['name_template']
+
+        light = Light(self.machine, "{}_light_{}".format(base_name, formatted_number))
+        tags = [base_name]
         tags.extend(self.config['tags'])
         light_config = copy.deepcopy(self.config['light_template'])
         if self.config['start_channel'] or self.config['previous']:
@@ -85,12 +99,12 @@ class LightGroup(SystemWideDevice):
                 else:
                     light_config['previous'] = self.config['previous'].name
             else:
-                light_config['previous'] = "{}_light_{}".format(self.name, relative_index - 1)
+                light_config['previous'] = "{}_light_{}".format(base_name, relative_index - 1)
         elif self.config['number_template']:
             light_config['number'] = self.config['number_template'].format(index)
         else:
             light_config['number'] = index
-        light_config['tags'].append(self.name)
+        light_config['tags'].append(base_name)
         light_config['x'] = x
         light_config['y'] = y
         light_config = light.validate_and_parse_config(light_config, False)
@@ -160,7 +174,7 @@ class LightStrip(LightGroup):
 
     def _create_lights(self):
         distance = 0
-        for index in range(self.config['number_start'], self.config['number_start'] + self.config['count']):
+        for index in range(self.config['number_start'], self.config['number_start'] + self.expected_count):
             if self.config['start_x'] is not None:
                 x = self.config['start_x'] + math.sin(self.config['direction'] / 180 * math.pi) * distance
                 y = self.config['start_y'] + math.cos(self.config['direction'] / 180 * math.pi) * distance
@@ -186,11 +200,11 @@ class LightRing(LightGroup):
 
     def _create_lights(self):
         angle = self.config['start_angle'] / 180 * math.pi
-        for index in range(self.config['number_start'], self.config['number_start'] + self.config['count']):
+        for index in range(self.config['number_start'], self.config['number_start'] + self.expected_count):
             if self.config['center_x'] is not None:
                 x = self.config['center_x'] + math.sin(angle) * self.config['radius']
                 y = self.config['center_y'] + math.cos(angle) * self.config['radius']
-                angle += 2 * math.pi / self.config['count']
+                angle += 2 * math.pi / self.expected_count
             else:
                 x = y = None
 
@@ -212,14 +226,14 @@ class NeoSegDisplay(LightGroup):
 
     def _create_lights(self):
         if self.config['size'] in ('8digit', '8digit-rg-swapped'):
-            count = 120
+            self.expected_count = 120
         elif self.config['size'] in ('2digit', '2digit-rg-swapped'):
-            count = 30
+            self.expected_count = 30
         else:
             self.warning_log("NeoSegDisplay %s could not determine number of lights to create.", self.name)
-            count = 0
+            self.expected_count = 0
 
-        for index in range(self.config['number_start'], self.config['number_start'] + count):
+        for index in range(self.config['number_start'], self.config['number_start'] + self.expected_count):
             x = y = None
             relative_index = index - self.config['number_start']
             self._create_light_at_index(index, x, y, relative_index)
