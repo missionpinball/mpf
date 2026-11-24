@@ -388,48 +388,48 @@ shows:
               color: off
 
 settings:
-  flipper_power:
-    label: Flipper power
-    sort: 1000
-    values:
-      0.8: Weak
-      1.0: Normal (default)
-      1.2: Strong
-    key_type: float
-    default: 1.0
+    flipper_power:
+        label: Flipper power
+        sort: 1000
+        values:
+            0.8: Weak
+            1.0: Normal (default)
+            1.2: Strong
+        key_type: float
+        default: 1.0
 
 machine_vars:
-  master_volume:
-    initial_value: 0.5
-    value_type: float
-    persist: true
+    master_volume:
+        initial_value: 0.5
+        value_type: float
+        persist: true
 
 psus:
-  default:
-    voltage: 48
+    default:
+        voltage: 48
 
 hardware:
-  platform: smart_virtual
-  coils: default
-  switches: default
-  lights: default
-  dmd: default
-  accelerometers: default
-  servo_controllers: default
-  i2c: default
-  shaker_controllers: default
-  stepper_controllers: default
-  motor_controllers: default
+    platform: smart_virtual
+    coils: default
+    switches: default
+    lights: default
+    dmd: default
+    accelerometers: default
+    servo_controllers: default
+    i2c: default
+    shaker_controllers: default
+    stepper_controllers: default
+    motor_controllers: default
 
 combo_switches:
-  both_flippers:
-    tag_1: left_flipper
-    tag_2: right_flipper
-    events_when_both: flipper_cancel
+    both_flippers:
+        tag_1: left_flipper
+        tag_2: right_flipper
+        events_when_both: flipper_cancel
 
 timed_switches:
-  flipper_cradle:
-    switch_tags: left_flipper, right_flipper
-    time: 3s
-    events_when_active: flipper_cradle
-    events_when_released: flipper_cradle_release
+    flipper_cradle:
+        switch_tags: left_flipper, right_flipper
+        time: 3s
+        events_when_active: flipper_cradle
+        events_when_released: flipper_cradle_release
