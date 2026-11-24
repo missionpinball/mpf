@@ -44,7 +44,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
         self._active_ms = self.config['active_ms']
         if self.config['max_events_per_second'] > 0:
             self._event_buffer_ms = (1 / self.config['max_events_per_second']) * 1000
-            self.log.debug("Configured event buffer for %s", self._event_buffer_ms)
+            self.debug_log("Configured event buffer for %s", self._event_buffer_ms)
         # Can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers, priority=1)
@@ -92,7 +92,7 @@ class Spinner(EnableDisableMixinSystemWideDevice, SystemWideDevice):
 
     def _post_hit_event(self, **kwargs):
         last_hits = kwargs.get("last_hits", 0)
-        self.log.debug("Buffer check has %s previous hits, current is %s", last_hits, self.hits)
+        self.debug_log("Buffer check has %s previous hits, current is %s", last_hits, self.hits)
         if last_hits and last_hits == self.hits:
             self.delay.remove("event_buffer")
             return

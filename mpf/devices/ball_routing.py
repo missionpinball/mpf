@@ -79,11 +79,11 @@ class BallRouting(EnableDisableMixin, ModeDevice):
         if self._balls_at_target and claimed_balls:
             if claimed_balls <= self._balls_at_target:
                 new_unexpected = unclaimed_balls + self._balls_at_target
-                self.log.debug("Adding %s balls to target %s", new_unexpected, self.config['target_device'].name)
+                self.debug_log("Adding %s balls to target %s", new_unexpected, self.config['target_device'].name)
                 self._balls_at_target = 0
                 return {"unclaimed_balls": new_unexpected}
 
-            self.log.debug("Adding %s balls to target %s", claimed_balls, self.config['target_device'].name)
+            self.debug_log("Adding %s balls to target %s", claimed_balls, self.config['target_device'].name)
             self._balls_at_target -= claimed_balls
             return {"unclaimed_balls": new_balls}
 

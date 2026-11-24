@@ -57,13 +57,13 @@ class ScoreReel(SystemWideDevice):
 
     async def _initialize(self):
         await super()._initialize()
-        self.log.debug("Configuring score reel with: %s", self.config)
+        self.debug_log("Configuring score reel with: %s", self.config)
 
         # figure out how many values we have
         # Add 1 so range is inclusive of the lower limit
         num_values = self.config['limit_hi'] - self.config['limit_lo'] + 1
 
-        self.log.debug("Total reel values: %s", num_values)
+        self.debug_log("Total reel values: %s", num_values)
 
         for value in range(num_values):
             self.value_switches.append(self.config.get('switch_' + str(value)))
@@ -100,15 +100,15 @@ class ScoreReel(SystemWideDevice):
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
 
-        self.log.debug("Checking hw switches to determine reel value with hw_confirm_time %sms",
+        self.debug_log("Checking hw switches to determine reel value with hw_confirm_time %sms",
                        self.config['hw_confirm_time'])
         for i, switch in enumerate(self.value_switches):
             if switch and self.machine.switch_controller.is_active(switch,
                                                                    ms=self.config['hw_confirm_time']):
                 if self.assumed_value != i:
-                    self.log.info("Setting value to %s because that switch is active.", i)
+                    self.info_log("Setting value to %s because that switch is active.", i)
                     if self.assumed_value != -999:
-                        self.log.warning("Reel de-synced. Assumed: %s. Real: %s", self.assumed_value, i)
+                        self.warning_log("Reel de-synced. Assumed: %s. Real: %s", self.assumed_value, i)
 
                     self.assumed_value = i
                     self._busy.set()
@@ -119,7 +119,7 @@ class ScoreReel(SystemWideDevice):
         if (self.assumed_value >= 0 and self.value_switches[self.assumed_value] and
                 not self.machine.switch_controller.is_active(self.value_switches[self.assumed_value],
                                                              ms=self.config['hw_confirm_time'])):
-            self.log.warning("Resetting value because the switch for %s is not active.", self.assumed_value)
+            self.warning_log("Resetting value because the switch for %s is not active.", self.assumed_value)
             self.assumed_value = -999
             self._busy.set()
             self._ready.clear()
@@ -144,12 +144,12 @@ class ScoreReel(SystemWideDevice):
         """Advance reel if the destination value has not been reached."""
         # check if there is any need to do something
         if self._destination_value == self.assumed_value:
-            self.log.debug("Reel is already at value %s (will not move)", self._destination_value)
+            self.debug_log("Reel is already at value %s (will not move)", self._destination_value)
             self._busy.clear()
             self._ready.set()
             return
 
-        self.log.debug("Advancing reel to value %s (current value: %s repeat_pulse_time: %sms)",
+        self.debug_log("Advancing reel to value %s (current value: %s repeat_pulse_time: %sms)",
                        self._destination_value, self.assumed_value, self.config['repeat_pulse_time'])
         while self._destination_value != self.assumed_value:
             self.machine.events.post('reel_{}_will_advance'.format(self.name))
@@ -170,11 +170,11 @@ class ScoreReel(SystemWideDevice):
 
                 desc: The reel (name) advanced to the next position.
                 '''
-            self.log.debug("Assumed value: %s", self.assumed_value)
+            self.debug_log("Assumed value: %s", self.assumed_value)
 
         self._busy.clear()
         self._ready.set()
-        self.log.debug("Advancing to %s successful.", self._destination_value)
+        self.debug_log("Advancing to %s successful.", self._destination_value)
 
     def wait_for_ready(self):
         """Return a future for ready."""
@@ -193,7 +193,7 @@ class ScoreReel(SystemWideDevice):
             what the destination value would be.
         """
         if self._destination_value != value:
-            self.log.debug("Setting new score_reel value. Old destination value: %s, New destination value: %s",
+            self.debug_log("Setting new score_reel value. Old destination value: %s, New destination value: %s",
                            self._destination_value, value)
 
             self._destination_value = value
