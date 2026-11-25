@@ -71,7 +71,7 @@ class Driver(SystemWideDevice):
         Returns: Validated config
         """
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
-        platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+        platform = self.machine.get_platform_sections('coils', config.get("platform"))
         platform.assert_has_feature("drivers")
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         return config

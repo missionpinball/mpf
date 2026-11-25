@@ -79,11 +79,11 @@ class DigitalOutput(SystemWideDevice):
         """
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         if config['type'] == "driver":
-            platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+            platform = self.machine.get_platform_sections('coils', config.get("platform"))
             platform.assert_has_feature("drivers")
             config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         elif config['type'] == "light":
-            platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+            platform = self.machine.get_platform_sections('coils', config.get("platform"))
             platform.assert_has_feature("lights")
         else:
             raise AssertionError(INVALID_TYPE_ERROR.format(config['type']))
