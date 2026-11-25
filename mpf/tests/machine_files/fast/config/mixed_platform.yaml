@@ -1,0 +1,29 @@
+#config_version=6
+
+# Virtual default platform with one FAST coil, as on a machine that is
+# still being wired: platform_settings must be validated by FAST.
+
+mpf:
+  report_crashes: never
+
+hardware:
+    platform: virtual, fast
+
+fast:
+    net:
+        port: com3
+        controller: neuron
+        io_loop:
+            io0804:  # drivers 0-3 (0x00-0x03), switches 0-7 (0x00-0x07)
+                model: FP-I/O-0804
+                order: 1
+
+coils:
+    c_fast:
+        number: io0804-0
+        platform: fast
+        default_pulse_ms: 20
+        platform_settings:
+            recycle_ms: 30  # pwm2_ms left out: FAST must fill in its default
+    c_virtual:
+        number: 1
