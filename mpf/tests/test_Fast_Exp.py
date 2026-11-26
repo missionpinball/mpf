@@ -98,6 +98,10 @@ class TestFastExp(TestFastBase):
             'EXP Board: dave - FP-EXP-0071,  Firmware: 0.11, Address: B4\n'
             'EXP Board: eli - FP-EXP-0081,  Firmware: 0.12, Address: 84\n'
             'EXP Board: neuron - FP-EXP-2000,  Firmware: 0.8, Address: 48\n'
+            '\n'
+            'Power Filter Boards:\n'
+            'Power Filter Board: FP-PWR-0007 @481, Firmware: 0.10, Status: unknown, Fuses: unknown, '
+            'Voltages: unknown\n'  # not read yet, the first read waits one poll interval
             )
         self.assertEqual(info_str, self.machine.hardware_platforms['fast'].get_info_string())
 

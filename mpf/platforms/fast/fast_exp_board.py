@@ -3,7 +3,6 @@
 import asyncio
 from base64 import b16decode
 from binascii import Error as binasciiError
-from importlib import import_module
 
 from packaging import version
 
@@ -71,9 +70,15 @@ class FastExpansionBoard:
 
     def create_breakout(self, config: dict) -> None:
         """Define a breakout board within an EXP board."""
-        if BREAKOUT_FEATURES[config['model']].get('device_class'):
-            module = import_module('mpf.platforms.fast.fast_exp_board')
-            brk_board = module.FastBreakoutBoard(config, self)
+        features = BREAKOUT_FEATURES[config['model']]
+
+        allowed_exp_boards = features.get('exp_boards')
+        if allowed_exp_boards and self.model not in allowed_exp_boards:
+            raise ConfigFileError(f"Breakout {config['model']} can only be connected to "
+                                  f"{', '.join(allowed_exp_boards)}, not to {self}", 3, self.log.name)
+
+        if features.get('device_class'):
+            brk_board = Util.string_to_class(features['device_class'])(config, self)
         else:
             brk_board = FastBreakoutBoard(config, self)
 
@@ -102,11 +107,18 @@ class FastExpansionBoard:
 
         exp_board = active_board[:2]
         brk_board = active_board[2:]  # will be empty if we got a 2-digit address for an EXP board
+        # An optional breakout (e.g. the FP-PWR-0007 power filter board) only adds monitoring.
+        # If it is missing or too old, MPF warns and keeps running without it.
+        optional = bool(brk_board and self.breakouts[brk_board].features.get('optional'))
 
         try:
             _, product_id, firmware_version = id_string.split()
         except ValueError as e:
             if id_string == 'F':  # got an ID:F response which means this breakout is not actually there
+                if optional:
+                    self.log.warning('Optional breakout %s on %s is not responding. MPF will run without it.',
+                                     self.breakouts[brk_board], self)
+                    return
                 self.log.error('Breakout %s on %s is not responding', brk_board, self)
                 raise AssertionError(f'Breakout {brk_board} on {self} is not responding') from e
             raise AssertionError(f'Invalid ID string {id_string} from {self}') from e
@@ -115,6 +127,14 @@ class FastExpansionBoard:
         self.firmware_version = firmware_version
 
         if brk_board:
+            self.breakouts[brk_board].firmware_version = firmware_version
+            if optional and version.parse(firmware_version) < version.parse(
+                    self.breakouts[brk_board].features['min_fw']):
+                self.log.warning('Firmware on optional breakout board %s is too old. Required: %s, Actual: %s. '
+                                 'MPF will run without it. Update at fastpinball.com/firmware',
+                                 product_id, self.breakouts[brk_board].features["min_fw"], firmware_version)
+                return
+
             if version.parse(firmware_version) < version.parse(self.breakouts[brk_board].features['min_fw']):
                 self.log.error('Firmware on breakout board %s is too old. Required: %s, Actual: %s. '
                                'Update at fastpinball.com/firmware',
@@ -222,8 +242,9 @@ class FastBreakoutBoard:
 
     """A FAST Breakout board on the EXP connection."""
 
+    # pylint: disable-msg=too-many-instance-attributes
     __slots__ = ["config", "expansion_board", "log", "index", "platform", "communicator", "address", "features",
-                 "leds", "led_fade_rate", "hw_verified", "model"]
+                 "leds", "led_fade_rate", "hw_verified", "model", "firmware_version"]
 
     def __init__(self, config, expansion_board):
         """Initialize FastBreakoutBoard."""
@@ -239,6 +260,7 @@ class FastBreakoutBoard:
         self.leds = list()  # TODO move to mixin class
         self.led_fade_rate = 0
         self.hw_verified = False
+        self.firmware_version = None
 
         self.model = self.config['model']
 
@@ -247,6 +269,10 @@ class FastBreakoutBoard:
     def __repr__(self):
         """Return representation of the breakout board."""
         return f"Breakout {self.model} @{self.address} on {self.expansion_board}"
+
+    def start_tasks(self) -> list:
+        """Start periodic tasks of this breakout. Returns the tasks so the communicator can cancel them."""
+        return []
 
     def _initialize(self, **kwargs):
         """Populate the LED objects."""

@@ -1,0 +1,20 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  exp:
+    port: com4
+    boards:
+      neuron:
+        model: FP-EXP-2000
+        breakouts:
+          - port: 1
+            model: FP-PWR-0007
+            power_filter:
+              poll_interval: 1s
+
+lights:
+  led1:
+    number: neuron-1-2  # 48001

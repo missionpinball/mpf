@@ -1,0 +1,14 @@
+#config_version=6
+
+hardware:
+    platform: fast
+
+fast:
+  exp:
+    port: com4
+    boards:
+      brian:
+        model: FP-EXP-0091
+        breakouts:
+          - port: 1
+            model: FP-PWR-0007

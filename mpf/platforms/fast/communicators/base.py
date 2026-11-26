@@ -517,6 +517,12 @@ class FastSerialCommunicator(LogMixin):
             try:
                 msg, pause_sending_until, log_msg = await self.send_queue.get()
 
+                if callable(msg):
+                    # An exclusive transaction (e.g. an EXP breakout passthrough). It writes to the
+                    # port and awaits its replies itself; nothing else is sent until it returns.
+                    await msg()
+                    continue
+
                 if pause_sending_until is not None:
                     self.pause_sending(pause_sending_until)
 
