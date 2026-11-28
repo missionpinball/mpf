@@ -15,12 +15,3 @@ It might be helpful to look at the real internal tests that MPF uses (which all 
 for how tests are written in MPF. They're available in the
 `mpf/tests <https://github.com/missionpinball/mpf/tree/dev/mpf/tests>`_ folder in the MPF repository. (They're
 installed locally when you install MPF.)
-
-Here's a diagram which shows how all the MPF and MPF-MC test case classes relate to each other:
-
-.. image:: /images/test_classes.png
-
-And the API reference for each:
-
-.. toctree::
-   {tests}

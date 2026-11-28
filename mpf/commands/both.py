@@ -1,4 +1,4 @@
-"""Command which launches both the MPF core engine and MPF-MC."""
+"""Command which launches both the MPF core engine and MPF-GMC."""
 
 from importlib import import_module
 import argparse

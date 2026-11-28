@@ -1,4 +1,4 @@
-"""Error in MPF or MPF-MC."""
+"""Error in MPF or media controller."""
 from mpf._version import log_url
 
 

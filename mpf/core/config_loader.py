@@ -234,7 +234,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
 class ProductionConfigLoader(ConfigLoader):
 
-    """Loads a single pickled production config each for MPF and MPF-MC."""
+    """Loads a single pickled production config for MPF."""
 
     __slots__ = ["machine_path"]
 

@@ -1,4 +1,4 @@
-"""Runtime error in MPF or MPF-MC."""
+"""Runtime error in MPF or media controller."""
 from mpf.exceptions.base_error import BaseError
 
 
