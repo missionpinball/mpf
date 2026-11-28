@@ -1,4 +1,5 @@
 """Light config player."""
+import re
 from typing import List
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
@@ -140,12 +141,10 @@ class LightPlayer(DeviceConfigPlayer):
         """Parse express config."""
         value = str(value).replace(' ', '')
         fade = None
-        if '-f' in value:
-            # Value contains both a color value and a fade value, parse it into
-            # its individual components
-            composite_value = value.split('-f')
-            value = composite_value[0].strip()
-            fade_value = composite_value[1].strip()
+
+        composite_value = re.split(r'-f(?![^()]*\))', value, maxsplit=1)
+        if len(composite_value) == 2:
+            value, fade_value = composite_value
             if fade_value.startswith('(') and fade_value.endswith(')'):
                 fade = fade_value  # "(string)" passes down to token system and is evaluated later
             else:

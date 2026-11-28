@@ -94,6 +94,7 @@ shows:
         fade: (fade)
       led2: 00EE00-f(fade)
       (light_token): (color2)-f(fade2)
+      led4: 00EE00-f(my-fade)
 
 show_player:
   play_show1: show_ext1
@@ -106,3 +107,4 @@ show_player:
         light_token: led3
         color2: '0000EE'
         fade2: 200
+        my-fade: 500
