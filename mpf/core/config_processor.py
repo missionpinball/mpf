@@ -73,11 +73,14 @@ class ConfigProcessor:
 
     # pylint: disable-msg=too-many-arguments,too-many-locals
     def load_config_files_with_cache(self, filenames: List[str], config_type: str,
-                                     ignore_unknown_sections=False, config_spec=None) -> dict:   # pragma: no cover
+                                     ignore_unknown_sections=False, config_spec=None,
+                                     extra_spec_files=None) -> dict:   # pragma: no cover
         """Load multiple configs with a combined cache."""
         config = dict()     # type: Any
+
         # Step 1: Check timestamps of the filelist vs cache
-        cache_file = self.get_cache_filename(filenames)
+        cache_file = self.get_cache_filename([*filenames, *(extra_spec_files or ())])
+
         load_from_cache = self._load_cache
         if load_from_cache:
             cache_time = self._get_mtime_or_negative(cache_file)
@@ -123,8 +126,8 @@ class ConfigProcessor:
 
         # Step 5: Store to cache
         if self._store_cache:
-            config_spec_file = self._get_config_spec_file()
-            loaded_files[config_spec_file] = (os.path.getmtime(config_spec_file), os.path.getsize(config_spec_file))
+            for spec_file in [self._get_config_spec_file(), *(extra_spec_files or ())]:
+                loaded_files[spec_file] = (os.path.getmtime(spec_file), os.path.getsize(spec_file))
             with open(cache_file, 'wb') as f:
                 pickle.dump((config, loaded_files), f, protocol=4)
                 self.log.info('Config file cache created: %s', cache_file)
@@ -215,13 +218,21 @@ class ConfigProcessor:
         """Return path of config_spec.yaml."""
         return os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir, "config_spec.yaml"))
 
-    def load_config_spec(self):
+    def load_config_spec(self, extra_spec_files=None):
         """Load config spec."""
-        cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
+        extra_spec_files = [os.path.abspath(f) for f in (extra_spec_files or [])]
         config_spec_file = self._get_config_spec_file()
-        stats_config_spec_file = os.stat(config_spec_file)
+        all_spec_files = [config_spec_file, *extra_spec_files]
+
+        if extra_spec_files:
+            spec_hash = hashlib.md5("".join(all_spec_files).encode("UTF-8")).hexdigest()  # nosec
+            cache_file = os.path.join(self.get_cache_dir(), f"config_spec_{spec_hash}.mpf_cache")
+        else:
+            cache_file = os.path.join(self.get_cache_dir(), "config_spec.mpf_cache")
+
+        newest_stat = max((os.stat(f) for f in all_spec_files), key=lambda s: s.st_mtime)
         if self._load_cache and os.path.isfile(cache_file) and \
-                os.path.getmtime(cache_file) == stats_config_spec_file.st_mtime:
+                abs(os.path.getmtime(cache_file) - newest_stat.st_mtime) < 1e-3:
             try:
                 with open(cache_file, 'rb') as f:
                     return pickle.load(f)   # nosec
@@ -233,11 +244,17 @@ class ConfigProcessor:
 
         config = ConfigSpecLoader.load_external_platform_config_specs(config)
 
+        for spec_file in extra_spec_files:
+            extra_spec = FileManager.load(spec_file, False, True)
+            if extra_spec:
+                extra_spec = ConfigSpecLoader.process_config_spec(extra_spec, "root")
+                config = Util.dict_merge(config, extra_spec)  # TODO determine combine_lists=False or not
+
         if self._store_cache:
             with open(cache_file, 'wb') as f:
                 pickle.dump(config, f, protocol=4)
-                os.utime(cache_file, ns=(stats_config_spec_file.st_atime_ns, stats_config_spec_file.st_mtime_ns))
-                self.log.info('Config spec file cache created: %s', cache_file)
+            os.utime(cache_file, ns=(newest_stat.st_atime_ns, newest_stat.st_mtime_ns))
+            self.log.info('Config spec file cache created: %s', cache_file)
 
         return config
 

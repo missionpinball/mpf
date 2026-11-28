@@ -1,0 +1,23 @@
+#config_version=6
+
+mpf:
+  core_modules:
+    example_controller: extensions.example.example.ExampleController
+  device_modules:
+    example_devices: extensions.example.devices.example_device.ExampleDevice
+
+logging:
+  console:
+    example_controller: basic
+  file:
+    example_controller: full
+
+example:
+  greeting: Custom extension controller active!
+
+example_devices:
+  my_test_device:
+    multiplier: 5
+
+event_player:
+  mode_attract_started: example_hook_working

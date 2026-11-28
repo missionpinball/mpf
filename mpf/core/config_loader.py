@@ -136,12 +136,13 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
     """Loads MPF configs from machine folder with config and modes."""
 
-    __slots__ = ["configfile", "machine_path", "config_processor", "log", "mpf_path", "mc_path"]
+    __slots__ = ["configfile", "extra_spec_files", "machine_path", "config_processor", "log", "mpf_path", "mc_path"]
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine_path, configfile, load_cache, store_cache):
+    def __init__(self, machine_path, configfile, load_cache, store_cache, extra_spec_files=None):
         """Initialize yaml multifile config loader."""
         self.configfile = configfile
+        self.extra_spec_files = extra_spec_files or []
         self.machine_path = machine_path
         self.config_processor = ConfigProcessor(load_cache, store_cache)
         self.log = logging.getLogger("YamlMultifileConfigLoader")
@@ -175,7 +176,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
         return MpfMcConfig(config_spec, machine_config, mode_config, self.machine_path)
 
     def _load_config_spec(self):
-        return self.config_processor.load_config_spec()
+        return self.config_processor.load_config_spec(self.extra_spec_files)
 
     def _load_mpf_machine_config(self, config_spec):
         config_files = [os.path.join(self.mpf_path, "mpfconfig.yaml")]
@@ -185,7 +186,9 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
             self.log.info("Machine config file #%s: %s", num + 1, config_file)
 
-        return self.config_processor.load_config_files_with_cache(config_files, "machine", config_spec=config_spec)
+        return self.config_processor.load_config_files_with_cache(config_files, "machine",
+                                                                  config_spec=config_spec,
+                                                                  extra_spec_files=self.extra_spec_files)
 
     def _load_mc_machine_config(self, config_spec):
         if not self.mc_path:

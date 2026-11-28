@@ -1,0 +1,7 @@
+#config_version=6
+
+# run from mpf/tests/machine_files/extensions/
+#   mpf game --config-spec extensions/example/example_spec.yaml -bt
+
+config:
+  - ../extensions/example/example.yaml

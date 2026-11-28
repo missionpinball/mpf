@@ -1,0 +1,13 @@
+example:
+  __valid_in__: machine
+  greeting: single|str|Hello from extension
+
+example_devices:
+  __valid_in__: machine
+  __type__: device
+  multiplier: single|int|2
+  console_log: single|str|basic
+  file_log: single|str|basic
+  debug: single|bool|False
+  tags: list|str|None
+  label: single|str|%
