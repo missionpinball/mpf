@@ -10,7 +10,6 @@ import sys
 from kivy.logger import Logger  # pylint: disable=import-error
 from mpf.commands import MpfCommandLineParser
 from mpf.tests.MpfDocTestCase import MpfDocTestCase, MpfDocTestCaseNoFakeGame
-from mpf.tests.MpfIntegrationDocTestCase import MpfIntegrationDocTestCase
 
 # some hacks to unbreak logging after loading the kivy logger
 root = logging.root
@@ -41,8 +40,6 @@ class Command(MpfCommandLineParser):
 
         parser.add_argument("-v", help="verbose",
                             default=False, action="store_true", dest="verbose")
-        parser.add_argument("-m", help="Start MC on non sphinx test (auto-detected in sphinx)",
-                            default=False, action="store_true", dest="start_mc")
 
         args = parser.parse_args(self.argv[1:])
 
@@ -53,9 +50,9 @@ class Command(MpfCommandLineParser):
         suite = unittest.TestSuite()
         simulation = "##! no_simulation" not in test_string
 
-        if ".. code-block:: mpf-config" in test_string or ".. code-block:: mpf-mc-config" in test_string:
+        if ".. code-block:: mpf-config" in test_string:
             print("Parsing documentation page")
-            blocks = re.finditer(".. code-block:: (?P<type>mpf-config|mpf-mc-config)\n\n(?P<code>( {2,4}[^\n]+|\n)+)",
+            blocks = re.finditer(".. code-block:: (?P<type>mpf-config)\n\n(?P<code>( {2,4}[^\n]+|\n)+)",
                                  test_string)
             if not blocks:
                 raise AssertionError("Could not parse tests.")
@@ -84,13 +81,10 @@ class Command(MpfCommandLineParser):
         else:
             print("Parsing single test")
 
-            if args.start_mc:
-                test = MpfIntegrationDocTestCase(config_string=test_string, base_dir=base_dir, simulation=simulation)
+            if "##! no_fake_game" in test_string:
+                test = MpfDocTestCaseNoFakeGame(config_string=test_string, base_dir=base_dir, simulation=simulation)
             else:
-                if "##! no_fake_game" in test_string:
-                    test = MpfDocTestCaseNoFakeGame(config_string=test_string, base_dir=base_dir, simulation=simulation)
-                else:
-                    test = MpfDocTestCase(config_string=test_string, base_dir=base_dir, simulation=simulation)
+                test = MpfDocTestCase(config_string=test_string, base_dir=base_dir, simulation=simulation)
             suite.addTest(test)
 
         result = unittest.TextTestRunner(verbosity=1 if not args.verbose else 99).run(suite)

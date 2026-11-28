@@ -5,15 +5,7 @@ from mpf.config_players.plugin_player import PluginPlayer
 
 class SoundPlayer(PluginPlayer):
 
-    """Base class for part of the sound player which runs as part of MPF.
-
-    Note: This class is loaded by MPF and everything in it is in the context of
-    MPF, not the mpf-mc. MPF finds this instance because the mpf-mc setup.py
-    has the following entry_point configured:
-
-        sound_player=mpfmc.config_players.sound_player:register_with_mpf
-
-    """
+    """Base class for part of the sound player which runs as part of MPF."""
 
     config_file_section = 'sound_player'
     show_section = 'sounds'
