@@ -4,32 +4,7 @@ from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class MockConfigPlayers(MpfTestCase):
-
-    """Add all config players without installing mpf-mc."""
-
-    @staticmethod
-    def _load_mc_players(cls):
-        mc_players = {
-            "sound_player": "mpfmc.config_players.plugins.sound_player",
-            "widget_player": "mpfmc.config_players.plugins.widget_player",
-            "slide_player": "mpfmc.config_players.plugins.slide_player",
-            "display_lights": "mpfmc.config_players.plugins.display_light_player",
-            "track_player": "mpfmc.config_players.plugins.track_player",
-            "sound_loop_player": "mpfmc.config_players.plugins.sound_loop_player",
-        }
-
-        for name, module in mc_players.items():
-            imported_module = inspect.importlib.import_module(module)
-            setattr(cls, '{}_player'.format(name),
-                    imported_module.player_cls(cls))
-
-    def setUp(self):
-        MachineController._register_plugin_config_players = self._load_mc_players
-        super().setUp()
-
-
-class BaseMpfMachineTestCase(MockConfigPlayers):
+class BaseMpfMachineTestCase(MpfTestCase):
 
     def get_enable_plugins(self):
         return True
