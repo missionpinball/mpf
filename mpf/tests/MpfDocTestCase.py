@@ -13,10 +13,9 @@ from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
-from mpf.tests.MpfMachineTestCase import MockConfigPlayers
 
 
-class MpfDocTestCaseBase(MockConfigPlayers, MpfGameTestCase):
+class MpfDocTestCaseBase(MpfGameTestCase):
     def __init__(self, config_string, base_dir = None, simulation=True, methodName='test_config_parsing'):
         super().__init__(methodName)
         self._config_string = config_string

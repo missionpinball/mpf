@@ -1,10 +1,29 @@
 """Test the virtual segment display connector plugin."""
+from queue import Queue
 from unittest.mock import patch, call, ANY
 
 from mpf.core.rgb_color import RGBColor
 from mpf.platforms.interfaces.segment_display_platform_interface import FlashingType
-from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
+from mpf.tests.MpfBcpTestCase import MpfBcpTestCase, MockBcpClient
 
+class TestBcpClient(MockBcpClient):
+    def __init__(self, machine, name, bcp):
+        super().__init__(machine, name, bcp)
+        self.queue = Queue()
+        self.exit_on_close = False
+
+    def send(self, bcp_command, kwargs):
+        if bcp_command == "reset":
+            self.receive_queue.put_nowait(("reset_complete", {}))
+        self.queue.put((bcp_command, kwargs))
+
+    def receive(self, bcp_command, callback=None, rawbytes=None, **kwargs):
+        if rawbytes:
+            kwargs['rawbytes'] = rawbytes
+        self.receive_queue.put_nowait((bcp_command, kwargs))
+
+        if callback:
+            callback()
 
 class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
 
@@ -12,7 +31,7 @@ class TestVirtualSegmentDisplayConnector(MpfBcpTestCase):
         super().__init__(methodName)
         # remove config patch which disables bcp
         self.machine_config_patches['bcp'] = \
-            {"connections": {"local_display": {"type": "mpf.tests.test_BcpMc.TestBcpClient"}}}
+            {"connections": {"local_display": {"type": "mpf.tests.test_VirtualSegmentDisplayConnector.TestBcpClient"}}}
         self.machine_config_patches['bcp']['servers'] = []
 
     def get_config_file(self):

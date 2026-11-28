@@ -3,8 +3,7 @@ Automated Testing
 
 The MPF dev team are strong believers in automated testing, and we use a
 `test-driven development (TDD) <https://en.wikipedia.org/wiki/Test-driven_development>`_ process for developing MPF
-itself. (At the time of this writing, there are over 800 unit tests for MPF and MPF-MC, each which contain dozens of
-individual tests.)
+itself. (At the time of this writing, there are over 900 unit tests for MPF, each which contain dozens of individual assertions.)
 
 We have extended Python's built-in unittest TestCase class for MPF-specific tests, including mocking critical internal
 elements and adding assertion methods for MPF features.

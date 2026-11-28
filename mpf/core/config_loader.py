@@ -77,48 +77,6 @@ class MpfConfig:
         return self._show_config.keys()
 
 
-class MpfMcConfig:
-
-    """Contains a MPF-MC config."""
-
-    __slots__ = ["_config_spec", "_machine_config", "_mode_config", "_machine_path"]
-
-    # pylint: disable-msg=too-many-arguments
-    def __init__(self, config_spec, machine_config, modes, machine_path):
-        """Initialize config."""
-        self._config_spec = config_spec
-        self._machine_config = machine_config
-        self._mode_config = modes
-        self._machine_path = machine_path
-
-    def get_machine_path(self):
-        """Return machine path."""
-        return self._machine_path
-
-    def set_machine_path(self, value):
-        """Set a new machine path."""
-        self._machine_path = value
-
-    def get_config_spec(self):
-        """Return config spec."""
-        return self._config_spec
-
-    def get_machine_config(self):
-        """Return machine wide config."""
-        return self._machine_config
-
-    def get_mode_config(self, mode_name):
-        """Return config for a mode."""
-        try:
-            return self._mode_config[mode_name]
-        except KeyError:
-            _raise_mode_not_found_exception(mode_name)
-
-    def get_modes(self):
-        """Return a list of mode names."""
-        return self._mode_config.keys()
-
-
 class ConfigLoader:
 
     """Generic loader for MPF and MC configs."""
@@ -128,15 +86,12 @@ class ConfigLoader:
     def load_mpf_config(self) -> MpfConfig:
         """Load and return a MPF config."""
 
-    def load_mc_config(self) -> MpfMcConfig:
-        """Load and return a MC config."""
-
 
 class YamlMultifileConfigLoader(ConfigLoader):
 
     """Loads MPF configs from machine folder with config and modes."""
 
-    __slots__ = ["configfile", "machine_path", "config_processor", "log", "mpf_path", "mc_path"]
+    __slots__ = ["configfile", "machine_path", "config_processor", "log", "mpf_path"]
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine_path, configfile, load_cache, store_cache):
@@ -151,12 +106,6 @@ class YamlMultifileConfigLoader(ConfigLoader):
             self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir))
         except ImportError:
             self.mpf_path = None
-        try:
-            # pylint: disable-msg=import-outside-toplevel
-            import mpfmc.core
-            self.mc_path = os.path.abspath(os.path.join(mpfmc.core.__path__[0], os.pardir))
-        except ImportError:
-            self.mc_path = None
 
     def load_mpf_config(self) -> MpfConfig:
         """Load and return a MPF config."""
@@ -167,30 +116,11 @@ class YamlMultifileConfigLoader(ConfigLoader):
         show_config = self._load_shows(config_spec, machine_config, mode_config)
         return MpfConfig(config_spec, machine_config, mode_config, show_config, self.machine_path, self.mpf_path)
 
-    def load_mc_config(self) -> MpfMcConfig:
-        """Load and return a MC config."""
-        config_spec = self._load_config_spec()
-        machine_config = self._load_mc_machine_config(config_spec)
-        mode_config = self._load_modes(config_spec, machine_config, ignore_unknown_sections=True)
-        return MpfMcConfig(config_spec, machine_config, mode_config, self.machine_path)
-
     def _load_config_spec(self):
         return self.config_processor.load_config_spec()
 
     def _load_mpf_machine_config(self, config_spec):
         config_files = [os.path.join(self.mpf_path, "mpfconfig.yaml")]
-
-        for num, config_file in enumerate(self.configfile):
-            config_files.append(os.path.join(self.machine_path, "config", config_file))
-
-            self.log.info("Machine config file #%s: %s", num + 1, config_file)
-
-        return self.config_processor.load_config_files_with_cache(config_files, "machine", config_spec=config_spec)
-
-    def _load_mc_machine_config(self, config_spec):
-        if not self.mc_path:
-            raise AssertionError("Could not import MPF-MC.")
-        config_files = [os.path.join(self.mc_path, "mcconfig.yaml")]
 
         for num, config_file in enumerate(self.configfile):
             config_files.append(os.path.join(self.machine_path, "config", config_file))
@@ -304,7 +234,7 @@ class YamlMultifileConfigLoader(ConfigLoader):
 
 class ProductionConfigLoader(ConfigLoader):
 
-    """Loads a single pickled production config each for MPF and MPF-MC."""
+    """Loads a single pickled production config for MPF."""
 
     __slots__ = ["machine_path"]
 
@@ -317,17 +247,7 @@ class ProductionConfigLoader(ConfigLoader):
         """Return the path for the MPF bundle."""
         return os.path.join(machine_path, "mpf_config.bundle")
 
-    @staticmethod
-    def get_mpf_mc_bundle_path(machine_path):
-        """Return the path for the MPF bundle."""
-        return os.path.join(machine_path, "mpf_mc_config.bundle")
-
     def load_mpf_config(self) -> MpfConfig:
         """Load and return a MPF config."""
         with open(self.get_mpf_bundle_path(self.machine_path), "rb") as f:
-            return pickle.load(f)
-
-    def load_mc_config(self) -> MpfMcConfig:
-        """Load and return a MC config."""
-        with open(self.get_mpf_mc_bundle_path(self.machine_path), "rb") as f:
             return pickle.load(f)

@@ -36,10 +36,6 @@ class Command(MpfCommandLineParser):
                                  "via a comma-"
                                  "separated list (no spaces between)")
 
-        parser.add_argument("-b",
-                            action="store_false", dest="mc", default=True,
-                            help="Builds a production config for MPF only, without MC.")
-
         parser.add_argument("--dest-path",
                             action="store", dest="dest_path", default=False,
                             help="Path to set as machine_path on the production bundle. May "
@@ -59,14 +55,7 @@ class Command(MpfCommandLineParser):
         if self.args.dest_path:
             mpf_config.set_machine_path(self.args.dest_path)
 
-        if self.args.mc:
-            mc_config = config_loader.load_mc_config()
-            if self.args.dest_path:
-                mc_config.set_machine_path(self.args.dest_path)
-
         with open(ProductionConfigLoader.get_mpf_bundle_path(self.machine_path), "wb") as mpf_file:
             pickle.dump(mpf_config, mpf_file)
-        if self.args.mc:
-            with open(ProductionConfigLoader.get_mpf_mc_bundle_path(self.machine_path), "wb") as mc_file:
-                pickle.dump(mc_config, mc_file)
+
         print("Success.")

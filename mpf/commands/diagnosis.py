@@ -18,14 +18,6 @@ class Command:
         print("MPF install location: {}".format(mpf_path))
         print("Machine folder detected: {}".format(machine_path))
 
-        try:
-            # pylint: disable-msg=import-outside-toplevel
-            from mpfmc._version import version as mc_version
-            print("MPF-MC version: {}".format(mc_version))
-
-        except ImportError:
-            print("MPF-MC not found")
-
         print("\nSerial ports found:")
         iterator = list_ports.comports()
         for _, (port, desc, hwid) in enumerate(iterator, 1):

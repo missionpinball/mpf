@@ -291,31 +291,6 @@ class DeviceCollection(dict):
         self._tag_cache = dict()
         return super().__delitem__(key)
 
-    def __getattr__(self, attr):
-        """Return device by key.
-
-        This method is DEPRECATED and will be removed soon.
-        """
-        # We used this to allow the programmer to access a hardware item like
-        # self.coils.coilname
-        self.machine.log.warning("Accessing devices by attribute is deprecated and will be removed. "
-                                 "Access by value instead: %s.%s -> %s['%s']",
-                                 self.name, attr, self.name, attr)
-        try:
-            return self[attr]
-        except KeyError:
-            raise KeyError('Error: No device exists with the name:', attr)
-
-    def __iter__(self):
-        """Iterate collection.
-
-        This method is DEPRECATED and will be removed soon. Use .values() instead.
-        """
-        self.machine.log.warning("Iterating device collections directly is deprecated and will be removed. "
-                                 "Access by value(): device_collections[%s] -> device_collections['%s'].values()",
-                                 self.name, self.name)
-        yield from self.values()
-
     def items_tagged(self, tag) -> List["Device"]:
         """Return of list of device objects which have a certain tag.
 

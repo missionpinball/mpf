@@ -323,27 +323,15 @@ class ConfigValidator:
                     if "mpf" in self.machine.config and self.machine.config['mpf']['allow_invalid_config_sections']:
 
                         self.log.warning('Unrecognized config setting. "%s" is '
-                                         'not a valid setting name.',
-                                         path_string)
-
-                    elif k == "track":
-                        # MPF 0.80 DEPRECATED
-                        self.log.error('Your config contains a value for "track" in '
-                                       'setting "%s", but "track" has been replaced '
-                                       'with "bus" in MPF 0.80.', path_string)
-
-                        raise ConfigFileError('Your config contains a value for "track" in '
-                                              'setting "' + path_string + '", but "track" has '
-                                              'been replaced with "bus" in MPF 0.80.', 20, self.log.name)
+                                         'not a valid setting name.', path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
                                        'setting "%s", but this is not a valid '
                                        'setting name.', path_string)
 
-                        raise ConfigFileError('Your config contains a value for the '
-                                              'setting "' + path_string + '", but this is not a valid '
-                                                                          'setting name.', 2, self.log.name)
+                        raise ConfigFileError('Your config contains a value for the setting "' + path_string +
+                                              '", but this is not a valid setting name.', 2, self.log.name)
 
         except TypeError:
             raise ConfigFileError(
@@ -352,9 +340,9 @@ class ConfigValidator:
                     validation_failure_info.parent.item, config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
-        # The inclusion of sound_pools causes a nested ducking subconfig that
+        # The legacy sound_pools caused a nested ducking subconfig that
         # fails due to missing required properties. Check for an empty dict
-        # as subconfig and ignore it.
+        # as subconfig and ignore it. -- .80+ may be able to simplify
         if item is None or (item is Dict and len(item) == 0):
             return {}
         try:

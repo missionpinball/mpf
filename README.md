@@ -15,7 +15,7 @@ machines. MPF is a community-developed project released under the MIT license. I
 [![Test Status](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml/badge.svg)](https://github.com/missionpinball/mpf/actions/workflows/run_tests.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
-Visit the MPF project homepage at https://missionpinball.org. Additional related projects exist as part of the MPF ecosystem, including the "MPF Monitor" which is a graphical application that lets you simulate pinball hardware, and "MPF-MC" which is a media controller which provides graphics and sounds for pinball machines.
+Visit the MPF project homepage at https://missionpinball.org. Additional related projects exist as part of the MPF ecosystem, including the "MPF Monitor" which is a graphical application that lets you simulate pinball hardware, and "MPF-GMC" which is a media controller written in Godot which provides graphics and sounds for pinball machines.
 
 Documentation
 -------------
